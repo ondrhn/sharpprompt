@@ -127,12 +127,6 @@ Two real sessions so far, 19 typed prompts. Fork median 3.1 s over 6 rewrites (1
 
 `/sharp stats` keeps, on your machine only: how many prompts each check let through, clear or rough, what happened to each rewrite, what you did with it (sent, edited, took yours back), classifier and rewrite times at p50 and p95, tokens per rough prompt, and for each turn the tool calls, duration, output tokens and whether Claude had to ask you something back. It compares turns that started from your own text with turns that started from a rewrite, and says the numbers are not evidence until there are 30 turns. A script that runs the same prompts both ways is planned; until then there is no claim here that rewriting helps.
 
-## Related
-
-- [severity1/claude-code-prompt-improver](https://github.com/severity1/claude-code-prompt-improver): a settings hook that asks you clarifying questions when a prompt is vague; it does not rewrite. About 1,900 stars, the most used tool in this space as of October 2026.
-- prompt-polish (mako-code): rewrites with a small model when you ask for it, and puts the result in the box.
-- clarifier (same repository): classifies prompts with Haiku and tells Claude to ask first when one is ambiguous.
-- prompt-boost: rewrites with the conversation in view and per-model profiles; German interface.
 
 ## Development
 
