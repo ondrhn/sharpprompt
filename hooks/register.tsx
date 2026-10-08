@@ -2,7 +2,7 @@ import type { EngineInterface, ModelUsage, PromptSubmitInput, PromptSubmitResult
 import type { SharppromptDecision, SharppromptMode, SharppromptPending, SharppromptRewrite, SharppromptVerdict } from '../types'
 import { contextNote, describe, DROP_NOTE, EDIT_OVERLAP, HELP, overlap, parseCommand } from './flow'
 import { endsWithQuestion, gate } from './gate'
-import { countKey, MAX_RECORDS, summary, tokens, type Counts, type RewriteRecord, type TurnRecord } from './stats'
+import { countKey, lastRewriteLine, MAX_RECORDS, summary, tokens, wordCount, type Counts, type RewriteRecord, type TurnRecord } from './stats'
 import { clean, completePrompt, familyOf, forkPrompt, type Exemplar, type Recent } from './rewrite'
 
 // The engine checks that $ never leaves this file, so everything that calls
@@ -191,7 +191,14 @@ async function record($: EngineInterface, d: SharppromptDecision) {
   await bump($, { [countKey(d)]: 1 })
   if (!('rewrite' in d) || !d.rewrite) return
   const r = d.rewrite
-  const item: RewriteRecord = { outcome: r.outcome, via: r.via, ms: r.ms, classifyMs: d.classifyMs, usage: tokens(r.usage) }
+  const item: RewriteRecord = {
+    outcome: r.outcome,
+    via: r.via,
+    ms: r.ms,
+    classifyMs: d.classifyMs,
+    usage: tokens(r.usage),
+    words: r.text ? [wordCount(d.text), wordCount(r.text)] : [wordCount(d.text)],
+  }
   await push($, 'rewrites', item)
 }
 
@@ -251,7 +258,8 @@ async function runCommand($: EngineInterface, args: string, options: Options): P
     case 'status': {
       const mode = await modeOf($, options)
       const off = (await $.state.get(isOff)).value === true
-      return `${off ? 'Off' : 'On'} for this session, mode ${mode}.\nLast prompt: ${describe((await $.state.get(lastDecision)).value ?? null)}`
+      const last = (await readList<RewriteRecord>($, 'rewrites')).at(-1)
+      return `${off ? 'Off' : 'On'} for this session, mode ${mode}.\nLast prompt: ${describe((await $.state.get(lastDecision)).value ?? null)}\n${lastRewriteLine(last)}`
     }
     case 'on':
       await $.state.set(isOff, false)

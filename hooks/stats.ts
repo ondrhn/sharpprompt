@@ -22,11 +22,22 @@ export type RewriteRecord = {
   ms: number
   classifyMs?: number
   usage?: Tokens
+  // Words in the draft and in the rewrite, when there was one.
+  words?: [number, number?]
 }
 
 export type Counts = Record<string, number>
 
 export const MAX_RECORDS = 500
+
+export const wordCount = (t: string) => t.split(/\s+/).filter(Boolean).length
+
+export function lastRewriteLine(r: RewriteRecord | undefined): string {
+  if (!r) return 'Last rewrite: none yet'
+  const w = r.words ? `, ${r.words[0]}${r.words[1] === undefined ? '' : ` -> ${r.words[1]}`} words` : ''
+  const c = r.classifyMs === undefined ? '' : `classify ${r.classifyMs} ms, `
+  return `Last rewrite: ${r.outcome}, ${c}${r.via} ${r.ms} ms${w}`
+}
 
 export function tokens(u: { input_tokens: number; output_tokens: number; cache_read_input_tokens: number; cache_creation_input_tokens: number } | undefined): Tokens | undefined {
   if (!u) return undefined

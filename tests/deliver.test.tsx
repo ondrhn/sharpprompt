@@ -191,7 +191,7 @@ test('a turn is recorded with how its prompt got there', async ($, on) => {
   await $.turn.complete(turn)
   expect(w.store.turns).toHaveLength(1)
   expect(w.store.counts).toMatchObject({ 'verdict:rough': 1, 'answer:as-is': 1 })
-  expect(w.store.rewrites).toEqual([{ outcome: 'rewritten', via: 'fork', ms: 0, classifyMs: 0, usage: { input: 10, output: 20, cacheRead: 0, cacheWrite: 0 } }])
+  expect(w.store.rewrites).toEqual([{ outcome: 'rewritten', via: 'fork', ms: 0, classifyMs: 0, usage: { input: 10, output: 20, cacheRead: 0, cacheWrite: 0 }, words: [14, 20] }])
 })
 
 test('stats prints a summary and says when n is too small', async ($, on) => {
