@@ -9,7 +9,7 @@
     {
       "name": "sharpprompt",
       "source": "./",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Lets clear prompts through untouched and rewrites rough ones into the prompt box for you to check before sending.",
       "homepage": "https://github.com/ondrhn/sharpprompt",
       "license": "MIT",

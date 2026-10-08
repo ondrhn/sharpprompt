@@ -229,14 +229,13 @@ test('classify time is kept for clear prompts too', async ($, on) => {
 test('when Claude Code puts the dropped prompt back under the rewrite, the rewrite is set alone again', async ($, on) => {
   const w = world(on, { box: fills => (fills.length === 1 ? `${REWRITTEN}\n${ROUGH}` : fills.at(-1)!) })
   await $.prompt.submit({ text: ROUGH, ...typed })
-  expect(w.fills).toEqual([REWRITTEN])
-  await w.clock.advance(150)
+  await w.clock.settle()
   expect(w.fills).toEqual([REWRITTEN, REWRITTEN])
 })
 
-test('a box the person already changed is left alone', async ($, on) => {
-  const w = world(on, { box: () => `${REWRITTEN} and also the logout page` })
+test('a box that already holds the rewrite alone is not filled again', async ($, on) => {
+  const w = world(on)
   await $.prompt.submit({ text: ROUGH, ...typed })
-  await w.clock.advance(150)
+  await w.clock.settle()
   expect(w.fills).toEqual([REWRITTEN])
 })

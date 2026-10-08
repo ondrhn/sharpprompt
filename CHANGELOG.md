@@ -1,9 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.1.1 (9 October 2026)
 
-- Claude Code 2.1.295 puts a dropped prompt back in the box after the rewrite, so the box read rewrite + original and Enter sent both. sharpprompt now checks the box a moment later and sets the rewrite alone again; a box you already changed is left alone.
+- Fixed: on Claude Code 2.1.295 the dropped prompt was added back under the rewrite, so Enter sent both. The box is checked one timer tick after the drop and the rewrite is put back alone.
 - Rewrite records keep the session model; `/sharp status` shows the last rewrite's timings and word counts.
+- README with illustrations, a demo recording and a FAQ; a gate benchmark test; [measurements](docs/measurements/v0.1.0.md) unchanged from 0.1.0.
 
 ## 0.1.0 (8 October 2026)
 
