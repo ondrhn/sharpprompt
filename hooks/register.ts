@@ -1,6 +1,7 @@
-import type { EngineInterface, PromptSubmitInput, Register } from 'claude-code'
-import type { SharppromptDecision, SharppromptVerdict } from '../types'
+import type { EngineInterface, ModelUsage, PromptSubmitInput, Register } from 'claude-code'
+import type { SharppromptDecision, SharppromptRewrite, SharppromptVerdict } from '../types'
 import { endsWithQuestion, gate } from './gate'
+import { clean, completePrompt, familyOf, forkPrompt, type Exemplar, type Recent } from './rewrite'
 
 // The engine checks that $ never leaves this file, so everything that calls
 // it lives here and gate.ts stays pure.
@@ -9,6 +10,19 @@ const isOff = { plugin: 'sharpprompt', key: 'isOff' } as const
 const lastDecision = { plugin: 'sharpprompt', key: 'lastDecision' } as const
 
 export const CLASSIFY_MS = 2_500
+export const REWRITE_MS = 5_000
+
+// Tokens a fork spent after it lost its race: it finished in the background
+// and was billed anyway. Read out by the stats in a later step.
+export const late = { forks: 0, usage: { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } }
+
+function addLate(u: ModelUsage) {
+  late.forks++
+  late.usage.input_tokens += u.input_tokens
+  late.usage.output_tokens += u.output_tokens
+  late.usage.cache_read_input_tokens += u.cache_read_input_tokens
+  late.usage.cache_creation_input_tokens += u.cache_creation_input_tokens
+}
 
 const TIMEOUT: unique symbol = Symbol('timeout')
 
@@ -41,6 +55,56 @@ async function classify($: EngineInterface, text: string, model: string): Promis
   }
 }
 
+async function recent($: EngineInterface): Promise<Recent[]> {
+  const rows = await $.session.messages()
+  return rows
+    .filter(r => r.text.trim() !== '')
+    .slice(-4)
+    .map(r => ({ role: r.role, text: r.text }))
+}
+
+async function exemplarsOf($: EngineInterface): Promise<Exemplar[]> {
+  const v = await $.store.get('exemplars')
+  return Array.isArray(v) ? (v as Exemplar[]) : []
+}
+
+// Fork first: it reads the conversation from the prompt cache. With nothing
+// to fork yet (first turn, after /clear) a plain completion with the last few
+// messages pasted in. Both race the clock; losing means no rewrite.
+async function rewrite($: EngineInterface, draft: string): Promise<SharppromptRewrite> {
+  const started = await $.clock.now()
+  const family = familyOf(await $.session.model())
+  const examples = await exemplarsOf($)
+  const took = async () => (await $.clock.now()) - started
+
+  const forking = $.model.fork({ prompt: forkPrompt(draft, family, examples) })
+  const forked = await race($, forking, REWRITE_MS)
+  if (forked === TIMEOUT) {
+    void forking.then(r => ('usage' in r ? addLate(r.usage) : undefined), () => {})
+    return { outcome: 'timeout', via: 'fork', ms: await took() }
+  }
+
+  let reply = forked
+  let via: 'fork' | 'complete' = 'fork'
+  if (!reply.isAnswered && reply.reason === 'nothing-to-fork') {
+    via = 'complete'
+    reply = await $.model.complete({
+      model: await $.session.model(),
+      prompt: completePrompt(draft, family, await recent($), examples),
+      maxTokens: 600,
+      effort: 'low',
+      timeoutMs: REWRITE_MS,
+    })
+    if (!reply.isAnswered && reply.reason === 'aborted') return { outcome: 'timeout', via, ms: await took() }
+  }
+  if (!reply.isAnswered) return { outcome: 'error', via, ms: await took(), detail: reply.reason }
+
+  const c = clean(reply.text, draft)
+  const ms = await took()
+  if ('rejected' in c) return { outcome: c.rejected, via, ms, usage: reply.usage }
+  return { outcome: 'rewritten', via, ms, usage: reply.usage, text: c.rewritten }
+}
+
 async function lastReply($: EngineInterface): Promise<string> {
   const rows = await $.session.messages()
   for (let i = rows.length - 1; i >= 0; i--) {
@@ -65,7 +129,9 @@ async function decide($: EngineInterface, e: PromptSubmitInput, options: Readonl
   if (endsWithQuestion(await lastReply($))) return { verdict: 'skip', reason: 'answer', text: e.text }
 
   const model = typeof options.optimizerModel === 'string' ? options.optimizerModel : 'haiku'
-  return { verdict: await classify($, e.text, model), text: e.text }
+  const verdict = await classify($, e.text, model)
+  if (verdict !== 'rough') return { verdict, text: e.text }
+  return { verdict, text: e.text, rewrite: await rewrite($, e.text) }
 }
 
 // Whatever happens in here, the prompt goes out. A thrown error lands in
