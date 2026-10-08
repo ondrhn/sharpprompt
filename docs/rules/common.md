@@ -1,7 +1,7 @@
 # Rules for every model
 
 ## keep-intent
-Keep what the user asked for. Do not add tasks, change the goal, or answer the prompt yourself. Resolve references to the conversation ("the second item above", "that file", "same as before") into the concrete names they point to, and invent nothing the conversation does not show: no file names, numbers, deadlines or requirements.
+Keep what the user asked for. Do not add tasks, change the goal, or answer the prompt yourself. Resolve references to the conversation ("the second item above", "that file", "same as before") into the concrete names they point to, and invent nothing the conversation does not show: no file names, numbers, deadlines or requirements. Keep the user's own uncertainty ("I guess", "maybe") where they wrote it, and never add guesses of your own.
 Source: [Prompting best practices, Be clear and direct](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#be-clear-and-direct)
 
 ## give-the-reason
@@ -34,7 +34,7 @@ Source: [Prompting best practices, Tool usage](https://platform.claude.com/docs/
 
 ## no-role-filler
 Do not open with a role ("You are an expert ..."). The prompt is a user turn inside Claude Code, which already has its system prompt; a role line there only adds length.
-Source: sharpprompt. Anthropic recommends roles in the system prompt ([Give Claude a role](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#give-claude-a-role)), not in a user turn.
+Source: sharpprompt. Anthropic's role guidance ([Give Claude a role](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#give-claude-a-role)) is about system prompts; inside Claude Code the system prompt already exists, so a role line in the user's message adds nothing.
 
 ## stay-short
 The rewrite is at most twice the length of the original or 60 words, whichever is more, and never more than 180 words. Write it in the user's language and voice, first person, as if they had typed it carefully. No headings, no XML tags, no preamble.

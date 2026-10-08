@@ -9,7 +9,7 @@ export const RULES: Record<Family, readonly Rule[]> = {
   "common": [
     {
       "id": "keep-intent",
-      "text": "Keep what the user asked for. Do not add tasks, change the goal, or answer the prompt yourself. Resolve references to the conversation (\"the second item above\", \"that file\", \"same as before\") into the concrete names they point to, and invent nothing the conversation does not show: no file names, numbers, deadlines or requirements."
+      "text": "Keep what the user asked for. Do not add tasks, change the goal, or answer the prompt yourself. Resolve references to the conversation (\"the second item above\", \"that file\", \"same as before\") into the concrete names they point to, and invent nothing the conversation does not show: no file names, numbers, deadlines or requirements. Keep the user's own uncertainty (\"I guess\", \"maybe\") where they wrote it, and never add guesses of your own."
     },
     {
       "id": "give-the-reason",

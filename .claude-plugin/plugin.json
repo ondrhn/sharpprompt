@@ -16,8 +16,8 @@
     },
     "optimizerModel": {
       "type": "string",
-      "title": "Classifier model",
-      "description": "Model that decides whether a prompt is rough",
+      "title": "Helper model",
+      "description": "Model for the rough-or-clear check and for the fallback rewrite when there is no conversation yet. The usual rewrite runs on the session model, because it reads the conversation from the cache",
       "default": "haiku",
       "options": ["haiku", "sonnet"]
     },

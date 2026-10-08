@@ -18,6 +18,8 @@ function world(
   const calls = { classify: 0, fork: 0, complete: 0, prompts: [] as string[], decisions: [] as any[], clock: mock.clock(on) }
   mock.store(on)
   on('session.model', () => ({ value: 'claude-opus-5-5' }))
+  on('session.surface', () => ({ value: 'terminal' }))
+  on('prompt.fill', () => ({ isFilled: true }))
   on('model.fork', (_$, e) => {
     calls.fork++
     calls.prompts.push(e.prompt)
@@ -47,10 +49,9 @@ function world(
 
 const reply = (text: string): SessionMessage => ({ role: 'assistant', text, toolUses: [] })
 
-test('a rough prompt is classified and, for now, goes out as typed', async ($, on) => {
+test('a rough prompt is classified and rewritten through the fork', async ($, on) => {
   const calls = world(on, { label: 'rough' })
-  const r = await $.prompt.submit({ text: ROUGH, ...typed })
-  expect(r.text).toBe(ROUGH)
+  await $.prompt.submit({ text: ROUGH, ...typed })
   expect(calls.classify).toBe(1)
   expect(calls.decisions.at(-1)).toMatchObject({ verdict: 'rough', text: ROUGH, rewrite: { outcome: 'rewritten', via: 'fork', text: REWRITTEN } })
   expect(calls.fork).toBe(1)
@@ -85,7 +86,7 @@ test('a completion cut off by its own time limit counts as a timeout', async ($,
   expect(calls.decisions.at(-1)?.rewrite).toMatchObject({ outcome: 'timeout', via: 'complete' })
 })
 
-test('KEEP from the model means no rewrite', async ($, on) => {
+test('KEEP from the model means no rewrite and the prompt goes out as typed', async ($, on) => {
   const calls = world(on, { fork: answer('KEEP') })
   const r = await $.prompt.submit({ text: ROUGH, ...typed })
   expect(r.text).toBe(ROUGH)

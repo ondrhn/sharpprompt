@@ -1,6 +1,7 @@
 export type SharppromptMode = 'fill' | 'replace' | 'context' | 'off'
 
-// Why the cheap gate let a prompt through untouched.
+// Why the cheap gate let a prompt through untouched. 'suggested' is a prompt
+// sent while our suggestion was in the box: the user's answer to it.
 export type SharppromptSkip =
   | 'off'
   | 'not-typed'
@@ -11,12 +12,11 @@ export type SharppromptSkip =
   | 'too-long'
   | 'harness-tag'
   | 'answer'
+  | 'suggested'
 
 // What the classifier said; 'timeout' and 'error' send the prompt as typed.
 export type SharppromptVerdict = 'clear' | 'rough' | 'timeout' | 'error'
 
-// The last prompt's fate. `text` is what goes out when nothing is rewritten
-// (the prompt itself, or with its raw: prefix cut off).
 // How a rewrite went. Only 'rewritten' carries text; every other outcome
 // sends the prompt as typed.
 export type SharppromptRewrite = {
@@ -32,11 +32,12 @@ export type SharppromptDecision =
   | { verdict: 'skip'; reason: SharppromptSkip; text: string }
   | { verdict: SharppromptVerdict; text: string; rewrite?: SharppromptRewrite }
 
-// A rewrite waiting in the prompt box, shown in the band above it.
+// A rewrite the user has not acted on yet: in the box (fill) or already sent
+// (replace), shown in the band above the prompt.
 export type SharppromptPending = {
+  kind: 'filled' | 'replaced'
   original: string
   rewritten: string
-  at: number
 }
 
 declare module 'claude-code' {
@@ -44,6 +45,7 @@ declare module 'claude-code' {
     sharpprompt: {
       pending: SharppromptPending | null
       isOff: boolean
+      mode: SharppromptMode | null
       lastDecision: SharppromptDecision | null
     }
   }
