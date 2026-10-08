@@ -1,0 +1,31 @@
+{
+  "name": "promptgate",
+  "version": "0.1.0",
+  "description": "Lets clear prompts through untouched and rewrites rough ones into the prompt box for you to check before sending.",
+  "author": { "name": "Onderhan Islekoglu" },
+  "license": "MIT",
+  "keywords": ["prompt", "rewrite", "mods"],
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "mode": {
+      "type": "string",
+      "title": "Mode",
+      "description": "fill puts the rewrite in the prompt box, replace sends it, context adds a hint, off does nothing",
+      "default": "fill",
+      "options": ["fill", "replace", "context", "off"]
+    },
+    "optimizerModel": {
+      "type": "string",
+      "title": "Classifier model",
+      "description": "Model that decides whether a prompt is rough",
+      "default": "haiku",
+      "options": ["haiku", "sonnet"]
+    },
+    "minChars": {
+      "type": "number",
+      "title": "Minimum length",
+      "description": "Prompts shorter than this pass through untouched",
+      "default": 40
+    }
+  }
+}
