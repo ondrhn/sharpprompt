@@ -139,6 +139,8 @@ Each rule is in [docs/rules](docs/rules) with a link to the Anthropic page it co
 |---|---|---|---|---|---|---|
 | [0.1.0](docs/measurements/v0.1.0.md) | 8 Oct 2026 | 19 typed, 8 rewritten | 17 us | 1.0 s (n=9) | 3.1 s (n=6) | 0 |
 
+Benchmark, Fable 5.1, 26 paired cases: no measurable difference between the prompt as typed and the rewrite ([report](docs/measurements/bench-2026-10-09-fable-5-1.md)).
+
 Each version gets a file in [docs/measurements](docs/measurements) with the method and the raw table, and a row here. The sample is small; none of this shows yet whether rewriting makes Claude's work better. `/sharp stats` keeps the same numbers for your own sessions, on your machine only, and compares turns that started from your text with turns that started from a rewrite.
 
 Tests: 54, in [tests/](tests), run with `claude plugin test .`.
@@ -167,6 +169,8 @@ Types come from the Claude Code build you run. Open an interactive session with 
 Rules and shapes live in `docs/`; `node scripts/build-bank.mjs` compiles them into `hooks/bank.ts`, because a mod cannot read files at run time. `--check` fails when the two drift.
 
 Checks: `claude plugin validate --strict .`, `claude plugin test .`, `tsc -p .`, `node scripts/build-bank.mjs --check`.
+
+Benchmark: `node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/bench.mjs --help`; the corpus and how to run it are in [docs/bench](docs/bench).
 
 ## License
 
