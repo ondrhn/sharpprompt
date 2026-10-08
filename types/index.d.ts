@@ -1,7 +1,7 @@
-export type PromptgateMode = 'fill' | 'replace' | 'context' | 'off'
+export type SharppromptMode = 'fill' | 'replace' | 'context' | 'off'
 
 // Why the cheap gate let a prompt through untouched.
-export type PromptgateSkip =
+export type SharppromptSkip =
   | 'off'
   | 'not-typed'
   | 'raw'
@@ -13,16 +13,16 @@ export type PromptgateSkip =
   | 'answer'
 
 // What the classifier said; 'timeout' and 'error' send the prompt as typed.
-export type PromptgateVerdict = 'clear' | 'rough' | 'timeout' | 'error'
+export type SharppromptVerdict = 'clear' | 'rough' | 'timeout' | 'error'
 
 // The last prompt's fate. `text` is what goes out when nothing is rewritten
 // (the prompt itself, or with its raw: prefix cut off).
-export type PromptgateDecision =
-  | { verdict: 'skip'; reason: PromptgateSkip; text: string }
-  | { verdict: PromptgateVerdict; text: string }
+export type SharppromptDecision =
+  | { verdict: 'skip'; reason: SharppromptSkip; text: string }
+  | { verdict: SharppromptVerdict; text: string }
 
 // A rewrite waiting in the prompt box, shown in the band above it.
-export type PromptgatePending = {
+export type SharppromptPending = {
   original: string
   rewritten: string
   at: number
@@ -30,10 +30,10 @@ export type PromptgatePending = {
 
 declare module 'claude-code' {
   interface PluginState {
-    promptgate: {
-      pending: PromptgatePending | null
+    sharpprompt: {
+      pending: SharppromptPending | null
       isOff: boolean
-      lastDecision: PromptgateDecision | null
+      lastDecision: SharppromptDecision | null
     }
   }
 }

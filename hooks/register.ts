@@ -1,12 +1,12 @@
 import type { EngineInterface, PromptSubmitInput, Register } from 'claude-code'
-import type { PromptgateDecision, PromptgateVerdict } from '../types'
+import type { SharppromptDecision, SharppromptVerdict } from '../types'
 import { endsWithQuestion, gate } from './gate'
 
 // The engine checks that $ never leaves this file, so everything that calls
 // it lives here and gate.ts stays pure.
 
-const isOff = { plugin: 'promptgate', key: 'isOff' } as const
-const lastDecision = { plugin: 'promptgate', key: 'lastDecision' } as const
+const isOff = { plugin: 'sharpprompt', key: 'isOff' } as const
+const lastDecision = { plugin: 'sharpprompt', key: 'lastDecision' } as const
 
 export const CLASSIFY_MS = 2_500
 
@@ -30,7 +30,7 @@ async function race<T>($: EngineInterface, work: Promise<T>, ms: number): Promis
   }
 }
 
-async function classify($: EngineInterface, text: string, model: string): Promise<PromptgateVerdict> {
+async function classify($: EngineInterface, text: string, model: string): Promise<SharppromptVerdict> {
   try {
     const label = await race($, $.model.classify(text, ['clear', 'rough'], { model }), CLASSIFY_MS)
     if (label === TIMEOUT) return 'timeout'
@@ -50,9 +50,9 @@ async function lastReply($: EngineInterface): Promise<string> {
   return ''
 }
 
-// What promptgate would do with this prompt. Anything but 'rough' means the
+// What sharpprompt would do with this prompt. Anything but 'rough' means the
 // prompt goes out exactly as typed.
-async function decide($: EngineInterface, e: PromptSubmitInput, options: Readonly<Record<string, unknown>>): Promise<PromptgateDecision> {
+async function decide($: EngineInterface, e: PromptSubmitInput, options: Readonly<Record<string, unknown>>): Promise<SharppromptDecision> {
   const off = options.mode === 'off' || (await $.state.get(isOff)).value === true
   const g = gate({
     text: e.text,

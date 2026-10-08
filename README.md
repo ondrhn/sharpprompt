@@ -1,4 +1,4 @@
-# promptgate
+# sharpprompt
 
 Work in progress. The full README comes with the first usable version.
 

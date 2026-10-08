@@ -1,5 +1,5 @@
 {
-  "name": "promptgate",
+  "name": "sharpprompt",
   "version": "0.1.0",
   "description": "Lets clear prompts through untouched and rewrites rough ones into the prompt box for you to check before sending.",
   "author": { "name": "Onderhan Islekoglu" },

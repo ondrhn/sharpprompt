@@ -16,7 +16,7 @@ function world(on: On, opts: { rows?: SessionMessage[]; label?: string | 'hang' 
     return { value: opts.label ?? 'rough' }
   })
   on('state.set', (_$, e, next) => {
-    if (e.plugin === 'promptgate' && e.key === 'lastDecision') calls.decisions.push(e.value)
+    if (e.plugin === 'sharpprompt' && e.key === 'lastDecision') calls.decisions.push(e.value)
     return next(e)
   })
   on('prompt.submit', (_$, e) => ({ text: e.text, context: e.context }))

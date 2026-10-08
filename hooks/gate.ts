@@ -1,5 +1,5 @@
 import type { PromptOrigin } from 'claude-code'
-import type { PromptgateSkip } from '../types'
+import type { SharppromptSkip } from '../types'
 
 // The cheap part of the decision: no model, no awaits. Anything this lets
 // through still has to be called rough by the classifier before we touch it.
@@ -12,7 +12,7 @@ export type GateInput = {
 }
 
 export type GateDecision =
-  | { pass: true; reason: PromptgateSkip; text: string }
+  | { pass: true; reason: SharppromptSkip; text: string }
   | { pass: false }
 
 export const MAX_CHARS = 20_000
@@ -25,7 +25,7 @@ const TYPED: ReadonlySet<PromptOrigin['kind']> = new Set(['composer', 'bridge'])
 
 export function gate(input: GateInput): GateDecision {
   const { text, origin, minChars, isOff } = input
-  const pass = (reason: PromptgateSkip, out = text): GateDecision => ({ pass: true, reason, text: out })
+  const pass = (reason: SharppromptSkip, out = text): GateDecision => ({ pass: true, reason, text: out })
 
   if (!TYPED.has(origin.kind)) return pass('not-typed')
   if (RAW_PREFIX.test(text)) return pass('raw', text.replace(RAW_PREFIX, ''))
