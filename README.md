@@ -112,7 +112,7 @@ Each rule is in [docs/rules](docs/rules) with a link to the Anthropic page it co
 
 ## Measurements
 
-Two real sessions so far, 19 typed prompts. Six timed rewrites: fork median 3.1 s over 6 rewrites, mostly the model's own thinking time on the session's effort setting (1.7 to 4.4 s); classifier median about 1 second. The aim is about 3 seconds. Too few to claim anything about whether rewriting helps.
+Two real sessions so far, 19 typed prompts. Fork median 3.1 s over 6 rewrites (1.7 to 4.4 s), mostly the model's own thinking time on the session's effort setting; the aim is about 3 seconds. Classifier median about 1 second. Too few to claim anything about whether rewriting helps.
 
 `/sharp stats` keeps, on your machine only: how many prompts each check let through, clear or rough, what happened to each rewrite, what you did with it (sent, edited, took yours back), classifier and rewrite times at p50 and p95, tokens per rough prompt, and for each turn the tool calls, duration, output tokens and whether Claude had to ask you something back. It compares turns that started from your own text with turns that started from a rewrite, and says the numbers are not evidence until there are 30 turns. A script that runs the same prompts both ways is planned; until then there is no claim here that rewriting helps.
 
