@@ -13,6 +13,7 @@ export type SharppromptSkip =
   | 'harness-tag'
   | 'answer'
   | 'suggested'
+  | 'back-to-mine'
 
 // What the classifier said; 'timeout' and 'error' send the prompt as typed.
 export type SharppromptVerdict = 'clear' | 'rough' | 'timeout' | 'error'
@@ -32,10 +33,11 @@ export type SharppromptDecision =
   | { verdict: 'skip'; reason: SharppromptSkip; text: string }
   | { verdict: SharppromptVerdict; text: string; classifyMs?: number; rewrite?: SharppromptRewrite }
 
-// A rewrite the user has not acted on yet: in the box (fill) or already sent
-// (replace), shown in the band above the prompt.
+// A rewrite the user has not acted on yet: in the box (filled) or already
+// sent (replaced), shown in the band; or the user's own text put back in the
+// box (restored), which goes out untouched if sent as it stands.
 export type SharppromptPending = {
-  kind: 'filled' | 'replaced'
+  kind: 'filled' | 'replaced' | 'restored'
   original: string
   rewritten: string
 }

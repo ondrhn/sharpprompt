@@ -101,7 +101,7 @@ test('replace mode sends the rewrite and keeps the original for undo', { options
   expect(w.sent[0]?.text).toBe(REWRITTEN)
   const out = await $.command.run(cmd('sharp', 'undo'))
   expect(out.text).toContain('back in the prompt box')
-  expect(w.fills.at(-1)).toBe(`raw: ${ROUGH}`)
+  expect(w.fills.at(-1)).toBe(ROUGH)
 })
 
 test('sending the suggestion as is goes out untouched, no second rewrite', async ($, on) => {
@@ -139,17 +139,27 @@ test('band: Enter, edit in the box, or r for the original', async ($, on) => {
   }
 })
 
-test('band: r puts the original back marked raw, and it then goes out as typed', async ($, on) => {
+test('band: r puts the original back as typed, and sent unchanged it goes out untouched', async ($, on) => {
   const w = world(on)
   await $.prompt.submit({ text: ROUGH, ...typed })
   const ui = await $.ui.mount({ plugin: 'sharpprompt', surface: 'terminal', ...BAND })
   await ui.press({ key: 'raw' })
-  expect(w.fills.at(-1)).toBe(`raw: ${ROUGH}`)
+  expect(w.fills.at(-1)).toBe(ROUGH)
   expect(await ui.find({ key: 'raw' })).toBeUndefined()
-  const r = await $.prompt.submit({ text: `raw: ${ROUGH}`, ...typed })
+  const r = await $.prompt.submit({ text: ROUGH, ...typed })
   expect(r.text).toBe(ROUGH)
+  expect(w.classify).toBe(1)
   expect(w.sent.at(-1)?.origin).toEqual({ kind: 'composer' })
-  expect(w.store.counts).toMatchObject({ 'answer:original': 1, 'skip:raw': 1 })
+  expect(w.store.counts).toMatchObject({ 'answer:original': 1, 'skip:back-to-mine': 1 })
+})
+
+test('band: the original put back and then edited is a new prompt', async ($, on) => {
+  const w = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  const ui = await $.ui.mount({ plugin: 'sharpprompt', surface: 'terminal', ...BAND })
+  await ui.press({ key: 'raw' })
+  await $.prompt.submit({ text: ROUGH + ' and also check the logout path please', ...typed })
+  expect(w.classify).toBe(2)
 })
 
 test('commands: off, status, mode, help', async ($, on) => {

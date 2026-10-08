@@ -224,13 +224,25 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
   return { drop: DROP_NOTE }
 }
 
-// Puts the user's own text back in the box, marked raw: so it goes out as
-// typed. We never send it for them: a prompt a plugin submits shows in the
-// transcript under the plugin's name and skips @file expansion.
-async function restoreOriginal($: EngineInterface, p: SharppromptPending) {
-  await $.state.set(pending, null)
+// Puts the user's own text back in the box. Sent as it stands, it goes out
+// untouched (prompt.submit checks it against pending); edited, it is a new
+// prompt. We never send it for them: a prompt a plugin submits shows in the
+// transcript under the plugin's name and skips @file expansion. pending is
+// written before the fill so an Enter right after it already sees it.
+async function restoreOriginal($: EngineInterface, p: SharppromptPending): Promise<boolean> {
+  await $.state.set(pending, { ...p, kind: 'restored' })
   await bump($, { 'answer:original': 1 })
-  await $.prompt.fill({ text: `raw: ${p.original}`, mode: 'replace' })
+  const r = await $.prompt.fill({ text: p.original, mode: 'replace' })
+  if (!r.isFilled) await $.state.set(pending, null)
+  return r.isFilled
+}
+
+// True when this is the user's own text we put back, sent unchanged.
+async function isRestored($: EngineInterface, text: string): Promise<boolean> {
+  const p = (await $.state.get(pending)).value
+  if (!p || p.kind !== 'restored') return false
+  await $.state.set(pending, null)
+  return text === p.original
 }
 
 async function runCommand($: EngineInterface, args: string, options: Options): Promise<string> {
@@ -253,9 +265,8 @@ async function runCommand($: EngineInterface, args: string, options: Options): P
     case 'undo': {
       const original = await $.store.get('lastOriginal')
       if (typeof original !== 'string') return 'Nothing to undo.'
-      await $.state.set(pending, null)
-      const r = await $.prompt.fill({ text: `raw: ${original}`, mode: 'replace' })
-      return r.isFilled ? 'Your original is back in the prompt box, marked raw: so it goes out as typed.' : `Could not reach the prompt box. Your original was:\n${original}`
+      const ok = await restoreOriginal($, { kind: 'restored', original, rewritten: '' })
+      return ok ? 'Your original is back in the prompt box; sent as it stands, it goes out untouched.' : `Could not reach the prompt box. Your original was:\n${original}`
     }
     case 'stats': {
       const v = await $.store.get('counts')
@@ -289,6 +300,13 @@ export const register: Register = (on, options) => {
     outgoing = null
     toolCalls = 0
     if (typedByUser) {
+      if (await isRestored($, e.text)) {
+        const d: SharppromptDecision = { verdict: 'skip', reason: 'back-to-mine', text: e.text }
+        await $.state.set(lastDecision, d)
+        await record($, d)
+        outgoing = 'typed'
+        return next(e)
+      }
       const answered = await settlePending($, e.text)
       if (answered) {
         await $.state.set(lastDecision, { verdict: 'skip', reason: 'suggested', text: e.text })
@@ -338,7 +356,7 @@ export const register: Register = (on, options) => {
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const p = (await $.state.get(pending)).value
-    if (!p || e.props.hasSurvey) return next(e)
+    if (!p || p.kind === 'restored' || e.props.hasSurvey) return next(e)
     const { Box, Button, Text } = $.ui.resolve(e)
     const was = p.original.length > 70 ? `${p.original.slice(0, 70)}...` : p.original
     if (p.kind === 'replaced') {
