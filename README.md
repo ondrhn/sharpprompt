@@ -10,12 +10,21 @@ Rewrites follow Anthropic's prompting guidance for the model your session runs o
 
 Tested on Claude Code 2.1.293.
 
+From the plugin marketplace, inside Claude Code:
+
+```
+/plugin marketplace add ondrhn/sharpprompt
+/plugin install sharpprompt@ondrhn
+```
+
+Or from a clone:
+
 ```sh
-git clone <this repository> ~/sharpprompt
+git clone https://github.com/ondrhn/sharpprompt ~/sharpprompt
 claude --plugin-dir ~/sharpprompt
 ```
 
-To load it in every session, add the folder to `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of `~/.claude/settings.json`.
+To load the clone in every session, add the folder to `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of `~/.claude/settings.json`.
 
 ## What it looks like
 
@@ -69,7 +78,9 @@ Modes: `fill` (default) puts the rewrite in the box. `replace` sends the rewrite
 `claude plugin validate --strict .` on this repository:
 
 ```
-Validating plugin manifest: .claude-plugin/plugin.json
+Validating marketplace manifest: .claude-plugin/marketplace.json
+
+Validating plugin: .claude-plugin/plugin.json
 
   ❯ types ./types/index.d.ts declares on $: nothing (no EngineInterface member)
   ❯ types ./types/index.d.ts declares state: sharpprompt.pending, sharpprompt.isOff, sharpprompt.mode, sharpprompt.lastDecision
