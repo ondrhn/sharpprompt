@@ -52,4 +52,11 @@ describe('endsWithQuestion', () => {
     expect(endsWithQuestion('Is this right? I changed three files.')).toBe(false)
     expect(endsWithQuestion('')).toBe(false)
   })
+
+  test('skips a code block at the end', () => {
+    expect(endsWithQuestion('Want me to run it?\n\n```bash\nnpm test\n```')).toBe(true)
+    expect(endsWithQuestion('Here is the query.\n\n```sql\nSELECT * FROM users WHERE id = ?\n```')).toBe(false)
+    expect(endsWithQuestion('Fixed.\n\n```py\nprint("Done?")\n```')).toBe(false)
+    expect(endsWithQuestion('Two options?\n```\na\n```\n\n```\nb\n```')).toBe(true)
+  })
 })

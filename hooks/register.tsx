@@ -2,6 +2,7 @@ import type { EngineInterface, ModelUsage, PromptSubmitInput, PromptSubmitResult
 import type { SharppromptDecision, SharppromptMode, SharppromptPending, SharppromptRewrite, SharppromptVerdict } from '../types'
 import { contextNote, describe, DROP_NOTE, EDIT_OVERLAP, HELP, overlap, parseCommand } from './flow'
 import { endsWithQuestion, gate } from './gate'
+import { countKey, MAX_RECORDS, summary, tokens, type Counts, type RewriteRecord, type TurnRecord } from './stats'
 import { clean, completePrompt, familyOf, forkPrompt, type Exemplar, type Recent } from './rewrite'
 
 // The engine checks that $ never leaves this file, so everything that calls
@@ -11,6 +12,11 @@ const isOff = { plugin: 'sharpprompt', key: 'isOff' } as const
 const lastDecision = { plugin: 'sharpprompt', key: 'lastDecision' } as const
 const pending = { plugin: 'sharpprompt', key: 'pending' } as const
 const modeOverride = { plugin: 'sharpprompt', key: 'mode' } as const
+
+// The turn now running and how its prompt got there; tool calls counted on
+// the main thread. Module state: a reload mid-turn loses one turn's record.
+let outgoing: TurnRecord['prompt'] | null = null
+let toolCalls = 0
 
 type Options = Readonly<Record<string, unknown>>
 
@@ -142,23 +148,51 @@ async function decide($: EngineInterface, e: PromptSubmitInput, options: Options
 
   if (endsWithQuestion(await lastReply($))) return { verdict: 'skip', reason: 'answer', text: e.text }
 
+  const t0 = await $.clock.now()
   const verdict = await classify($, e.text, helperModel(options))
-  if (verdict !== 'rough') return { verdict, text: e.text }
-  return { verdict, text: e.text, rewrite: await rewrite($, e.text, helperModel(options)) }
+  const classifyMs = (await $.clock.now()) - t0
+  if (verdict !== 'rough') return { verdict, text: e.text, classifyMs }
+  return { verdict, text: e.text, classifyMs, rewrite: await rewrite($, e.text, helperModel(options)) }
 }
 
 // A prompt sent while our suggestion is waiting is the user's answer to it,
 // not a new draft. When they edited it first, the edit is kept as an example
 // of how they like their prompts.
-async function settlePending($: EngineInterface, text: string): Promise<boolean> {
+async function settlePending($: EngineInterface, text: string): Promise<'as-is' | 'edited' | null> {
   const p = (await $.state.get(pending)).value
-  if (!p || p.kind !== 'filled') return false
+  if (!p || p.kind !== 'filled') return null
   await $.state.set(pending, null)
-  if (text === p.rewritten) return true
-  if (overlap(text, p.rewritten) < EDIT_OVERLAP) return false
+  if (text === p.rewritten) return 'as-is'
+  if (overlap(text, p.rewritten) < EDIT_OVERLAP) return null
   const list = await exemplarsOf($)
   await $.store.set('exemplars', [...list, { original: p.rewritten, sent: text }].slice(-20))
-  return true
+  return 'edited'
+}
+
+async function bump($: EngineInterface, add: Counts) {
+  const v = await $.store.get('counts')
+  const counts: Counts = v && typeof v === 'object' ? { ...(v as Counts) } : {}
+  for (const [k, n] of Object.entries(add)) counts[k] = (counts[k] ?? 0) + n
+  await $.store.set('counts', counts)
+}
+
+async function push<T>($: EngineInterface, key: 'rewrites' | 'turns', item: T) {
+  const v = await $.store.get(key)
+  const list = Array.isArray(v) ? (v as T[]) : []
+  await $.store.set(key, [...list, item].slice(-MAX_RECORDS))
+}
+
+async function readList<T>($: EngineInterface, key: 'rewrites' | 'turns'): Promise<T[]> {
+  const v = await $.store.get(key)
+  return Array.isArray(v) ? (v as T[]) : []
+}
+
+async function record($: EngineInterface, d: SharppromptDecision) {
+  await bump($, { [countKey(d)]: 1 })
+  if (!('rewrite' in d) || !d.rewrite) return
+  const r = d.rewrite
+  const item: RewriteRecord = { outcome: r.outcome, via: r.via, ms: r.ms, classifyMs: d.classifyMs, usage: tokens(r.usage) }
+  await push($, 'rewrites', item)
 }
 
 async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: string, mode: SharppromptMode, next: (e: PromptSubmitInput) => Promise<PromptSubmitResult>): Promise<PromptSubmitResult> {
@@ -168,29 +202,34 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
   const drawn = surface === 'terminal' || surface === 'desktop'
   const how = mode === 'fill' && !drawn ? 'context' : mode
 
-  if (how === 'context') return next({ ...e, context: [...(e.context ?? []), contextNote(rewritten)] })
+  if (how === 'context') {
+    outgoing = 'context'
+    return next({ ...e, context: [...(e.context ?? []), contextNote(rewritten)] })
+  }
 
   if (how === 'replace') {
     await $.store.set('lastOriginal', e.text)
     await $.state.set(pending, { kind: 'replaced', original: e.text, rewritten })
+    outgoing = 'rewritten'
     return next({ ...e, text: rewritten })
   }
 
   const filled = await $.prompt.fill({ text: rewritten, mode: 'replace' })
-  if (!filled.isFilled) return next(e)
+  if (!filled.isFilled) {
+    outgoing = 'typed'
+    return next(e)
+  }
   await $.store.set('lastOriginal', e.text)
   await $.state.set(pending, { kind: 'filled', original: e.text, rewritten })
   return { drop: DROP_NOTE }
 }
 
-async function sendOriginal($: EngineInterface, p: SharppromptPending) {
+// Puts the user's own text back in the box, marked raw: so it goes out as
+// typed. We never send it for them: a prompt a plugin submits shows in the
+// transcript under the plugin's name and skips @file expansion.
+async function restoreOriginal($: EngineInterface, p: SharppromptPending) {
   await $.state.set(pending, null)
-  await $.prompt.fill({ text: '', mode: 'replace' })
-  await $.prompt.submit({ text: p.original, asUser: true })
-}
-
-async function editOriginal($: EngineInterface, p: SharppromptPending) {
-  await $.state.set(pending, null)
+  await bump($, { 'answer:original': 1 })
   await $.prompt.fill({ text: `raw: ${p.original}`, mode: 'replace' })
 }
 
@@ -200,14 +239,14 @@ async function runCommand($: EngineInterface, args: string, options: Options): P
     case 'status': {
       const mode = await modeOf($, options)
       const off = (await $.state.get(isOff)).value === true
-      return `sharpprompt is ${off ? 'off' : 'on'} for this session, mode ${mode}.\nLast prompt: ${describe((await $.state.get(lastDecision)).value ?? null)}`
+      return `${off ? 'Off' : 'On'} for this session, mode ${mode}.\nLast prompt: ${describe((await $.state.get(lastDecision)).value ?? null)}`
     }
     case 'on':
       await $.state.set(isOff, false)
-      return 'sharpprompt is on for this session.'
+      return 'On for this session.'
     case 'off':
       await $.state.set(isOff, true)
-      return 'sharpprompt is off for this session. Prompts go out as typed.'
+      return 'Off for this session. Prompts go out as typed.'
     case 'mode':
       await $.state.set(modeOverride, c.mode)
       return `Mode is ${c.mode} for this session.`
@@ -218,8 +257,11 @@ async function runCommand($: EngineInterface, args: string, options: Options): P
       const r = await $.prompt.fill({ text: `raw: ${original}`, mode: 'replace' })
       return r.isFilled ? 'Your original is back in the prompt box, marked raw: so it goes out as typed.' : `Could not reach the prompt box. Your original was:\n${original}`
     }
-    case 'stats':
-      return 'Stats come in the next version.'
+    case 'stats': {
+      const v = await $.store.get('counts')
+      const counts = v && typeof v === 'object' ? (v as Counts) : {}
+      return summary(counts, await readList<RewriteRecord>($, 'rewrites'), await readList<TurnRecord>($, 'turns'))
+    }
     case 'try': {
       const verdict = await classify($, c.text, helperModel(options))
       const r = await rewrite($, c.text, helperModel(options))
@@ -243,19 +285,56 @@ export const register: Register = (on, options) => {
   on('command.run', { command: 'sharp' }, async ($, e) => ({ text: await runCommand($, e.args, options) }))
 
   on('prompt.submit', async ($, e, next) => {
-    if (e.origin.kind === 'composer' || e.origin.kind === 'bridge') {
-      if (await settlePending($, e.text)) {
+    const typedByUser = e.origin.kind === 'composer' || e.origin.kind === 'bridge'
+    outgoing = null
+    toolCalls = 0
+    if (typedByUser) {
+      const answered = await settlePending($, e.text)
+      if (answered) {
         await $.state.set(lastDecision, { verdict: 'skip', reason: 'suggested', text: e.text })
+        await bump($, { [`answer:${answered}`]: 1 })
+        outgoing = answered === 'as-is' ? 'rewritten' : 'edited'
         return next(e)
       }
     }
     const mode = await modeOf($, options)
     const d = await decide($, e, options, mode)
     await $.state.set(lastDecision, d)
+    if (typedByUser) await record($, d)
     const rewritten = 'rewrite' in d ? d.rewrite?.text : undefined
     if (rewritten) return deliver($, e, rewritten, mode, next)
+    if (typedByUser) outgoing = 'typed'
     return next(d.text !== e.text ? { ...e, text: d.text } : e)
   }).catch(($, e, next) => next(e))
+
+  on('tool.call', ($, e, next) => {
+    if (!e.agentId) toolCalls++
+    return next(e)
+  }).catch(($, e, next) => next(e))
+
+  // One record per turn a typed prompt started, for /sharp stats. Subagent
+  // turns and turns nobody typed are left out.
+  on('turn.complete', async ($, e, next) => {
+    if (!e.agentId && outgoing) {
+      const turn: TurnRecord = {
+        prompt: outgoing,
+        durationMs: e.durationMs,
+        tools: toolCalls,
+        asked: endsWithQuestion(e.answer),
+        usage: tokens(e.usage),
+        aborted: e.isAborted,
+      }
+      outgoing = null
+      await push($, 'turns', turn)
+    }
+    if (late.forks > 0) {
+      const add = { 'late:forks': late.forks, 'late:input': late.usage.input_tokens + late.usage.cache_read_input_tokens + late.usage.cache_creation_input_tokens, 'late:output': late.usage.output_tokens }
+      late.forks = 0
+      late.usage = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 }
+      await bump($, add)
+    }
+    return next(e)
+  })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const p = (await $.state.get(pending)).value
@@ -267,7 +346,7 @@ export const register: Register = (on, options) => {
         <Box flexDirection="column">
           <Text dimColor>sharpprompt sent a rewrite of: {was}</Text>
           <Box>
-            <Button key="undo" hotkey="u" label="put my original in the box" onPress={() => editOriginal($, p)} />
+            <Button key="undo" hotkey="u" label="put my original in the box" onPress={() => restoreOriginal($, p)} />
             <Button key="dismiss" hotkey="x" label="ok" role="dismiss" onPress={() => $.state.set(pending, null)} />
           </Box>
         </Box>
@@ -277,9 +356,8 @@ export const register: Register = (on, options) => {
       <Box flexDirection="column">
         <Text dimColor>sharpprompt rewrote: {was}</Text>
         <Box>
-          <Text dimColor>Enter sends the rewrite </Text>
-          <Button key="edit" hotkey="e" label="edit my original" onPress={() => editOriginal($, p)} />
-          <Button key="raw" hotkey="r" label="send my original" onPress={() => sendOriginal($, p)} />
+          <Text dimColor>Enter sends it, or edit it in the box. </Text>
+          <Button key="raw" hotkey="r" label="back to mine" onPress={() => restoreOriginal($, p)} />
         </Box>
       </Box>
     )

@@ -43,7 +43,15 @@ export function gate(input: GateInput): GateDecision {
 
 // When Claude's last reply ended on a question, the next prompt is almost
 // always the answer to it, and rewriting an answer only gets in the way.
+// A code block at the very end ("Want me to run it?" then the command) is
+// skipped, so the question before it counts and a "?" inside it does not.
 export function endsWithQuestion(reply: string): boolean {
-  const tail = reply.trimEnd().replace(/[*_`)\]"'”’»\s]+$/u, '')
+  let text = reply.trimEnd()
+  while (text.endsWith('```')) {
+    const open = text.lastIndexOf('```', text.length - 4)
+    if (open < 0) break
+    text = text.slice(0, open).trimEnd()
+  }
+  const tail = text.replace(/[*_`)\]"'”’»\s]+$/u, '')
   return tail.endsWith('?') || tail.endsWith('？')
 }

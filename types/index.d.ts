@@ -30,7 +30,7 @@ export type SharppromptRewrite = {
 
 export type SharppromptDecision =
   | { verdict: 'skip'; reason: SharppromptSkip; text: string }
-  | { verdict: SharppromptVerdict; text: string; rewrite?: SharppromptRewrite }
+  | { verdict: SharppromptVerdict; text: string; classifyMs?: number; rewrite?: SharppromptRewrite }
 
 // A rewrite the user has not acted on yet: in the box (fill) or already sent
 // (replace), shown in the band above the prompt.

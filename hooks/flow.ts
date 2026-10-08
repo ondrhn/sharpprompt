@@ -23,7 +23,7 @@ export function contextNote(rewritten: string): string {
   return `The sharpprompt plugin read the user's request above as the following. Use it only where it matches what the user wrote:\n${rewritten}`
 }
 
-export const DROP_NOTE = 'sharpprompt put a clearer version in the prompt box. Enter sends it; to send yours as typed, press ctrl+x tab then r.'
+export const DROP_NOTE = 'sharpprompt put a clearer version in the box. Enter sends it, ctrl+x tab then r brings yours back.'
 
 export type Command =
   | { kind: 'status' }

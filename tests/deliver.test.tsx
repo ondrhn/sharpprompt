@@ -22,7 +22,7 @@ const BAND = {
 
 // The engine beneath the plugin, recording what reaches the model, the box
 // and the bottom of prompt.submit.
-function world(on: On, opts: { surface?: RenderSurface | null; fillOk?: boolean; label?: string } = {}) {
+function world(on: On, opts: { surface?: RenderSurface | null; fillOk?: boolean; label?: string; forkMs?: number } = {}) {
   const w = {
     sent: [] as { text: string; context?: readonly string[]; origin: unknown }[],
     fills: [] as string[],
@@ -48,7 +48,10 @@ function world(on: On, opts: { surface?: RenderSurface | null; fillOk?: boolean;
     w.classify++
     return { value: opts.label ?? 'rough' }
   })
-  on('model.fork', () => ({ value: answer(REWRITTEN) }))
+  on('model.fork', async () => {
+    if (opts.forkMs) await w.clock.sleep(opts.forkMs)
+    return { value: answer(REWRITTEN) }
+  })
   on('prompt.fill', (_$, e) => {
     w.fills.push(e.text)
     return opts.fillOk === false ? { isFilled: false, refusal: 'dialog' } : { isFilled: true }
@@ -125,35 +128,33 @@ test('a different prompt after a suggestion is a new prompt', async ($, on) => {
   expect(w.classify).toBe(2)
 })
 
-test('band: three choices; r sends the original as typed, e puts it back raw', async ($, on) => {
-  const w = world(on)
+test('band: Enter, edit in the box, or r for the original', async ($, on) => {
+  world(on)
   await $.prompt.submit({ text: ROUGH, ...typed })
   for (const surface of ['terminal', 'desktop'] as const) {
     const ui = await $.ui.mount({ plugin: 'sharpprompt', surface, ...BAND })
-    expect((await ui.find({ type: 'Text', text: /Enter sends the rewrite/ }))).toBeDefined()
-    expect((await ui.find({ key: 'edit' }))?.props.hotkey).toBe('e')
+    expect(await ui.find({ type: 'Text', text: /Enter sends it, or edit it in the box/ })).toBeDefined()
     expect((await ui.find({ key: 'raw' }))?.props.hotkey).toBe('r')
     await ui.unmount()
   }
-  const ui = await $.ui.mount({ plugin: 'sharpprompt', surface: 'terminal', ...BAND })
-  await ui.press({ key: 'raw' })
-  expect(w.sent.at(-1)).toMatchObject({ text: ROUGH, origin: { kind: 'plugin', name: 'sharpprompt', asUser: true } })
-  expect(await ui.find({ key: 'raw' })).toBeUndefined()
 })
 
-test('band: e puts the original back marked raw', async ($, on) => {
+test('band: r puts the original back marked raw, and it then goes out as typed', async ($, on) => {
   const w = world(on)
   await $.prompt.submit({ text: ROUGH, ...typed })
   const ui = await $.ui.mount({ plugin: 'sharpprompt', surface: 'terminal', ...BAND })
-  await ui.press({ key: 'edit' })
+  await ui.press({ key: 'raw' })
   expect(w.fills.at(-1)).toBe(`raw: ${ROUGH}`)
+  expect(await ui.find({ key: 'raw' })).toBeUndefined()
   const r = await $.prompt.submit({ text: `raw: ${ROUGH}`, ...typed })
   expect(r.text).toBe(ROUGH)
+  expect(w.sent.at(-1)?.origin).toEqual({ kind: 'composer' })
+  expect(w.store.counts).toMatchObject({ 'answer:original': 1, 'skip:raw': 1 })
 })
 
 test('commands: off, status, mode, help', async ($, on) => {
   const w = world(on)
-  expect((await $.command.run(cmd('sharpprompt', 'off'))).text).toContain('off')
+  expect((await $.command.run(cmd('sharpprompt', 'off'))).text).toContain('Off for this session')
   await $.prompt.submit({ text: ROUGH, ...typed })
   expect(w.classify).toBe(0)
   expect((await $.command.run(cmd('sharp', 'status'))).text).toContain('passed untouched (off)')
@@ -167,4 +168,40 @@ test('try shows what a rewrite would be without sending anything', async ($, on)
   expect(out.text).toContain('classify: rough')
   expect(out.text).toContain(REWRITTEN)
   expect(w.sent).toHaveLength(0)
+})
+
+test('a turn is recorded with how its prompt got there', async ($, on) => {
+  const w = world(on)
+  on('turn.complete', (_$, e) => ({ text: e.answer, reason: 'answer' as const }))
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  await $.prompt.submit({ text: REWRITTEN, ...typed })
+  const turn = { turnId: 't1', durationMs: 4200, isAborted: false, reason: 'answer', answer: 'Done. Want me to push it?' } as const
+  await $.turn.complete(turn)
+  expect(w.store.turns).toEqual([{ prompt: 'rewritten', durationMs: 4200, tools: 0, asked: true, aborted: false }])
+  await $.turn.complete(turn)
+  expect(w.store.turns).toHaveLength(1)
+  expect(w.store.counts).toMatchObject({ 'verdict:rough': 1, 'answer:as-is': 1 })
+  expect(w.store.rewrites).toEqual([{ outcome: 'rewritten', via: 'fork', ms: 0, classifyMs: 0, usage: { input: 10, output: 20, cacheRead: 0, cacheWrite: 0 } }])
+})
+
+test('stats prints a summary and says when n is too small', async ($, on) => {
+  world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  const out = (await $.command.run(cmd('sharp', 'stats'))).text ?? ''
+  expect(out).toContain('Classified: clear 0, rough 1')
+  expect(out).toContain('fork 0 / 0 ms (n=1)')
+  expect(out).toContain('Too few turns to compare yet')
+})
+
+test('a fork that loses the race is still counted once it finishes', async ($, on) => {
+  const w = world(on, { forkMs: 6_000 })
+  on('turn.complete', (_$, e) => ({ text: e.answer, reason: 'answer' as const }))
+  const pending = $.prompt.submit({ text: ROUGH, ...typed })
+  await w.clock.settle()
+  await w.clock.advance(5_000)
+  expect((await pending).text).toBe(ROUGH)
+  await w.clock.advance(1_000)
+  await $.turn.complete({ turnId: 't1', durationMs: 1000, isAborted: false, reason: 'answer', answer: 'ok.' })
+  expect(w.store.counts).toMatchObject({ 'late:forks': 1, 'late:output': 20, 'late:input': 10 })
+  expect(w.store.rewrites).toEqual([expect.objectContaining({ outcome: 'timeout', via: 'fork' })])
 })
