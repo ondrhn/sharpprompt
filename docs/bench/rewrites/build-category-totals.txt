@@ -1,0 +1,1 @@
+Add per-category totals for the monthly email, in the format the people behind it asked for. I'm not sure what that looks like yet, so take the most direct reading and say which one you used. Done when each category shows its total and the totals add up to the overall figure.

@@ -1,0 +1,1 @@
+Add validation that rejects negative amounts. Find where amounts enter the code, add the check there, and tell me which place you chose. Done when the existing tests pass.

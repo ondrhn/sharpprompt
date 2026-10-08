@@ -1,0 +1,1 @@
+Review my rewrite of `over_budget`, which now compares spent to the limit. I think it's fine, but tell me whether it's correct and list any bugs, most serious first. Don't change the code yet.

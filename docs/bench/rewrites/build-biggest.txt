@@ -1,0 +1,1 @@
+Finance asked which single expense was the largest each month. Add that to the report: for each month, show the single biggest expense. If more than one report could be meant, take the most direct reading and say which one you changed. Done when each month in that report shows its largest expense and the existing tests still pass.

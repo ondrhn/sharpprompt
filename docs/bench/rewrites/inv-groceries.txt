@@ -1,0 +1,1 @@
+Budget alerts fired for "Groceries" but not "groceries", and the grocery totals look split. Find out why the numbers are off and tell me the likely cause with the evidence. Don't change anything yet.

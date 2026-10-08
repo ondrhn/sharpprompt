@@ -1,0 +1,1 @@
+What CSV format does Excel actually expect, and does Python's csv module produce it? Give me a short answer. Don't change anything yet.

@@ -1,0 +1,1 @@
+I keep doing date maths by hand in different places, so clean up the date handling across the codebase. Find where dates or durations are calculated by hand and move that logic into shared helpers, keeping what each place returns the same. Done when the existing tests pass and you list the places you changed.

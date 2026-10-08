@@ -1,0 +1,1 @@
+Rename the unclear short variable names in budget.py to descriptive names that say what each holds. Update every use of each renamed variable in that file, and leave the behaviour unchanged. Done when no references to the old names remain in budget.py.

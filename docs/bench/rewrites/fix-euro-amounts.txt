@@ -1,0 +1,1 @@
+Fix parse_amount() in calc.py so European amounts parse correctly: 1.000,50 should become 1000.5, not 1.0005. Our bank exports use this format now. Done when the existing tests pass and parse_amount returns 1000.5 for that input.

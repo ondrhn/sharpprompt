@@ -1,0 +1,1 @@
+In the report, 'Food' and 'food' show up as separate categories again. Fix it so they count as one category. Done when the report shows a single food category and the existing tests still pass.

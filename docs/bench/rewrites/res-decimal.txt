@@ -1,0 +1,1 @@
+decimal vs float for money in python, which and why, keep it short

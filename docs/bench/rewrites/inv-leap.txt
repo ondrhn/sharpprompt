@@ -1,0 +1,1 @@
+Is the daily average wrong in leap years, or am I imagining it? Check how it is calculated and tell me whether leap years cause a problem. Don't change anything yet.

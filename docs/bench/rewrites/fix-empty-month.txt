@@ -1,0 +1,1 @@
+Fix the ZeroDivisionError that crashed the monthly email job last night, as we discussed. September had no expenses for one account. `average()` in calc.py divides by `len(xs)`, so for an empty month `report()` should return zeros instead. Done when an empty month returns zeros and the existing tests pass.

@@ -1,0 +1,1 @@
+Fix the February bug in `days_in_month()` in `dates.py`: it always returns 28, so leap years like 2028 are off by a day. That's why the February 2028 daily average looks low. Make it return 29 for leap years, and confirm the existing tests pass.

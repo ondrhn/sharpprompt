@@ -1,0 +1,1 @@
+Add a --month flag to the CLI so I can pick one month. Find the CLI in this project and take the most direct reading of what the flag filters, stating that assumption. Done when the flag works and any existing tests still pass.

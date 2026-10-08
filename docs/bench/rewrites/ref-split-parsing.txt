@@ -1,0 +1,1 @@
+calc.py is getting messy, split the parsing stuff out of it

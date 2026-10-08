@@ -1,0 +1,1 @@
+I think the CSV export should have a total row at the bottom. The finance team opens it in a spreadsheet and reads it there. Add the total row and confirm the existing tests still pass.
