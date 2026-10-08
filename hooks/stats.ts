@@ -26,6 +26,9 @@ export type RewriteRecord = {
   words?: [number, number?]
 }
 
+// Every classified prompt, so short-but-rough patterns show once n grows.
+export type ClassifyRecord = { verdict: string; ms: number; words: number }
+
 export type Counts = Record<string, number>
 
 export const MAX_RECORDS = 500
@@ -66,7 +69,7 @@ function turnLine(label: string, turns: readonly TurnRecord[]): string {
   return `${label}: n=${turns.length}, tools ${fmt(avg(done.map(t => t.tools)))}, ${fmt(avg(done.map(t => t.durationMs / 1000)), ' s')}, Claude asked back ${share(done.filter(t => t.asked).length, done.length)}, output ${fmt(avg(done.map(t => t.usage?.output ?? 0)), ' tok')}`
 }
 
-export function summary(counts: Counts, rewrites: readonly RewriteRecord[], turns: readonly TurnRecord[], classifyMs: readonly number[] = []): string {
+export function summary(counts: Counts, rewrites: readonly RewriteRecord[], turns: readonly TurnRecord[], classified: readonly ClassifyRecord[] = []): string {
   const c = (k: string) => counts[k] ?? 0
   const skips = Object.entries(counts)
     .filter(([k]) => k.startsWith('skip:'))
@@ -83,7 +86,7 @@ export function summary(counts: Counts, rewrites: readonly RewriteRecord[], turn
     `Classified: clear ${c('verdict:clear')}, rough ${rough}, timeout ${c('verdict:timeout')}, error ${c('verdict:error')}.`,
     `Rewrites: ${ok.length} made, ${rewrites.length - ok.length} not (${['keep', 'same', 'too-long', 'empty', 'timeout', 'error'].map(o => `${o} ${rewrites.filter(r => r.outcome === o).length}`).join(', ')}).`,
     `What you did with them: sent as is ${c('answer:as-is')}, edited ${c('answer:edited')}, took yours back ${c('answer:original')}.`,
-    `Wait (p50 / p95): classify ${spread(classifyMs)}, fork ${spread(forks.map(r => r.ms))}, fallback completion ${spread(rewrites.filter(r => r.via === 'complete').map(r => r.ms))}.`,
+    `Wait (p50 / p95): classify ${spread(classified.map(x => x.ms))}, fork ${spread(forks.map(r => r.ms))}, fallback completion ${spread(rewrites.filter(r => r.via === 'complete').map(r => r.ms))}.`,
     `Cost per rough prompt: ${fmt(avg(spent.map(u => u.input)))} in, ${fmt(avg(spent.map(u => u.cacheRead)))} from cache, ${fmt(avg(spent.map(u => u.output)))} out. Forks that lost the race and finished anyway: ${c('late:forks')}, ${c('late:output')} output tokens, ${c('late:input')} input.`,
     turnLine('Turns after a typed prompt', turns.filter(t => t.prompt === 'typed')),
     turnLine('Turns after a rewrite', turns.filter(t => t.prompt !== 'typed')),

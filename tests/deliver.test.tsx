@@ -15,6 +15,8 @@ const cmd = (command: string, args: string) => ({
   presentation: { isFullscreen: false, columns: 100 },
 })
 
+const LABELS: Record<string, string> = { clear: 'clear and specific', rough: 'rough: vague or missing what to deliver' }
+
 const BAND = {
   component: 'AbovePrompt',
   props: { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 100, scroll: { offset: 0, bodyRows: 10 }, view: {}, title: '', isFocused: false },
@@ -46,7 +48,7 @@ function world(on: On, opts: { surface?: RenderSurface | null; fillOk?: boolean;
   on('session.messages', () => ({ value: [] }))
   on('model.classify', () => {
     w.classify++
-    return { value: opts.label ?? 'rough' }
+    return { value: LABELS[opts.label ?? 'rough'] ?? opts.label }
   })
   on('model.fork', async () => {
     if (opts.forkMs) await w.clock.sleep(opts.forkMs)
@@ -219,6 +221,6 @@ test('a fork that loses the race is still counted once it finishes', async ($, o
 test('classify time is kept for clear prompts too', async ($, on) => {
   const w = world(on, { label: 'clear' })
   await $.prompt.submit({ text: ROUGH, ...typed })
-  expect(w.store.classifyMs).toEqual([0])
+  expect(w.store.classified).toEqual([{ verdict: 'clear', ms: 0, words: 14 }])
   expect(w.store.rewrites).toBeUndefined()
 })

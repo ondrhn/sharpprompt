@@ -29,7 +29,7 @@ test('when the chain below throws after next, nothing is sent again', async ($, 
   mock.clock(on)
   let sent = 0
   on('session.messages', () => ({ value: [] }))
-  on('model.classify', () => ({ value: 'clear' }))
+  on('model.classify', () => ({ value: 'clear and specific' }))
   on('prompt.submit', () => {
     sent++
     throw new Error('below broke')

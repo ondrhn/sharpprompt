@@ -17,7 +17,7 @@ export const RULES: Record<Family, readonly Rule[]> = {
     },
     {
       "id": "name-the-deliverable",
-      "text": "Make the output explicit: what should exist or be answered when Claude is done, and how the user will tell it is done (tests pass, a file exists, a question answered). Use a short numbered list only when the order of steps matters."
+      "text": "Make the output explicit: what should exist or be answered when Claude is done, and how the user will tell it is done (tests pass, a file exists, a question answered). Use a check that already exists (the tests, a command) as the done signal; do not add work the user did not ask for, such as new tests. Use a short numbered list only when the order of steps matters."
     },
     {
       "id": "question-stays-a-question",
@@ -121,7 +121,7 @@ export const SHAPES: readonly Shape[] = [
     "fields": "what it does for whom, where it lives, inputs and outputs, what is out of scope, how to tell it works.",
     "context": "the project is a FastAPI service; the user has been discussing exporting reports.",
     "before": "add csv export for reports",
-    "after": "Add a CSV export for reports so analysts can open them in a spreadsheet: a GET endpoint next to the existing report routes that returns the same rows as the JSON report, one column per field. No new dependencies. Done when a test downloads a report as CSV and checks its header and row count."
+    "after": "Add a CSV export for reports so analysts can open them in a spreadsheet: a GET endpoint next to the existing report routes that returns the same rows as the JSON report, one column per field. No new dependencies. Done when the new endpoint returns the same rows as the JSON report for an existing report and the current tests still pass."
   },
   {
     "name": "refactor",

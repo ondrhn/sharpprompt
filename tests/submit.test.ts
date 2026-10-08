@@ -37,7 +37,8 @@ function world(
     calls.classify++
     if (opts.label === 'throw') throw new Error('api down')
     if (opts.label === 'hang') return new Promise<never>(() => {})
-    return { value: opts.label ?? 'rough' }
+    const labels: Record<string, string> = { clear: 'clear and specific', rough: 'rough: vague or missing what to deliver' }
+    return { value: labels[opts.label ?? 'rough'] ?? opts.label }
   })
   on('state.set', (_$, e, next) => {
     if (e.plugin === 'sharpprompt' && e.key === 'lastDecision') calls.decisions.push(e.value)
@@ -158,7 +159,7 @@ test('a broken session read still lets the prompt through', async ($, on) => {
   on('session.messages', () => {
     throw new Error('boom')
   })
-  on('model.classify', () => ({ value: 'clear' }))
+  on('model.classify', () => ({ value: 'clear and specific' }))
   on('prompt.submit', (_$, e) => ({ text: e.text }))
   const r = await $.prompt.submit({ text: ROUGH, ...typed })
   expect(r.text).toBe(ROUGH)

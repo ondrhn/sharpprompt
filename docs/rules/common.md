@@ -9,7 +9,7 @@ When the conversation or the prompt shows why the user wants this or who it is f
 Source: [Prompting best practices, Add context to improve performance](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#add-context-to-improve-performance) and [Prompting Claude Fable 5, Give the reason, not only the request](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5#give-the-reason-not-only-the-request)
 
 ## name-the-deliverable
-Make the output explicit: what should exist or be answered when Claude is done, and how the user will tell it is done (tests pass, a file exists, a question answered). Use a short numbered list only when the order of steps matters.
+Make the output explicit: what should exist or be answered when Claude is done, and how the user will tell it is done (tests pass, a file exists, a question answered). Use a check that already exists (the tests, a command) as the done signal; do not add work the user did not ask for, such as new tests. Use a short numbered list only when the order of steps matters.
 Source: [Prompting best practices, Be clear and direct](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#be-clear-and-direct)
 
 ## question-stays-a-question
