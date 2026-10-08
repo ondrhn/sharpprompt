@@ -1,0 +1,6 @@
+{"id":"fix-empty-month","arm":"rewritten","order":1,"repeat":1,"session":"49f872bf-35bd-4b0b-9946-5c890fc3a9e6","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-08T21:48:29.989Z"}
+{"id":"fix-empty-month","arm":"raw","order":2,"repeat":1,"session":"ed5af54a-1880-447a-8557-43713e0b1745","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-08T21:48:54.729Z"}
+{"id":"fix-budget-limit","arm":"rewritten","order":1,"repeat":1,"session":"3fa3edd1-454d-4b02-bb2f-c7913689b1b6","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-08T21:49:29.560Z"}
+{"id":"fix-budget-limit","arm":"raw","order":2,"repeat":1,"session":"c23b9058-89c9-4285-80fb-852544d2b2b0","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-08T21:49:48.419Z"}
+{"id":"ask-floats","arm":"raw","order":1,"repeat":1,"session":"49d46e23-ad78-4f21-b3eb-6a4e9327ffcd","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-08T21:50:16.073Z"}
+{"id":"ask-floats","arm":"rewritten","order":2,"repeat":1,"session":"75518c2c-25ad-4299-80b1-01364f4e7531","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-08T21:50:42.686Z"}

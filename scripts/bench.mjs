@@ -6,20 +6,26 @@
 //
 //   rewrites   write docs/bench/rewrites/<id>.txt for every case, with the
 //              plugin's own fallback template (no conversation to fork here)
-//   run        (next step)
+//   run        run every case twice, as typed and rewritten, on a fresh copy
+//              of the fixture each time; writes docs/bench/runs/<date>-<model>.jsonl
+//              and a manifest beside it
 //
-// Options: --helper <model> (default haiku), --family <fable|opus|sonnet|haiku|common>
-//          (the family of the model the benchmark runs on; default fable),
-//          --only <id,id,...>
+// Options: --model <id> (run: required; the model the benchmark runs on)
+//          --helper <model> (rewrites: default haiku)
+//          --family <fable|opus|sonnet|haiku|common> (rewrites: the rule family
+//            of the benchmark model; default fable)
+//          --only <id,id,...>   --repeat <n> (run: default 1)
 
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { randomUUID } from 'node:crypto'
+import { appendFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 const root = new URL('..', import.meta.url).pathname
 const bench = join(root, 'docs/bench')
 const { completePrompt, clean } = await import(join(root, 'hooks/rewrite.ts'))
+const { endsWithQuestion } = await import(join(root, 'hooks/gate.ts'))
 
 const args = process.argv.slice(2)
 const command = args[0]
@@ -86,8 +92,135 @@ function rewrites() {
   writeFileSync(file, [...kept, ...index].map(x => JSON.stringify(x)).join('\n') + '\n')
 }
 
+// The child runs must save their transcripts (--resume needs them), which a
+// session started from inside Claude Code would not.
+function childEnv() {
+  const env = { ...process.env }
+  delete env.CLAUDE_CODE_CHILD_SESSION
+  delete env.CLAUDECODE
+  return env
+}
+
+const CLAUDE_ARGS = model => [
+  '-p',
+  '--model', model,
+  '--setting-sources', '',
+  '--permission-mode', 'acceptEdits',
+  // Running the project's own tests and scripts, nothing else.
+  '--allowedTools', 'Bash(python3 *)',
+]
+
+function contextMessage(context) {
+  const lines = context.map(m => `${m.role === 'user' ? 'Me' : 'You'}: ${m.text}`)
+  return `For context, this is what we said earlier in this conversation. No action needed; just reply "ok".\n\n${lines.join('\n\n')}`
+}
+
+const ASKS = /\b(which|do you mean|did you mean|could you clarify|can you clarify|clarify|would you like|do you want|should i|want me to)\b/i
+
+function parseStream(stdout) {
+  let tools = 0
+  let result = null
+  for (const line of stdout.split('\n')) {
+    if (!line.trim()) continue
+    let ev
+    try {
+      ev = JSON.parse(line)
+    } catch {
+      continue
+    }
+    if (ev.type === 'assistant' && Array.isArray(ev.message?.content)) {
+      tools += ev.message.content.filter(b => b.type === 'tool_use').length
+    }
+    if (ev.type === 'result') result = ev
+  }
+  return { tools, result }
+}
+
+function runOne(c, arm, model, order, repeat) {
+  const text = arm === 'raw' ? c.raw : readFileSync(join(bench, 'rewrites', `${c.id}.txt`), 'utf8').trim()
+  const base = mkdtempSync(join(tmpdir(), 'sharpprompt-bench-'))
+  const dir = join(base, 'expenses')
+  cpSync(join(bench, 'fixture'), dir, { recursive: true })
+  const session = randomUUID()
+  const env = childEnv()
+  const out = { id: c.id, shape: c.shape, arm, order, repeat, session, model }
+
+  try {
+    if (c.context.length > 0) {
+      const r = spawnSync('claude', [...CLAUDE_ARGS(model), '--session-id', session, '--output-format', 'json'], {
+        cwd: dir, env, input: contextMessage(c.context), encoding: 'utf8', timeout: 300_000,
+      })
+      const j = r.status === 0 ? JSON.parse(r.stdout) : null
+      out.context = j
+        ? { ms: j.duration_ms, cost: j.total_cost_usd, reply: (j.result ?? '').slice(0, 80), usage: j.usage }
+        : { error: (r.stderr || r.stdout || '').slice(0, 300) }
+    }
+    const t0 = Date.now()
+    const r = spawnSync(
+      'claude',
+      [...CLAUDE_ARGS(model), c.context.length > 0 ? '--resume' : '--session-id', session, '--output-format', 'stream-json', '--verbose'],
+      { cwd: dir, env, input: text, encoding: 'utf8', timeout: 900_000, maxBuffer: 64 * 1024 * 1024 },
+    )
+    const { tools, result } = parseStream(r.stdout ?? '')
+    const answer = result?.result ?? ''
+    Object.assign(out, {
+      ok: r.status === 0 && !!result && !result.is_error,
+      wallMs: Date.now() - t0,
+      ms: result?.duration_ms ?? null,
+      turns: result?.num_turns ?? null,
+      tools,
+      outputTokens: result?.usage?.output_tokens ?? null,
+      cost: result?.total_cost_usd ?? null,
+      asked: endsWithQuestion(answer),
+      asksPattern: ASKS.test(answer.split('\n').slice(-4).join(' ')),
+      answer: answer.slice(0, 4000),
+    })
+    if (!out.ok) out.error = (r.stderr || '').slice(0, 500)
+    if (c.check) {
+      const k = spawnSync('python3', [join(bench, 'checks', c.check)], {
+        cwd: dir, env: { ...process.env, PYTHONPATH: join(bench, 'checks') }, encoding: 'utf8', timeout: 60_000,
+      })
+      out.check = { name: c.check, pass: k.status === 0, out: (k.stdout + k.stderr).trim().slice(-200) }
+    }
+  } finally {
+    rmSync(base, { recursive: true, force: true })
+  }
+  return out
+}
+
+function run() {
+  const model = opt('model', '')
+  if (!model) {
+    console.error('run needs --model <id>, the model the benchmark runs on')
+    process.exit(1)
+  }
+  const repeat = Number(opt('repeat', '1'))
+  const version = spawnSync('claude', ['--version'], { encoding: 'utf8' }).stdout.trim()
+  const date = new Date().toISOString().slice(0, 10)
+  const runs = join(bench, 'runs')
+  mkdirSync(runs, { recursive: true })
+  const stem = join(runs, `${date}-${model}${opt('only', '') ? '-partial' : ''}`)
+  const file = `${stem}.jsonl`
+  const manifest = `${stem}.manifest.jsonl`
+  for (let rep = 1; rep <= repeat; rep++) {
+    for (const c of loadCases()) {
+      const arms = Math.random() < 0.5 ? ['raw', 'rewritten'] : ['rewritten', 'raw']
+      arms.forEach((arm, i) => {
+        const r = runOne(c, arm, model, i + 1, rep)
+        appendFileSync(manifest, JSON.stringify({ id: c.id, arm, order: i + 1, repeat: rep, session: r.session, model, claudeCode: version, at: new Date().toISOString() }) + '\n')
+        appendFileSync(file, JSON.stringify({ ...r, claudeCode: version }) + '\n')
+        console.log(`${c.id} ${arm}: ${r.ok ? 'ok' : 'FAILED'} ${r.turns ?? '-'} turns, ${r.tools} tools, ${r.outputTokens ?? '-'} out, ${Math.round((r.ms ?? 0) / 1000)} s${r.asked ? ', asked back' : ''}${r.check ? `, check ${r.check.pass ? 'pass' : 'fail'}` : ''}`)
+      })
+    }
+  }
+  console.log(`wrote ${file}`)
+}
+
 if (command === 'rewrites') rewrites()
+else if (command === 'run') run()
 else {
-  console.log(readFileSync(new URL(import.meta.url), 'utf8').split('\n').filter(l => l.startsWith('//')).map(l => l.slice(3)).join('\n'))
+  const lines = readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1)
+  const head = lines.slice(0, lines.findIndex(l => !l.startsWith('//')))
+  console.log(head.map(l => l.slice(3)).join('\n'))
   process.exit(command === '--help' || command === undefined ? 0 : 1)
 }
