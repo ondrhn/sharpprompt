@@ -67,7 +67,10 @@ Start a prompt with raw: to send it untouched.`
 export function describe(d: SharppromptDecision | null): string {
   if (!d) return 'no prompt seen yet'
   if (d.verdict === 'skip') return `passed untouched (${d.reason})`
-  if (!('rewrite' in d) || !d.rewrite) return `classified ${d.verdict}, sent as typed`
+  const words = (t: string) => t.split(/\s+/).filter(Boolean).length
+  const classify = d.classifyMs === undefined ? '' : ` in ${d.classifyMs} ms`
+  if (!('rewrite' in d) || !d.rewrite) return `classified ${d.verdict}${classify}, sent as typed`
   const r = d.rewrite
-  return `classified rough, rewrite ${r.outcome} via ${r.via} in ${r.ms} ms`
+  const size = r.text ? `, ${words(d.text)} -> ${words(r.text)} words` : `, ${words(d.text)} words`
+  return `classified rough${classify}, rewrite ${r.outcome} via ${r.via} in ${r.ms} ms${size}`
 }
