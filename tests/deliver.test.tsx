@@ -24,7 +24,7 @@ const BAND = {
 
 // The engine beneath the plugin, recording what reaches the model, the box
 // and the bottom of prompt.submit.
-function world(on: On, opts: { surface?: RenderSurface | null; fillOk?: boolean; label?: string; forkMs?: number } = {}) {
+function world(on: On, opts: { surface?: RenderSurface | null; fillOk?: boolean; label?: string; forkMs?: number; box?: (fills: string[]) => string } = {}) {
   const w = {
     sent: [] as { text: string; context?: readonly string[]; origin: unknown }[],
     fills: [] as string[],
@@ -54,6 +54,7 @@ function world(on: On, opts: { surface?: RenderSurface | null; fillOk?: boolean;
     if (opts.forkMs) await w.clock.sleep(opts.forkMs)
     return { value: answer(REWRITTEN) }
   })
+  on('prompt.read', () => ({ value: { text: opts.box ? opts.box(w.fills) : (w.fills.at(-1) ?? ''), cursor: 0 } }))
   on('prompt.fill', (_$, e) => {
     w.fills.push(e.text)
     return opts.fillOk === false ? { isFilled: false, refusal: 'dialog' } : { isFilled: true }
@@ -193,7 +194,7 @@ test('a turn is recorded with how its prompt got there', async ($, on) => {
   await $.turn.complete(turn)
   expect(w.store.turns).toHaveLength(1)
   expect(w.store.counts).toMatchObject({ 'verdict:rough': 1, 'answer:as-is': 1 })
-  expect(w.store.rewrites).toEqual([{ outcome: 'rewritten', via: 'fork', ms: 0, classifyMs: 0, usage: { input: 10, output: 20, cacheRead: 0, cacheWrite: 0 }, words: [14, 20] }])
+  expect(w.store.rewrites).toEqual([{ outcome: 'rewritten', via: 'fork', ms: 0, classifyMs: 0, usage: { input: 10, output: 20, cacheRead: 0, cacheWrite: 0 }, words: [14, 20], model: 'claude-opus-5-5' }])
 })
 
 test('stats prints a summary and says when n is too small', async ($, on) => {
@@ -223,4 +224,19 @@ test('classify time is kept for clear prompts too', async ($, on) => {
   await $.prompt.submit({ text: ROUGH, ...typed })
   expect(w.store.classified).toEqual([{ verdict: 'clear', ms: 0, words: 14 }])
   expect(w.store.rewrites).toBeUndefined()
+})
+
+test('when Claude Code puts the dropped prompt back under the rewrite, the rewrite is set alone again', async ($, on) => {
+  const w = world(on, { box: fills => (fills.length === 1 ? `${REWRITTEN}\n${ROUGH}` : fills.at(-1)!) })
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(w.fills).toEqual([REWRITTEN])
+  await w.clock.advance(150)
+  expect(w.fills).toEqual([REWRITTEN, REWRITTEN])
+})
+
+test('a box the person already changed is left alone', async ($, on) => {
+  const w = world(on, { box: () => `${REWRITTEN} and also the logout page` })
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  await w.clock.advance(150)
+  expect(w.fills).toEqual([REWRITTEN])
 })

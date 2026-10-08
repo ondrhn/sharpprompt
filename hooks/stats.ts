@@ -24,6 +24,8 @@ export type RewriteRecord = {
   usage?: Tokens
   // Words in the draft and in the rewrite, when there was one.
   words?: [number, number?]
+  // The session model the fork ran on.
+  model?: string
 }
 
 // Every classified prompt, so short-but-rough patterns show once n grows.

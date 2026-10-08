@@ -26,6 +26,7 @@ export const CLASSIFY_MS = 2_500
 const CLEAR = 'clear and specific'
 const ROUGH = 'rough: vague or missing what to deliver'
 export const REWRITE_MS = 5_000
+const RESTORE_CHECK_MS = 150
 
 // Tokens a fork spent after it lost its race: it finished in the background
 // and was billed anyway. Read out by the stats in a later step.
@@ -207,6 +208,7 @@ async function record($: EngineInterface, d: SharppromptDecision) {
     classifyMs: d.classifyMs,
     usage: tokens(r.usage),
     words: r.text ? [wordCount(d.text), wordCount(r.text)] : [wordCount(d.text)],
+    model: await $.session.model(),
   }
   await push($, 'rewrites', item)
 }
@@ -237,6 +239,18 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
   }
   await $.store.set('lastOriginal', e.text)
   await $.state.set(pending, { kind: 'filled', original: e.text, rewritten })
+  // Since Claude Code 2.1.295 a dropped prompt is put back in the box after
+  // our fill, so the box reads rewrite + original. A moment later, if the box
+  // is exactly that, put the rewrite alone back; anything else the person
+  // may already be typing, so leave it.
+  $.clock.after(RESTORE_CHECK_MS, async () => {
+    const box = await $.prompt.read()
+    const p = (await $.state.get(pending)).value
+    if (!p || p.kind !== 'filled' || p.rewritten !== rewritten) return
+    if (box.text !== rewritten && box.text.startsWith(rewritten) && box.text.trimEnd().endsWith(e.text.trim())) {
+      await $.prompt.fill({ text: rewritten, mode: 'replace' })
+    }
+  })
   return { drop: DROP_NOTE }
 }
 

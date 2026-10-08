@@ -6,6 +6,9 @@ import { endsWithQuestion, gate } from '../hooks/gate'
 // 100,000 calls in batches of 100; a batch is timed whole because a single
 // call is near the clock's resolution. Prints mean and p99 per call.
 
+// The test environment has console.log; the hooks typings do not declare it.
+declare const console: { log: (line: string) => void }
+
 const ROUGH = 'that question thing u mentioned, is it gonna break when replies end with a code block or smth, look into it'
 // A long last reply ending on a question and a code block: the slow path of
 // the answer check.
