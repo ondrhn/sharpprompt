@@ -1,0 +1,1 @@
+Add validation so negative amounts don't get through. Find where amounts enter the code and reject negative values there. Don't change anything else, and don't add tests or files I didn't ask for. Done when the existing tests pass.

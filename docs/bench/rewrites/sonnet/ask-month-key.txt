@@ -1,0 +1,1 @@
+What does month_key return for the input 2026-1-5? I'm just curious, so give me the output and don't change any code.

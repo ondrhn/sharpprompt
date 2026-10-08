@@ -1,0 +1,1 @@
+Is the daily average wrong in leap years, or am I imagining it? Find where the daily average is calculated in this project and tell me whether it handles leap years correctly, with a short answer and the main evidence. Don't change anything yet.

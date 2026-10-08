@@ -1,0 +1,1 @@
+Payee names with commas, like 'Smith, John', still break the CSV from export.py: they split across cells when opened in a spreadsheet. Fix the export so these values stay in one cell, and don't add tests or new files. Done when a payee like 'Smith, John' exports as one cell.

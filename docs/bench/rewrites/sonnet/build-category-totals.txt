@@ -1,0 +1,1 @@
+Add per-category totals to the monthly email, in the breakdown format its recipients asked for. I guess the totals belong wherever the monthly email is generated. Don't add tests or docs that weren't asked for. Done when the monthly email output shows a total for each category.

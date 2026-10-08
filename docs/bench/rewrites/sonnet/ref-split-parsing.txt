@@ -1,0 +1,1 @@
+Split the parsing code out of calc.py into its own module, since the file is getting messy. Keep behaviour the same: calc.py's public functions keep their names and results. Done when calc.py imports the parsing code from the new module and the existing tests pass. Don't add new tests or docs.

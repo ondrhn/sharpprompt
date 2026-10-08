@@ -1,0 +1,1 @@
+Rename the short, unclear variable names in budget.py so they're easy to read. Change only variable names in that file, with no change in behaviour, and don't add tests, docs or files. When done, list each old and new name.

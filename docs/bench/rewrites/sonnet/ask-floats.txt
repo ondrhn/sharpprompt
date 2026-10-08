@@ -1,0 +1,1 @@
+Is it okay that `report()` returns floats for money values? I mean monetary amounts. Give me a short yes or no with the main reason, and don't change any code yet.

@@ -1,0 +1,1 @@
+Look over export.py for edge cases and anything that could break. List each finding with its line number and why it would fail, most serious first. Don't change any code yet.

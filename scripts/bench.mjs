@@ -19,6 +19,12 @@
 //   summary <runs.jsonl>   paired differences (rewritten minus raw) over the
 //              cases whose rewrite is not KEEP, medians and a bootstrap 95%
 //              interval (1,000 resamples, fixed seed)
+//
+//   judge <runs.jsonl> --judge-model <id>   a blind judge reads, for each
+//              paired case, the user's request, what a good answer does, and
+//              the two final answers in a random order with the arms hidden;
+//              it picks A, B or tie, and scores each answer 1 to 5 on its own.
+//              Writes <runs>.judge.jsonl beside the runs and prints a summary
 
 import { spawnSync } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
@@ -28,7 +34,7 @@ import { join } from 'node:path'
 
 const root = new URL('..', import.meta.url).pathname
 const bench = join(root, 'docs/bench')
-const { completePrompt, clean } = await import(join(root, 'hooks/rewrite.ts'))
+const { completePrompt, clean, familyOf } = await import(join(root, 'hooks/rewrite.ts'))
 const { endsWithQuestion } = await import(join(root, 'hooks/gate.ts'))
 
 const args = process.argv.slice(2)
@@ -66,6 +72,8 @@ function complete(model, prompt) {
 function rewrites() {
   const helper = opt('helper', 'haiku')
   const family = opt('family', 'fable')
+  const dir = join(bench, 'rewrites', family)
+  mkdirSync(dir, { recursive: true })
   const index = []
   for (const c of loadCases()) {
     const prompt = completePrompt(c.raw, family, c.context)
@@ -81,11 +89,11 @@ function rewrites() {
       // What the plugin would send: the rewrite, or the prompt as typed.
       text = 'rewritten' in cl ? cl.rewritten : c.raw
     }
-    writeFileSync(join(bench, 'rewrites', `${c.id}.txt`), text + '\n')
+    writeFileSync(join(dir, `${c.id}.txt`), text + '\n')
     index.push({ id: c.id, outcome, helper, family, ms: r.ms ?? null, words: [c.raw.split(/\s+/).length, text.split(/\s+/).length] })
     console.log(`${c.id}: ${outcome}${r.ms ? ` in ${r.ms} ms` : ''}`)
   }
-  const file = join(bench, 'rewrites', 'index.jsonl')
+  const file = join(dir, 'index.jsonl')
   const kept = (() => {
     try {
       return readFileSync(file, 'utf8').trim().split('\n').filter(Boolean).map(l => JSON.parse(l))
@@ -141,7 +149,9 @@ function parseStream(stdout) {
 }
 
 function runOne(c, arm, model, order, repeat) {
-  const text = arm === 'raw' ? c.raw : readFileSync(join(bench, 'rewrites', `${c.id}.txt`), 'utf8').trim()
+  // sharpprompt picks its rules by the session model's family, so the
+  // rewritten arm reads the rewrites made for that family.
+  const text = arm === 'raw' ? c.raw : readFileSync(join(bench, 'rewrites', familyOf(model), `${c.id}.txt`), 'utf8').trim()
   const base = mkdtempSync(join(tmpdir(), 'sharpprompt-bench-'))
   const dir = join(base, 'expenses')
   cpSync(join(bench, 'fixture'), dir, { recursive: true })
@@ -199,6 +209,11 @@ function run() {
     process.exit(1)
   }
   const repeat = Number(opt('repeat', '1'))
+  const family = familyOf(model)
+  if (!existsSync(join(bench, 'rewrites', family, 'index.jsonl'))) {
+    console.error(`no rewrites for the ${family} family yet: run "rewrites --family ${family}" first`)
+    process.exit(1)
+  }
   const version = spawnSync('claude', ['--version'], { encoding: 'utf8' }).stdout.trim()
   const date = new Date().toISOString().slice(0, 10)
   const runs = join(bench, 'runs')
@@ -271,7 +286,7 @@ function bootstrap(diffs, n = 1000, seed = 20261009) {
 export function summarize(file) {
   const runs = readFileSync(file, 'utf8').trim().split('\n').map(l => JSON.parse(l)).filter(r => r.repeat === 1 || r.repeat === undefined)
   const keep = new Set(
-    readFileSync(join(bench, 'rewrites', 'index.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l)).filter(x => x.outcome !== 'rewritten').map(x => x.id),
+    readFileSync(join(bench, 'rewrites', familyOf(runs[0].model), 'index.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l)).filter(x => x.outcome !== 'rewritten').map(x => x.id),
   )
   const by = {}
   for (const r of runs) (by[r.id] ??= {})[r.arm] = r
@@ -328,9 +343,109 @@ function summary() {
   console.log(`cost (API equivalent) ${s.cost.toFixed(2)} USD, ${s.wallSeconds} s`)
 }
 
+function askJSON(model, prompt) {
+  const r = complete(model, prompt)
+  if (r.error) return { error: r.error }
+  const m = r.text.match(/\{[\s\S]*\}/)
+  try {
+    return m ? JSON.parse(m[0]) : { error: `no JSON in: ${r.text.slice(0, 200)}` }
+  } catch {
+    return { error: `bad JSON in: ${r.text.slice(0, 200)}` }
+  }
+}
+
+function request(c) {
+  const ctx = c.context.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.text}`).join('\n')
+  return `${ctx ? `Earlier in the conversation:\n${ctx}\n\n` : ''}The user then wrote:\n${c.raw}`
+}
+
+const PAIR = (c, a, b) => `You are judging two answers from a coding assistant working in a small Python project (expense totals). Both answered the same user request; you see only each answer's final message, not the files it changed.
+
+${request(c)}
+
+What a good answer does: ${c.expect}
+
+<answer_a>
+${a}
+</answer_a>
+
+<answer_b>
+${b}
+</answer_b>
+
+Which answer better does what the user wanted? Judge substance (did it do the right thing, at the right scope, and say what it did), not length or formatting. Reply with JSON only: {"winner": "A" | "B" | "tie", "reason": "<one sentence>"}`
+
+const SINGLE = (c, a) => `You are judging one answer from a coding assistant working in a small Python project (expense totals). You see only its final message, not the files it changed.
+
+${request(c)}
+
+What a good answer does: ${c.expect}
+
+<answer>
+${a}
+</answer>
+
+How well does this answer do what the user wanted, from 1 (not at all) to 5 (fully, at the right scope)? Reply with JSON only: {"score": 1-5, "reason": "<one sentence>"}`
+
+// Two-sided sign test: chance of a split at least this uneven under 50/50.
+function signTest(wins, losses) {
+  const n = wins + losses
+  if (n === 0) return 1
+  const k = Math.min(wins, losses)
+  let p = 0
+  let c = 1
+  for (let i = 0; i <= n; i++) {
+    if (i > 0) c = (c * (n - i + 1)) / i
+    if (i <= k) p += c
+  }
+  return Math.min(1, (2 * p) / 2 ** n)
+}
+
+function judge() {
+  const file = args[1]
+  const model = opt('judge-model', '')
+  if (!file || !model) {
+    console.error('judge needs the runs file and --judge-model <id>')
+    process.exit(1)
+  }
+  const runs = readFileSync(file, 'utf8').trim().split('\n').map(l => JSON.parse(l)).filter(r => (r.repeat ?? 1) === 1)
+  const cases = Object.fromEntries(loadCases().map(c => [c.id, c]))
+  const keep = new Set(
+    readFileSync(join(bench, 'rewrites', familyOf(runs[0].model), 'index.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l)).filter(x => x.outcome !== 'rewritten').map(x => x.id),
+  )
+  const by = {}
+  for (const r of runs) (by[r.id] ??= {})[r.arm] = r
+  const out = file.replace(/\.jsonl$/, '.judge.jsonl')
+  const done = new Set(existsSync(out) ? readFileSync(out, 'utf8').trim().split('\n').filter(Boolean).map(l => JSON.parse(l).id) : [])
+  const r = rng(424242)
+  for (const [id, p] of Object.entries(by)) {
+    if (keep.has(id) || !p.raw?.ok || !p.rewritten?.ok || done.has(id) || !cases[id]) continue
+    const c = cases[id]
+    const rewrittenFirst = r() < 0.5
+    const [a, b] = rewrittenFirst ? [p.rewritten.answer, p.raw.answer] : [p.raw.answer, p.rewritten.answer]
+    const pair = askJSON(model, PAIR(c, a, b))
+    const winner = pair.winner === 'tie' ? 'tie' : pair.winner === 'A' ? (rewrittenFirst ? 'rewritten' : 'raw') : pair.winner === 'B' ? (rewrittenFirst ? 'raw' : 'rewritten') : null
+    const raw = askJSON(model, SINGLE(c, p.raw.answer))
+    const rewritten = askJSON(model, SINGLE(c, p.rewritten.answer))
+    const row = { id, judge: model, rewrittenFirst, winner, reason: pair.reason ?? pair.error, scores: { raw: raw.score ?? null, rewritten: rewritten.score ?? null }, reasons: { raw: raw.reason ?? raw.error, rewritten: rewritten.reason ?? rewritten.error } }
+    appendFileSync(out, JSON.stringify(row) + '\n')
+    console.log(`${id}: ${winner ?? 'no verdict'}; scores raw ${row.scores.raw}, rewritten ${row.scores.rewritten}`)
+  }
+  const rows = readFileSync(out, 'utf8').trim().split('\n').map(l => JSON.parse(l))
+  const w = rows.filter(x => x.winner === 'rewritten').length
+  const l = rows.filter(x => x.winner === 'raw').length
+  const t = rows.filter(x => x.winner === 'tie').length
+  const scored = rows.filter(x => x.scores.raw && x.scores.rewritten)
+  const mean = xs => xs.reduce((s, v) => s + v, 0) / (xs.length || 1)
+  const diffs = scored.map(x => x.scores.rewritten - x.scores.raw)
+  console.log(`judge ${model}: rewritten won ${w}, raw won ${l}, tie ${t}; sign test p = ${signTest(w, l).toFixed(3)} (ties left out)`)
+  console.log(`scores 1-5: raw mean ${mean(scored.map(x => x.scores.raw)).toFixed(2)}, rewritten mean ${mean(scored.map(x => x.scores.rewritten)).toFixed(2)}, paired difference mean ${mean(diffs).toFixed(2)} (n=${scored.length})`)
+}
+
 if (command === 'rewrites') rewrites()
 else if (command === 'run') run()
 else if (command === 'summary') summary()
+else if (command === 'judge') judge()
 else {
   const lines = readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1)
   const head = lines.slice(0, lines.findIndex(l => !l.startsWith('//')))

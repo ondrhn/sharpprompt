@@ -1,0 +1,1 @@
+The CSV export should have a total row at the bottom, I think. Finance reads it in a spreadsheet. Change only the CSV export, and don't add new tests. Done when the existing tests pass.

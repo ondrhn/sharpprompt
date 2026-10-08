@@ -1,0 +1,1 @@
+Write a short, plain-language note for the email recipients about the bank export's switch to European number format last week, where 1.000,50 means 1000.5. Explain that totals from the new exports are wrong until parse_amount() reads that format correctly. Only write the note; don't change any code.

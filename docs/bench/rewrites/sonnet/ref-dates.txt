@@ -1,0 +1,1 @@
+I keep doing date maths by hand in different places, so clean up the date handling across the codebase. Find every spot that computes dates manually and move that arithmetic into one shared place, then point those spots at it. Keep the behaviour the same. Done when the existing tests pass. Don't add new tests, docs, or files.

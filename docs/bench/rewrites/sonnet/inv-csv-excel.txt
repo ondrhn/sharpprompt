@@ -1,0 +1,1 @@
+Why does the CSV export open oddly in Excel for some rows? Look into the cause and tell me what you find, with the evidence. Don't change any code yet.

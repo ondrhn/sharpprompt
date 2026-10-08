@@ -1,0 +1,1 @@
+Update the report so it also shows the single largest expense for each month, since Finance asked for this. Keep the report's existing output as it is, and don't add tests or files that weren't asked for. Done when each month in the report lists its largest single expense next to the current figures.

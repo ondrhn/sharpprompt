@@ -1,0 +1,1 @@
+Add a --month flag to the CLI so I can pick one month. Find the CLI entry point in this repo and add the flag alongside its existing options. Don't add tests, docs or files that weren't asked for. Done when the existing tests pass and the command runs with --month.

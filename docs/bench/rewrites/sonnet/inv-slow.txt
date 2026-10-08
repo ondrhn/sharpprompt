@@ -1,0 +1,1 @@
+The email job used to take about a second, but now it sometimes hangs. Where would you start looking for the cause? Tell me where to look first and what evidence would point to each possibility. Don't change any code yet.

@@ -1,0 +1,1 @@
+The report shows 'Food' and 'food' as two separate categories again. Make them count as one, matching case-insensitively everywhere categories are grouped or compared. Leave the other categories as they are. Done when the report shows food once and the existing tests still pass.

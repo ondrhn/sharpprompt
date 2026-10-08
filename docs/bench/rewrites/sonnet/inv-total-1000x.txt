@@ -1,0 +1,1 @@
+Last week's report showed 1,051 for transport, but it's usually around 50. Find out why the total is sometimes off by like 1000x, and tell me the likely cause with the evidence. Don't fix anything yet.

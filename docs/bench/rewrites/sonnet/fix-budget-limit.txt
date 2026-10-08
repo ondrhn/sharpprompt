@@ -1,0 +1,1 @@
+The budget alert doesn't fire when spending hits the limit exactly. It should fire at that point too, so please fix it. Done when the existing tests pass and an alert fires at exactly the limit. Don't add new tests or files.

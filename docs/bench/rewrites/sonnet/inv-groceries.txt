@@ -1,0 +1,1 @@
+Find out why budget alerts fire for "Groceries" but not "groceries", and why the grocery totals look split. Tell me the likely cause with the evidence. Don't change anything yet.
