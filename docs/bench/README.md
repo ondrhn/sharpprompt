@@ -15,6 +15,16 @@ Does a sharpprompt rewrite make Claude's work easier than the rough prompt it ca
 - The rewrite reads the context as pasted text, not as a forked conversation.
 - The runs load the account's own `~/.claude/CLAUDE.md`, which `claude -p` reads in every mode that works with a subscription. It is the same for both arms.
 
+## Running it
+
+```sh
+node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/bench.mjs run --model claude-fable-5-1 [--repeat 1] [--only id,id]
+```
+
+Each case runs twice on a fresh copy of the fixture under `/tmp`, in a random order recorded per case. When a case has context, it goes first as its own turn ("For context, this is what we said earlier... reply ok"), the same text for both arms, and the prompt follows with `--resume`; only that last turn is measured. Runs use `--setting-sources ''`, `--permission-mode acceptEdits` and `--allowedTools 'Bash(python3 *)'`, so the model can edit the copy and run the project's tests and nothing else. The runner removes `CLAUDE_CODE_CHILD_SESSION` and `CLAUDECODE` from the child's environment when started from inside Claude Code; with them set, transcripts are not saved and `--resume` fails.
+
+Output: `runs/<date>-<model>.jsonl` (one line per run) and `runs/<date>-<model>.manifest.jsonl` (case, arm, order, repeat, session id). Starting the same command again skips what the manifest already holds, and a usage limit stops the run so it can be continued later.
+
 ## Making the rewrites again
 
 ```sh

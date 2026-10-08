@@ -202,11 +202,29 @@ function run() {
   const stem = join(runs, `${date}-${model}${opt('only', '') ? '-partial' : ''}`)
   const file = `${stem}.jsonl`
   const manifest = `${stem}.manifest.jsonl`
+  // A second start picks up where the first stopped: an id + arm + repeat in
+  // the manifest is done.
+  const done = new Set(
+    existsSync(manifest)
+      ? readFileSync(manifest, 'utf8').trim().split('\n').filter(Boolean).map(l => {
+          const m = JSON.parse(l)
+          return `${m.id}|${m.arm}|${m.repeat}`
+        })
+      : [],
+  )
   for (let rep = 1; rep <= repeat; rep++) {
     for (const c of loadCases()) {
       const arms = Math.random() < 0.5 ? ['raw', 'rewritten'] : ['rewritten', 'raw']
       arms.forEach((arm, i) => {
+        if (done.has(`${c.id}|${arm}|${rep}`)) return
         const r = runOne(c, arm, model, i + 1, rep)
+        // A usage limit ends the run without recording the failed attempt, so
+        // a later start runs it again.
+        if (!r.ok && /usage limit|rate limit|limit reached|resets? at/i.test(`${r.error ?? ''} ${r.answer ?? ''}`)) {
+          console.error(`stopped at ${c.id} ${arm}: usage limit. Start the same command again later to continue.`)
+          console.error((r.error || r.answer || '').slice(0, 300))
+          process.exit(2)
+        }
         appendFileSync(manifest, JSON.stringify({ id: c.id, arm, order: i + 1, repeat: rep, session: r.session, model, claudeCode: version, at: new Date().toISOString() }) + '\n')
         appendFileSync(file, JSON.stringify({ ...r, claudeCode: version }) + '\n')
         console.log(`${c.id} ${arm}: ${r.ok ? 'ok' : 'FAILED'} ${r.turns ?? '-'} turns, ${r.tools} tools, ${r.outputTokens ?? '-'} out, ${Math.round((r.ms ?? 0) / 1000)} s${r.asked ? ', asked back' : ''}${r.check ? `, check ${r.check.pass ? 'pass' : 'fail'}` : ''}`)
