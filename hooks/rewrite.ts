@@ -30,7 +30,6 @@ function shapes(): string {
   return SHAPES.map(s =>
     [
       `${s.name}: ${s.summary} A good one carries: ${s.fields}`,
-      `  Context: ${s.context}`,
       `  Before: ${s.before}`,
       `  After: ${s.after}`,
     ].join('\n'),

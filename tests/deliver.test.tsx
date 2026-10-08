@@ -199,7 +199,7 @@ test('stats prints a summary and says when n is too small', async ($, on) => {
   await $.prompt.submit({ text: ROUGH, ...typed })
   const out = (await $.command.run(cmd('sharp', 'stats'))).text ?? ''
   expect(out).toContain('Classified: clear 0, rough 1')
-  expect(out).toContain('fork 0 / 0 ms (n=1)')
+  expect(out).toContain('classify 0 / 0 ms (n=1), fork 0 / 0 ms (n=1)')
   expect(out).toContain('Too few turns to compare yet')
 })
 
@@ -214,4 +214,11 @@ test('a fork that loses the race is still counted once it finishes', async ($, o
   await $.turn.complete({ turnId: 't1', durationMs: 1000, isAborted: false, reason: 'answer', answer: 'ok.' })
   expect(w.store.counts).toMatchObject({ 'late:forks': 1, 'late:output': 20, 'late:input': 10 })
   expect(w.store.rewrites).toEqual([expect.objectContaining({ outcome: 'timeout', via: 'fork' })])
+})
+
+test('classify time is kept for clear prompts too', async ($, on) => {
+  const w = world(on, { label: 'clear' })
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(w.store.classifyMs).toEqual([0])
+  expect(w.store.rewrites).toBeUndefined()
 })

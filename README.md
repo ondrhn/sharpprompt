@@ -108,11 +108,11 @@ Each rule is in [docs/rules](docs/rules) with a link to the Anthropic page it co
 - Claude Code's fork has no time limit, so sharpprompt stops waiting after 5 seconds and sends your prompt as typed. The fork still finishes in the background and is billed, with no cap on its output. `/sharp stats` counts these.
 - VS Code and headless runs (`claude -p`, the SDK) have no box to fill, so `fill` acts as `context` there. Mods do not run in a Desktop session that uses WSL.
 - Taking your own text back is two keys: `r` puts it in the box, Enter sends it. sharpprompt does not send it for you because a prompt a plugin sends shows under the plugin's name in the transcript and skips `@file` expansion. The band's buttons answer to their keys once the band has focus: ctrl+x tab, or a click.
-- A rough prompt waits for the classifier and the rewrite before anything happens. In the first real session the box filled 3 to 6 seconds after Enter.
+- A rough prompt waits for the classifier and the rewrite before anything happens. In the sessions measured so far the box filled 3.6 to 6.2 seconds after Enter.
 
 ## Measurements
 
-Two real-session rewrites so far, one timed: 1.7 seconds for the fork. Too few to claim anything.
+Two real sessions so far, 17 typed prompts. Six timed rewrites: fork median 3.1 seconds (1.7 to 4.4), classifier median about 1 second. Too few to claim anything about whether rewriting helps.
 
 `/sharp stats` keeps, on your machine only: how many prompts each check let through, clear or rough, what happened to each rewrite, what you did with it (sent, edited, took yours back), classifier and rewrite times at p50 and p95, tokens per rough prompt, and for each turn the tool calls, duration, output tokens and whether Claude had to ask you something back. It compares turns that started from your own text with turns that started from a rewrite, and says the numbers are not evidence until there are 30 turns. A script that runs the same prompts both ways is planned; until then there is no claim here that rewriting helps.
 

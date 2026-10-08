@@ -176,19 +176,20 @@ async function bump($: EngineInterface, add: Counts) {
   await $.store.set('counts', counts)
 }
 
-async function push<T>($: EngineInterface, key: 'rewrites' | 'turns', item: T) {
+async function push<T>($: EngineInterface, key: 'rewrites' | 'turns' | 'classifyMs', item: T) {
   const v = await $.store.get(key)
   const list = Array.isArray(v) ? (v as T[]) : []
   await $.store.set(key, [...list, item].slice(-MAX_RECORDS))
 }
 
-async function readList<T>($: EngineInterface, key: 'rewrites' | 'turns'): Promise<T[]> {
+async function readList<T>($: EngineInterface, key: 'rewrites' | 'turns' | 'classifyMs'): Promise<T[]> {
   const v = await $.store.get(key)
   return Array.isArray(v) ? (v as T[]) : []
 }
 
 async function record($: EngineInterface, d: SharppromptDecision) {
   await bump($, { [countKey(d)]: 1 })
+  if ('classifyMs' in d && d.classifyMs !== undefined) await push($, 'classifyMs', d.classifyMs)
   if (!('rewrite' in d) || !d.rewrite) return
   const r = d.rewrite
   const item: RewriteRecord = {
@@ -279,7 +280,7 @@ async function runCommand($: EngineInterface, args: string, options: Options): P
     case 'stats': {
       const v = await $.store.get('counts')
       const counts = v && typeof v === 'object' ? (v as Counts) : {}
-      return summary(counts, await readList<RewriteRecord>($, 'rewrites'), await readList<TurnRecord>($, 'turns'))
+      return summary(counts, await readList<RewriteRecord>($, 'rewrites'), await readList<TurnRecord>($, 'turns'), await readList<number>($, 'classifyMs'))
     }
     case 'try': {
       const verdict = await classify($, c.text, helperModel(options))
