@@ -1,30 +1,16 @@
 # sharpprompt
 
-A Claude Code mod that looks at each prompt you type before it is sent. Most prompts go through untouched.
-When one is rough (vague, missing what you want back, leaning on "that thing above"), sharpprompt rewrites it with the conversation in view and puts the rewrite in your prompt box.
-You read it, then press Enter, edit it, or take your own text back. It never sends anything for you.
-It reads your prompt and the conversation, and nothing else: no files, no shell, no network, no environment.
-Rewrites follow Anthropic's prompting guidance for the model your session runs on, with each rule linked to its source.
+Rough prompt in. Clear prompt in your box. You press Enter.
 
-## Install
+![A small black creature at a desk rewrites a crumpled note with the chat beside it, while most notes fly straight past into the prompt box](https://raw.githubusercontent.com/ondrhn/sharpprompt/master/docs/illustrations/01b-sharpener-detailed.png)
 
-Tested on Claude Code 2.1.293.
+[![License: MIT](https://img.shields.io/badge/license-MIT-black)](LICENSE) [![Claude Code 2.1.293+](https://img.shields.io/badge/Claude%20Code-2.1.293%2B-orange)](https://docs.claude.com/en/docs/claude-code)
 
-From the plugin marketplace, inside Claude Code:
+## What is this
 
-```
-/plugin marketplace add ondrhn/sharpprompt
-/plugin install sharpprompt@ondrhn
-```
-
-Or from a clone:
-
-```sh
-git clone https://github.com/ondrhn/sharpprompt ~/sharpprompt
-claude --plugin-dir ~/sharpprompt
-```
-
-To load the clone in every session, add the folder to `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of `~/.claude/settings.json`.
+sharpprompt is a Claude Code mod that looks at each prompt you type before it goes out, and lets most of them through untouched.
+When one is rough (vague, missing what you want back, leaning on "that thing above"), it rewrites it with the conversation in view and puts the rewrite in your prompt box.
+You press Enter, edit it, or take your own text back; it never sends anything for you.
 
 ## What it looks like
 
@@ -48,15 +34,39 @@ sharpprompt rewrote: that question thing u mentioned, is it gonna break when rep
 Enter sends it, or edit it in the box. [ back to mine ]
 ```
 
-"u mentioned" became the function and file the conversation was about. The rewrite took 1.7 seconds.
+"u mentioned" became the function and file the conversation was about.
 
-## How it decides
+![Recording: a rough prompt is typed, the rewrite appears in the prompt box with a note above it, Enter sends it and Claude starts on the fix](https://raw.githubusercontent.com/ondrhn/sharpprompt/master/docs/demo.gif)
 
-1. Cheap checks, no model: slash commands, `#` lines, prompts under 40 characters, pastes over 20,000, anything not typed by you (task notifications, other sessions, plugins), and your answer to a question Claude just asked all go through untouched. Start a prompt with `raw:` to skip sharpprompt once.
-2. A small model (Haiku by default) labels the rest clear or rough, with a 2.5 second limit. Clear goes through.
-3. A rough prompt is rewritten by your session's own model, forked from the conversation so it can resolve references. If the model thinks the draft is fine, it says so and nothing changes.
+Recorded with [vhs](docs/demo.tape) on Claude Code 2.1.295.
 
-Anything that fails or runs out of time sends your prompt as typed.
+## How it works
+
+![Three stations on a conveyor: a turnstile with a stopwatch, a scale that sends clear notes out a door, and a desk where rough notes are rewritten; a red belt underneath carries stalled notes through as typed](https://raw.githubusercontent.com/ondrhn/sharpprompt/master/docs/illustrations/02b-three-gates-detailed.png)
+
+1. A gate with no model lets through slash commands, `#` lines, prompts under 40 characters, pastes over 20,000, anything you did not type (task notifications, other sessions, plugins), and your answer to a question Claude just asked. It takes about 17 microseconds per prompt on a desktop CPU (mean of 100,000 calls; see [tests/gate.bench.test.ts](tests/gate.bench.test.ts)).
+2. A small model (Haiku by default) labels the rest clear or rough, with a 2.5 second limit. Clear goes out as typed.
+3. A rough prompt is rewritten by your session's own model, forked from the conversation so it can resolve references, and put in your box. If the model thinks the draft is fine, nothing changes.
+
+Anything that fails sends your prompt as typed.
+
+## Install
+
+Inside Claude Code:
+
+```
+/plugin marketplace add ondrhn/sharpprompt
+/plugin install sharpprompt@ondrhn
+```
+
+Or from a clone:
+
+```sh
+git clone https://github.com/ondrhn/sharpprompt ~/sharpprompt
+claude --plugin-dir ~/sharpprompt
+```
+
+To load the clone in every session, add the folder to `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of `~/.claude/settings.json`.
 
 ## Commands
 
@@ -75,6 +85,8 @@ Modes: `fill` (default) puts the rewrite in the box. `replace` sends the rewrite
 
 ## What it reaches
 
+![The creature sits in a glass booth with only your prompt and the chat; files, keys, the network, a shell and a mailbox stand outside, each crossed out in red](https://raw.githubusercontent.com/ondrhn/sharpprompt/master/docs/illustrations/03b-glass-booth-detailed.png)
+
 `claude plugin validate --strict .` on this repository:
 
 ```
@@ -92,7 +104,7 @@ Validating hooks: hooks/hooks.json
   ❯ ./register.tsx answers its own command: command.run{command=sharp}
   ❯ ./register.tsx gating hook with .catch: prompt.submit
   ❯ ./register.tsx gating hook with .catch: tool.call
-  ❯ ./register.tsx calls: $.clock.now (via decide, rewrite), $.clock.sleep (via race), $.command.register, $.model.classify (via classify), $.model.complete (via rewrite), $.model.fork (via rewrite), $.prompt.fill (via deliver, restoreOriginal), $.session.messages (via lastReply, recent), $.session.model (via rewrite), $.session.surface (via deliver), $.state.get, $.state.set, $.store.get (via bump, exemplarsOf, push, readList, runCommand), $.store.set (via bump, deliver, push, settlePending), $.ui.resolve
+  ❯ ./register.tsx calls: $.clock.after (via deliver), $.clock.now (via decide, rewrite), $.clock.sleep (via race), $.command.register, $.model.classify (via classify), $.model.complete (via rewrite), $.model.fork (via rewrite), $.prompt.fill (via deliver, restoreOriginal), $.prompt.read (via deliver), $.session.messages (via lastReply, recent), $.session.model (via record, rewrite), $.session.surface (via deliver), $.state.get, $.state.set, $.store.get (via bump, exemplarsOf, push, readList, runCommand), $.store.set (via bump, deliver, push, settlePending), $.ui.resolve
   ❯ ./register.tsx state writes: sharpprompt.isOff, sharpprompt.lastDecision, sharpprompt.mode, sharpprompt.pending
   ❯ ./register.tsx state reads: sharpprompt.isOff, sharpprompt.lastDecision, sharpprompt.mode, sharpprompt.pending
 
@@ -123,15 +135,39 @@ Each rule is in [docs/rules](docs/rules) with a link to the Anthropic page it co
 
 ## Measurements
 
-Two real sessions so far, 19 typed prompts. Fork median 3.1 s over 6 rewrites (1.7 to 4.4 s), mostly the model's own thinking time on the session's effort setting; the aim is about 3 seconds. Classifier median about 1 second. Too few to claim anything about whether rewriting helps.
+| version | date | prompts | gate (mean) | classifier p50 | rewrite p50 | timeouts |
+|---|---|---|---|---|---|---|
+| [0.1.0](docs/measurements/v0.1.0.md) | 8 Oct 2026 | 19 typed, 8 rewritten | 17 us | 1.0 s (n=9) | 3.1 s (n=6) | 0 |
 
-`/sharp stats` keeps, on your machine only: how many prompts each check let through, clear or rough, what happened to each rewrite, what you did with it (sent, edited, took yours back), classifier and rewrite times at p50 and p95, tokens per rough prompt, and for each turn the tool calls, duration, output tokens and whether Claude had to ask you something back. It compares turns that started from your own text with turns that started from a rewrite, and says the numbers are not evidence until there are 30 turns. A script that runs the same prompts both ways is planned; until then there is no claim here that rewriting helps.
+Each version gets a file in [docs/measurements](docs/measurements) with the method and the raw table, and a row here. The sample is small; none of this shows yet whether rewriting makes Claude's work better. `/sharp stats` keeps the same numbers for your own sessions, on your machine only, and compares turns that started from your text with turns that started from a rewrite.
 
+Tests: 54, in [tests/](tests), run with `claude plugin test .`.
+
+## FAQ
+
+### Does it send anything for me?
+No. In the default mode the rewrite waits in your box until you press Enter. Only `replace` mode, which you turn on yourself, sends the rewrite in place of your text.
+
+### Why did it leave my prompt alone?
+Most prompts pass: short ones, commands, answers to Claude's questions, and anything the classifier calls clear. `/sharp status` says which reason applied to the last one.
+
+### What does a rewrite cost?
+One classifier call on the helper model for each prompt that passes the gate, and for a rough prompt one fork on your session's model. In the 0.1.0 measurements that fork used about 2,500 input tokens outside the cache, 64,000 read from the cache and 230 output tokens. `/sharp stats` shows your own numbers.
+
+### Can I turn it off for one prompt?
+Start the prompt with `raw:`. The prefix is removed and the rest goes out as typed. `/sharp off` turns it off for the session.
+
+### Does it work in VS Code?
+The hooks run, but VS Code has no box for the mod to fill and no band, so the rewrite goes to Claude as a note beside your prompt (`context` mode) and your prompt goes out as typed.
 
 ## Development
 
-Types come from the Claude Code build you run. Load the plugin once (`claude --plugin-dir .`, or `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude -p --plugin-dir . "/x"`) and the engine writes them to `.claude-plugin/types/` (git-ignored); `tsconfig.json` extends the one written there. After a Claude Code update, load it again.
+Types come from the Claude Code build you run. Open an interactive session with the plugin once (`claude --plugin-dir .`) and the engine writes them to `.claude-plugin/types/` (git-ignored); `tsconfig.json` extends the one written there. After a Claude Code update, open it again.
 
 Rules and shapes live in `docs/`; `node scripts/build-bank.mjs` compiles them into `hooks/bank.ts`, because a mod cannot read files at run time. `--check` fails when the two drift.
 
 Checks: `claude plugin validate --strict .`, `claude plugin test .`, `tsc -p .`, `node scripts/build-bank.mjs --check`.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
