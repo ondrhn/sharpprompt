@@ -1,0 +1,29 @@
+name: test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Pinned to the build the tests last passed on. The mod API changes
+      # between builds, so a new one is a change to test, not an update to
+      # take silently. `claude plugin validate` and `claude plugin test` need
+      # no login or API key.
+      - run: npm install -g @anthropic-ai/claude-code@2.1.296
+      - run: claude plugin validate --strict .
+      - run: claude plugin test .
+      - run: node scripts/build-bank.mjs --check
+      - run: node --test scripts/usage.node-test.mjs
+      # tsc is not run here: the types it checks against are written by the
+      # engine when the plugin loads in a signed-in session, which CI has not.
+    env:
+      DISABLE_AUTOUPDATER: '1'

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- CI: a GitHub Actions workflow runs validate, the plugin tests, the bank check and the script tests on each push and pull request; `tsc` stays local.
 - README: a When it helps section, from the measurements: no difference on ordinary prompts, a gain when the prompt leaves out something only you know, and what it costs per prompt.
 - `scripts/token_overhead.mjs`: sharpprompt's own tokens (rewrites, late forks, classify estimated) against the interactive sessions' tokens in a window, by kind and at API prices. Rewrite, classify and late-fork records now carry their time.
 - Usage log: for each rewrite the draft, the rewrite, questions and answers, the text put in the box, what you did with it and the turn that followed; last 300, on your machine only, `Usage log` in `/config` turns it off. `/sharp stats` counts the records; `scripts/export_log.mjs` copies them to a JSONL file and `scripts/usage_report.mjs` summarises one.

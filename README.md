@@ -4,7 +4,7 @@ Rough prompt in. Clear prompt in your box. You press Enter.
 
 ![A small black creature at a desk rewrites a crumpled note with the chat beside it, while most notes fly straight past into the prompt box](https://raw.githubusercontent.com/ondrhn/sharpprompt/master/docs/illustrations/01b-sharpener-detailed.png)
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-black)](LICENSE) [![Claude Code 2.1.293+](https://img.shields.io/badge/Claude%20Code-2.1.293%2B-orange)](https://docs.claude.com/en/docs/claude-code)
+[![test](https://github.com/ondrhn/sharpprompt/actions/workflows/test.yml/badge.svg)](https://github.com/ondrhn/sharpprompt/actions/workflows/test.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-black)](LICENSE) [![Claude Code 2.1.293+](https://img.shields.io/badge/Claude%20Code-2.1.293%2B-orange)](https://docs.claude.com/en/docs/claude-code)
 
 ## What is this
 
@@ -158,7 +158,7 @@ Benchmark, 30 cases, the prompt as typed against the rewrite: no measurable diff
 
 Each version gets a file in [docs/measurements](docs/measurements) with the method and the raw table, and a row here. The rewrites in the benchmark were written by Haiku; the plugin forks the session model. `/sharp stats` keeps the same numbers for your own sessions, on your machine only, and compares turns that started from your text with turns that started from a rewrite.
 
-Tests: 85 in [tests/](tests), run with `claude plugin test .`, and 3 for the scripts, run with `node --test scripts/usage.node-test.mjs`.
+Tests: 85 in [tests/](tests), run with `claude plugin test .`, and 3 for the scripts, run with `node --test scripts/usage.node-test.mjs`. Both run on every push and pull request ([test workflow](.github/workflows/test.yml)).
 
 ## FAQ
 
@@ -183,7 +183,7 @@ Types come from the Claude Code build you run. Open an interactive session with 
 
 Rules and shapes live in `docs/`; `node scripts/build-bank.mjs` compiles them into `hooks/bank.ts`, because a mod cannot read files at run time. `--check` fails when the two drift.
 
-Checks: `claude plugin validate --strict .`, `claude plugin test .`, `tsc -p .`, `node scripts/build-bank.mjs --check`, and for the export, report and token overhead scripts `node --test scripts/usage.node-test.mjs`.
+Checks: `claude plugin validate --strict .`, `claude plugin test .`, `tsc -p .`, `node scripts/build-bank.mjs --check`, and for the export, report and token overhead scripts `node --test scripts/usage.node-test.mjs`. CI runs all of them but `tsc`, on Claude Code 2.1.296; none needs a login. `tsc` runs locally only, because the types it checks against are written when the plugin loads in a signed-in session.
 
 Benchmark: `node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/bench.mjs --help`; the corpus and how to run it are in [docs/bench](docs/bench).
 
