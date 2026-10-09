@@ -1,0 +1,1 @@
+Finance imports our CSV exports into their accounting tool every month, and I want the CSV export to work with that import so they can load it without manual fixes. Don't change anything else about the export. Import spec: I know it because finance's accounting tool reads semicolon-separated files..

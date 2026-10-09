@@ -1,0 +1,49 @@
+{
+  "questions": [
+    {
+      "question": "How does finance write dates?",
+      "header": "Date format",
+      "options": [
+        {
+          "label": "DD/MM/YYYY",
+          "adds": "Finance writes dates as DD/MM/YYYY, for example 09/10/2026."
+        },
+        {
+          "label": "MM/DD/YYYY",
+          "adds": "Finance writes dates as MM/DD/YYYY, for example 10/09/2026."
+        },
+        {
+          "label": "YYYY-MM-DD",
+          "adds": "Finance writes dates as YYYY-MM-DD, for example 2026-10-09."
+        },
+        {
+          "label": "DD Mon YYYY",
+          "adds": "Finance writes dates as DD Mon YYYY, for example 09 Oct 2026."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "How does finance write dates?": "Finance writes dates as DD.MM.YYYY, with dots as separators (e.g. 02.09.2026)."
+  },
+  "recommended": [
+    "DD/MM/YYYY"
+  ],
+  "rewriteBeforeAnswers": "The finance team reads the CSV export by hand before importing it, so I want the dates in that export written the way finance writes them. Change only how dates are formatted in the CSV export, and don't add tests, docs or new files. Done when the exported dates show in that format.",
+  "outcome": "rewritten",
+  "final": "The finance team reads the CSV export by hand before importing it, so I want the dates in that export written the way finance writes them. Change only how dates are formatted in the CSV export, and don't add tests, docs or new files. Done when the exported dates show in that format. Date format: Finance writes dates as DD.MM.YYYY, with dots as separators (e.g. 02.09.2026)..",
+  "leak": [
+    {
+      "question": "How does finance write dates?",
+      "value": "02.09"
+    },
+    {
+      "question": "How does finance write dates?",
+      "value": "2026"
+    },
+    {
+      "question": "How does finance write dates?",
+      "value": "DD.MM"
+    }
+  ]
+}

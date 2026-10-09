@@ -1,0 +1,9 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Some rows in the bank export now have negative amounts, and they keep showing up. Find where the export produces them and handle them properly. If it's unclear what \"properly\" means for these rows, take the most direct reading and tell me your assumption. Done when the export no longer mishandles negative amounts, and the existing tests still pass.",
+  "outcome": "rewritten",
+  "final": "Some rows in the bank export now have negative amounts, and they keep showing up. Find where the export produces them and handle them properly. If it's unclear what \"properly\" means for these rows, take the most direct reading and tell me your assumption. Done when the export no longer mishandles negative amounts, and the existing tests still pass.",
+  "leak": []
+}

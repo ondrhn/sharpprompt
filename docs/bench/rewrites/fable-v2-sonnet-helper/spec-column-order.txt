@@ -1,0 +1,1 @@
+I want to reorder the CSV export columns so they match what finance's import tool expects, since it reads the columns by position. Only the column order should change, not the data or anything else about the export. Done when the exported columns come out in that order and the existing tests still pass. Column order: The order is amount, date, category, name..

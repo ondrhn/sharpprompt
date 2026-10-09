@@ -1,0 +1,1 @@
+The budget warnings currently fire too late. Find where they are triggered and make them fire earlier. Tell me which threshold or condition you changed, and from what to what. Done when the existing tests still pass. Threshold: Warn from 75% of the limit..

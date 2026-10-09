@@ -1,0 +1,10 @@
+{"id":"spec-csv-separator","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"fable","language":"en","questions":0,"leaks":0,"ms":4069,"words":[9,47]}
+{"id":"spec-near-75","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"fable","language":"en","questions":1,"leaks":2,"ms":5178,"words":[9,44]}
+{"id":"spec-date-format","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"fable","language":"en","questions":0,"leaks":0,"ms":1997,"words":[12,46]}
+{"id":"spec-refunds","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"fable","language":"en","questions":0,"leaks":0,"ms":2424,"words":[8,59]}
+{"id":"spec-sort-amount","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"fable","language":"en","questions":0,"leaks":0,"ms":2356,"words":[8,51]}
+{"id":"spec-top3-other","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"fable","language":"en","questions":0,"leaks":0,"ms":3277,"words":[9,38]}
+{"id":"spec-round-005","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"fable","language":"en","questions":1,"leaks":2,"ms":4913,"words":[7,61]}
+{"id":"spec-eur-suffix","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"fable","language":"en","questions":1,"leaks":0,"ms":6153,"words":[7,62]}
+{"id":"spec-hide-small","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"fable","language":"en","questions":0,"leaks":0,"ms":2535,"words":[7,58]}
+{"id":"spec-column-order","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"fable","language":"en","questions":1,"leaks":1,"ms":6235,"words":[8,63]}

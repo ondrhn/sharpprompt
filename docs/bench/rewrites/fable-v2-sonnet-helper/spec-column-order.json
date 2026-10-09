@@ -1,0 +1,37 @@
+{
+  "questions": [
+    {
+      "question": "Where does the column order finance needs come from?",
+      "header": "Column order",
+      "options": [
+        {
+          "label": "I'll paste it",
+          "adds": "The order finance needs is: <paste the column list here>."
+        },
+        {
+          "label": "Sample file in repo",
+          "adds": "A sample or spec file in the repo shows the order finance needs; find it and match it."
+        },
+        {
+          "label": "Ask me first",
+          "adds": "If you can't find the required order, ask me before changing anything."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Where does the column order finance needs come from?": "The order is amount, date, category, name."
+  },
+  "recommended": [
+    "I'll paste it"
+  ],
+  "rewriteBeforeAnswers": "I want to reorder the CSV export columns so they match what finance's import tool expects, since it reads the columns by position. Only the column order should change, not the data or anything else about the export. Done when the exported columns come out in that order and the existing tests still pass.",
+  "outcome": "rewritten",
+  "final": "I want to reorder the CSV export columns so they match what finance's import tool expects, since it reads the columns by position. Only the column order should change, not the data or anything else about the export. Done when the exported columns come out in that order and the existing tests still pass. Column order: The order is amount, date, category, name..",
+  "leak": [
+    {
+      "question": "Where does the column order finance needs come from?",
+      "value": "category"
+    }
+  ]
+}

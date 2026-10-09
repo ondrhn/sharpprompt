@@ -1,0 +1,9 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Finance imports our CSV exports into their accounting tool every month. Make the CSV export produce files that tool accepts without manual fixing. I don't have the tool's format requirements yet, so first find the export code and tell me which format details you need from finance.",
+  "outcome": "rewritten",
+  "final": "Finance imports our CSV exports into their accounting tool every month. Make the CSV export produce files that tool accepts without manual fixing. I don't have the tool's format requirements yet, so first find the export code and tell me which format details you need from finance.",
+  "leak": []
+}

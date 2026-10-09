@@ -28,6 +28,14 @@
     {
       "question": "How should the totals be rounded?",
       "value": "0.05"
+    },
+    {
+      "question": "How should the totals be rounded?",
+      "value": "nearest"
+    },
+    {
+      "question": "How should the totals be rounded?",
+      "value": "rounding"
     }
   ]
 }

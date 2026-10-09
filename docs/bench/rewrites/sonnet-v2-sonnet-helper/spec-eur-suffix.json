@@ -1,0 +1,32 @@
+{
+  "questions": [
+    {
+      "question": "Which currency should the CLI output show?",
+      "header": "Currency",
+      "options": [
+        {
+          "label": "Existing currency field",
+          "adds": "Use the currency already stored in the data or config, not a hardcoded one."
+        },
+        {
+          "label": "Symbol only",
+          "adds": "Show it as a symbol such as $ or €, before each amount."
+        },
+        {
+          "label": "ISO code",
+          "adds": "Show it as a three-letter ISO code such as USD, after each amount."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which currency should the CLI output show?": "ISO code"
+  },
+  "recommended": [
+    "Existing currency field"
+  ],
+  "rewriteBeforeAnswers": "Show the currency in the CLI output. Wherever the CLI currently prints amounts, include the currency alongside them. Keep everything else about the output as it is, and don't add tests, docs or files. Done when running the CLI shows the currency next to each amount.",
+  "outcome": "rewritten",
+  "final": "Show the currency in the CLI output. Wherever the CLI currently prints amounts, include the currency alongside them. Keep everything else about the output as it is, and don't add tests, docs or files. Done when running the CLI shows the currency next to each amount. Show it as a three-letter ISO code such as USD, after each amount.",
+  "leak": []
+}

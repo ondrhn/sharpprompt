@@ -1,0 +1,1 @@
+The report lists categories with only a few euros spent next to the big ones, which clutters it. Hide the tiny categories from the report so the large ones stand out. Take the most direct reading: drop categories below a small spending threshold, and tell me which threshold you picked. Done when the report no longer shows them.

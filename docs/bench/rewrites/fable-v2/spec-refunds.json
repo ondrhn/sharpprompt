@@ -24,5 +24,18 @@
   "rewriteBeforeAnswers": "Some rows in the bank export have negative amounts, and they keep showing up. Find the code that reads the export and make it handle negative amounts properly. Done when a row with a negative amount is read correctly.",
   "outcome": "rewritten",
   "final": "Some rows in the bank export have negative amounts, and they keep showing up. Find the code that reads the export and make it handle negative amounts properly. Done when a row with a negative amount is read correctly. Sign rule: Neither; negative amounts are refunds, so they should be kept out of the category totals and tracked separately..",
-  "leak": []
+  "leak": [
+    {
+      "question": "What should a negative amount become after import?",
+      "value": "refunds"
+    },
+    {
+      "question": "What should a negative amount become after import?",
+      "value": "category"
+    },
+    {
+      "question": "What should a negative amount become after import?",
+      "value": "totals"
+    }
+  ]
 }

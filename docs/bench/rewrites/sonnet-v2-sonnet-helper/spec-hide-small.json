@@ -1,0 +1,41 @@
+{
+  "questions": [
+    {
+      "question": "How should 'tiny' be decided?",
+      "header": "Threshold",
+      "options": [
+        {
+          "label": "Fixed euro amount",
+          "adds": "Treat a category as tiny when its spending is below a fixed euro amount; pick a sensible default and keep it as a named constant I can change."
+        },
+        {
+          "label": "Percent of total",
+          "adds": "Treat a category as tiny when it is below a small percentage of the total spending; pick a sensible default and keep it as a named constant I can change."
+        },
+        {
+          "label": "Group as Other",
+          "adds": "Instead of dropping tiny categories, combine them into a single 'Other' line so the total still adds up."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "How should 'tiny' be decided?": "A fixed amount, under 10.00 in euros."
+  },
+  "recommended": [
+    "Fixed euro amount"
+  ],
+  "rewriteBeforeAnswers": "The report lists categories with only a few euros spent right next to the big ones, and it clutters the output. Hide the tiny categories from the report, in every place the report lists categories. Change only that, and don't add tests, docs or files. Done when the report no longer shows the tiny ones and the big ones still appear.",
+  "outcome": "rewritten",
+  "final": "The report lists categories with only a few euros spent right next to the big ones, and it clutters the output. Hide the tiny categories from the report, in every place the report lists categories. Change only that, and don't add tests, docs or files. Done when the report no longer shows the tiny ones and the big ones still appear. Threshold: A fixed amount, under 10.00 in euros..",
+  "leak": [
+    {
+      "question": "How should 'tiny' be decided?",
+      "value": "10.00"
+    },
+    {
+      "question": "How should 'tiny' be decided?",
+      "value": "under"
+    }
+  ]
+}

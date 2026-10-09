@@ -28,6 +28,26 @@
     {
       "question": "What should happen to the negative rows?",
       "value": "refunds"
+    },
+    {
+      "question": "What should happen to the negative rows?",
+      "value": "category"
+    },
+    {
+      "question": "What should happen to the negative rows?",
+      "value": "totals"
+    },
+    {
+      "question": "What should happen to the negative rows?",
+      "value": "report"
+    },
+    {
+      "question": "What should happen to the negative rows?",
+      "value": "overall"
+    },
+    {
+      "question": "What should happen to the negative rows?",
+      "value": "total"
     }
   ]
 }

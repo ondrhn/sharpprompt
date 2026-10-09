@@ -1,0 +1,9 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Round the totals in the report to two decimal places, so they stop showing odd cents. Finance keeps asking about them. Change only how the totals are rounded and displayed, and don't add tests or docs.",
+  "outcome": "rewritten",
+  "final": "Round the totals in the report to two decimal places, so they stop showing odd cents. Finance keeps asking about them. Change only how the totals are rounded and displayed, and don't add tests or docs.",
+  "leak": []
+}

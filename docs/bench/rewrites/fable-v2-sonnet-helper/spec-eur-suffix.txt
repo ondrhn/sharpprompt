@@ -1,0 +1,1 @@
+Show the currency in the CLI output next to every amount it prints. If this could be read more than one way, take the most direct reading and tell me your assumption. Done when running the CLI shows the currency beside each amount and the existing tests still pass. Show it as the ISO code after the amount, for example 12.50 USD.

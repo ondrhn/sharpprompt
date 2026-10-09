@@ -1,0 +1,65 @@
+{
+  "questions": [
+    {
+      "question": "What should happen to rows with negative amounts?",
+      "header": "Handling",
+      "options": [
+        {
+          "label": "Keep, mark as debits",
+          "adds": "Negative amounts are legitimate (debits or refunds), so keep them in the export but handle them consistently and correctly."
+        },
+        {
+          "label": "Make them positive",
+          "adds": "Convert negative amounts to positive values in the export."
+        },
+        {
+          "label": "Exclude those rows",
+          "adds": "Leave rows with negative amounts out of the export."
+        },
+        {
+          "label": "Diagnose first",
+          "adds": "Don't change any code yet; first tell me why negatives appear and what the options are."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What should happen to rows with negative amounts?": "They're refunds, so leave them out of the category totals and report their sum as a positive refunds figure, while the overall total stays net."
+  },
+  "recommended": [
+    "Keep, mark as debits"
+  ],
+  "rewriteBeforeAnswers": "Some rows in the bank export now have negative amounts, and I want them handled properly. Find where the export builds or processes amounts, work out why negatives are showing up and what correct handling should be, then fix it. Keep everything else about the export as it is. Done when the export no longer shows negative amounts incorrectly and the existing tests pass.",
+  "outcome": "rewritten",
+  "final": "Some rows in the bank export now have negative amounts, and I want them handled properly. Find where the export builds or processes amounts, work out why negatives are showing up and what correct handling should be, then fix it. Keep everything else about the export as it is. Done when the export no longer shows negative amounts incorrectly and the existing tests pass. Handling: They're refunds, so leave them out of the category totals and report their sum as a positive refunds figure, while the overall total stays net..",
+  "leak": [
+    {
+      "question": "What should happen to rows with negative amounts?",
+      "value": "refunds"
+    },
+    {
+      "question": "What should happen to rows with negative amounts?",
+      "value": "leave"
+    },
+    {
+      "question": "What should happen to rows with negative amounts?",
+      "value": "category"
+    },
+    {
+      "question": "What should happen to rows with negative amounts?",
+      "value": "totals"
+    },
+    {
+      "question": "What should happen to rows with negative amounts?",
+      "value": "report"
+    },
+    {
+      "question": "What should happen to rows with negative amounts?",
+      "value": "overall"
+    },
+    {
+      "question": "What should happen to rows with negative amounts?",
+      "value": "total"
+    }
+  ]
+}

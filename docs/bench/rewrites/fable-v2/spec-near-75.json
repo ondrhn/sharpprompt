@@ -48,6 +48,10 @@
     {
       "question": "Which budget warning should fire earlier?",
       "value": "near_budget"
+    },
+    {
+      "question": "Which budget warning should fire earlier?",
+      "value": "limit"
     }
   ]
 }

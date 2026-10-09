@@ -1,0 +1,1 @@
+Change the dates in the CSV export so they appear in the format the finance team uses. They read the export by hand before importing it. If you can't tell which format that is from the code, ask me. Leave all other columns as they are.

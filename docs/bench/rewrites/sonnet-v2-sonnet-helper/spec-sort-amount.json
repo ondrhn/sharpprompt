@@ -1,0 +1,41 @@
+{
+  "questions": [
+    {
+      "question": "What order should the categories be in?",
+      "header": "Sort order",
+      "options": [
+        {
+          "label": "Alphabetical",
+          "adds": "Sort the categories alphabetically by name."
+        },
+        {
+          "label": "By count, descending",
+          "adds": "Sort the categories by how many items each has, largest first."
+        },
+        {
+          "label": "Fixed custom order",
+          "adds": "Use a fixed, hand-picked category order; look at the code and propose one that makes sense before applying it."
+        },
+        {
+          "label": "Most recent first",
+          "adds": "Sort the categories by most recent activity first."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What order should the categories be in?": "By amount, largest first."
+  },
+  "recommended": [
+    "Alphabetical"
+  ],
+  "rewriteBeforeAnswers": "Change how the categories are sorted in the CLI output so they appear in a better order, everywhere the CLI lists them. Leave the rest of the output as it is, and don't add tests, docs or files. Done when running the CLI shows the categories in the new order and the existing tests still pass.",
+  "outcome": "rewritten",
+  "final": "Change how the categories are sorted in the CLI output so they appear in a better order, everywhere the CLI lists them. Leave the rest of the output as it is, and don't add tests, docs or files. Done when running the CLI shows the categories in the new order and the existing tests still pass. Sort order: By amount, largest first..",
+  "leak": [
+    {
+      "question": "What order should the categories be in?",
+      "value": "largest"
+    }
+  ]
+}

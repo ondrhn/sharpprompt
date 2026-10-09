@@ -1,0 +1,1 @@
+Show the currency in the CLI output. Wherever the CLI currently prints amounts, include the currency alongside them. Keep everything else about the output as it is, and don't add tests, docs or files. Done when running the CLI shows the currency next to each amount. Show it as a three-letter ISO code such as USD, after each amount.

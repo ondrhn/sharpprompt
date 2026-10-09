@@ -1,0 +1,1 @@
+The budget warnings come too late. Find where they are triggered and make them fire earlier. Change only the warning trigger, and don't add tests, docs or files. Tell me what the threshold was before and after. Warn when 80% of the budget is used.

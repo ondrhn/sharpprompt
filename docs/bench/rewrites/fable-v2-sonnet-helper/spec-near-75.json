@@ -1,0 +1,45 @@
+{
+  "questions": [
+    {
+      "question": "How much earlier should the budget warnings fire?",
+      "header": "Threshold",
+      "options": [
+        {
+          "label": "You pick a value",
+          "adds": "I don't have a specific threshold in mind, so pick a sensible earlier one and tell me what you chose."
+        },
+        {
+          "label": "Warn at 80%",
+          "adds": "Warn when 80% of the budget is used."
+        },
+        {
+          "label": "Warn at 50%",
+          "adds": "Warn when 50% of the budget is used."
+        },
+        {
+          "label": "Make it configurable",
+          "adds": "Make the warning threshold configurable instead of hardcoded."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "How much earlier should the budget warnings fire?": "Warn from 75% of the limit."
+  },
+  "recommended": [
+    "You pick a value"
+  ],
+  "rewriteBeforeAnswers": "The budget warnings currently fire too late. Find where they are triggered and make them fire earlier. Tell me which threshold or condition you changed, and from what to what. Done when the existing tests still pass.",
+  "outcome": "rewritten",
+  "final": "The budget warnings currently fire too late. Find where they are triggered and make them fire earlier. Tell me which threshold or condition you changed, and from what to what. Done when the existing tests still pass. Threshold: Warn from 75% of the limit..",
+  "leak": [
+    {
+      "question": "How much earlier should the budget warnings fire?",
+      "value": "75"
+    },
+    {
+      "question": "How much earlier should the budget warnings fire?",
+      "value": "limit"
+    }
+  ]
+}

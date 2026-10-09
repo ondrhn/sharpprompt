@@ -1,13 +1,13 @@
 {"id":"spec-csv-separator","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ms":6808,"words":[9,55],"leaks":0}
 {"id":"spec-near-75","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ms":6996,"words":[9,54],"leaks":0}
 {"id":"spec-date-format","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ms":6199,"words":[12,76],"leaks":3}
-{"id":"spec-refunds","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ms":7102,"words":[8,62],"leaks":1}
-{"id":"spec-sort-amount","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ms":7130,"words":[8,49],"leaks":0}
+{"id":"spec-refunds","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ms":7102,"words":[8,62],"leaks":6}
+{"id":"spec-sort-amount","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ms":7130,"words":[8,49],"leaks":2}
 {"id":"spec-top3-other","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ms":7094,"words":[9,74],"leaks":0}
-{"id":"spec-round-005","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ms":4371,"words":[7,49],"leaks":1}
+{"id":"spec-round-005","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ms":4371,"words":[7,49],"leaks":2}
 {"id":"spec-eur-suffix","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ms":5545,"words":[7,38],"leaks":0}
 {"id":"spec-hide-small","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ms":5696,"words":[7,52],"leaks":0}
-{"id":"spec-column-order","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ms":4803,"words":[8,58],"leaks":0}
+{"id":"spec-column-order","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ms":4803,"words":[8,58],"leaks":1}
 {"id":"ref-quote-report-csv","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ms":2856,"words":[10,30],"leaks":0}
 {"id":"ref-quote-category-csv","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ms":4061,"words":[10,50],"leaks":0}
 {"id":"ref-short-dates-month-key","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ms":4402,"words":[10,35],"leaks":0}

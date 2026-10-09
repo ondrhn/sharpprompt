@@ -1,0 +1,37 @@
+{
+  "questions": [
+    {
+      "question": "Which rounding should the report totals use?",
+      "header": "Rounding",
+      "options": [
+        {
+          "label": "Two decimals",
+          "adds": "Round to two decimal places (whole cents)."
+        },
+        {
+          "label": "Whole currency units",
+          "adds": "Round to whole currency units, with no cents."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which rounding should the report totals use?": "Round to the nearest 0.05 (cash rounding)."
+  },
+  "recommended": [
+    "Two decimals"
+  ],
+  "rewriteBeforeAnswers": "Round the report totals to two decimal places so the odd cents stop showing up. Finance keeps asking about them. I haven't said which report or file, so find where the totals are calculated and take the most direct reading. Tell me what you assumed. Done when the totals display as whole cents.",
+  "outcome": "rewritten",
+  "final": "Round the report totals to two decimal places so the odd cents stop showing up. Finance keeps asking about them. I haven't said which report or file, so find where the totals are calculated and take the most direct reading. Tell me what you assumed. Done when the totals display as whole cents. Rounding: Round to the nearest 0.05 (cash rounding)..",
+  "leak": [
+    {
+      "question": "Which rounding should the report totals use?",
+      "value": "0.05"
+    },
+    {
+      "question": "Which rounding should the report totals use?",
+      "value": "nearest"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+Change how the categories are sorted in the CLI output so they appear in a better order, everywhere the CLI lists them. Leave the rest of the output as it is, and don't add tests, docs or files. Done when running the CLI shows the categories in the new order and the existing tests still pass. Sort order: By amount, largest first..

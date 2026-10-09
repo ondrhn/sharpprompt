@@ -1,0 +1,10 @@
+{"id":"spec-csv-separator","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"sonnet","language":"en","questions":1,"leaks":4,"ms":4333,"words":[9,49]}
+{"id":"spec-near-75","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"sonnet","language":"en","questions":1,"leaks":0,"ms":5739,"words":[9,45]}
+{"id":"spec-date-format","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"sonnet","language":"en","questions":1,"leaks":3,"ms":10064,"words":[12,66]}
+{"id":"spec-refunds","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"sonnet","language":"en","questions":1,"leaks":7,"ms":4277,"words":[8,90]}
+{"id":"spec-sort-amount","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"sonnet","language":"en","questions":1,"leaks":1,"ms":6428,"words":[8,62]}
+{"id":"spec-top3-other","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"sonnet","language":"en","questions":1,"leaks":0,"ms":5784,"words":[9,57]}
+{"id":"spec-round-005","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"sonnet","language":"en","questions":0,"leaks":0,"ms":9927,"words":[7,36]}
+{"id":"spec-eur-suffix","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"sonnet","language":"en","questions":1,"leaks":0,"ms":5011,"words":[7,59]}
+{"id":"spec-hide-small","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"sonnet","language":"en","questions":1,"leaks":2,"ms":7357,"words":[7,69]}
+{"id":"spec-column-order","outcome":"rewritten","helper":"claude-sonnet-5-5","family":"sonnet","language":"en","questions":1,"leaks":1,"ms":6350,"words":[8,64]}

@@ -28,6 +28,10 @@
     {
       "question": "Should the totals be rounded to whole units or to two decimal places?",
       "value": "0.05"
+    },
+    {
+      "question": "Should the totals be rounded to whole units or to two decimal places?",
+      "value": "nearest"
     }
   ]
 }

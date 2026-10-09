@@ -1,0 +1,1 @@
+The finance team reads the CSV export by hand before importing it, so I want the dates in that export written the way finance writes them. Change only how dates are formatted in the CSV export, and don't add tests, docs or new files. Done when the exported dates show in that format. Date format: Finance writes dates as DD.MM.YYYY, with dots as separators (e.g. 02.09.2026)..

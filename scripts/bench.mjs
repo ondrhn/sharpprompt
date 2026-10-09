@@ -130,19 +130,26 @@ Answer only this question, using only the part of what you know that it asks abo
   return hit ?? a.replace(/^Other:\s*/i, '')
 }
 
-// An oracle answer leaks when it names something the user knows (a number, a
-// quoted text, a module.function or snake_case name) that neither the
-// question nor its option labels mention: the rewrite then carries what the
-// user was never asked for.
-export function leaksOf(intent, q, answer) {
+// An oracle answer leaks when it names something the user knows that neither
+// the question, its option labels nor the user's own prompt mention: a
+// number, a quoted text, a module.function or snake_case name, or a plain
+// word of the hidden spec ("semicolon"). The rewrite then carries what the
+// user was never asked for. The audit flags; an answer that gives the value
+// the question asked for, when no option had it, is flagged too and has to
+// be read by hand.
+const PLAIN = /\b[a-z]{5,}\b/g
+const COMMON = new Set(['should', 'which', 'there', 'their', 'about', 'every', 'other', 'would', 'could', 'never', 'still', 'stays', 'nothing', 'because', 'number', 'positive', 'negative', 'amounts', 'amount', 'their', 'where', 'those', 'these', 'thing', 'value', 'values', 'using', 'only'])
+export function leaksOf(intent, q, answer, typed = '') {
   const labels = q.options.map(o => o.label)
   if (labels.some(l => l.toLowerCase() === answer.trim().toLowerCase())) return []
-  const asked = [q.question, ...labels].join(' ').toLowerCase()
+  const asked = [q.question, ...labels, typed].join(' ').toLowerCase()
   const known = intent.toLowerCase()
+  const knownWords = new Set(known.match(PLAIN) ?? [])
   const tokens = new Set([
     ...(answer.match(/\d+(?:[.,]\d+)?%?/g) ?? []).map(t => t.replace(/%$/, '')),
     ...[...answer.matchAll(/["'`]([^"'`]{2,40})["'`]/g)].map(m => m[1]),
     ...(answer.match(/\b[a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*\b|\b[a-z][a-z0-9]*_[a-z0-9_]+\b/gi) ?? []),
+    ...(answer.toLowerCase().match(PLAIN) ?? []).filter(w => knownWords.has(w) && !COMMON.has(w)),
   ])
   return [...tokens].filter(t => known.includes(t.toLowerCase()) && !asked.includes(t.toLowerCase()))
 }
@@ -150,7 +157,8 @@ export function leaksOf(intent, q, answer) {
 function leaksOfRecord(c, record) {
   const leak = []
   for (const q of record.questions ?? []) {
-    for (const t of leaksOf(intentOf(c), q, record.oracleAnswers?.[q.question] ?? '')) leak.push({ question: q.question, value: t })
+    const typed = [c.raw, ...c.context.map(m => m.text)].join(' ')
+    for (const t of leaksOf(intentOf(c), q, record.oracleAnswers?.[q.question] ?? '', typed)) leak.push({ question: q.question, value: t })
   }
   return leak
 }

@@ -1,0 +1,9 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Sort the categories in the CLI output into a better order. I haven't said which order I want, so pick the most sensible one (for example alphabetical, or by importance or count), tell me which you chose and why, and apply it. Leave the rest of the output as it is.",
+  "outcome": "rewritten",
+  "final": "Sort the categories in the CLI output into a better order. I haven't said which order I want, so pick the most sensible one (for example alphabetical, or by importance or count), tell me which you chose and why, and apply it. Leave the rest of the output as it is.",
+  "leak": []
+}

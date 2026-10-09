@@ -1,0 +1,36 @@
+{
+  "questions": [
+    {
+      "question": "How much earlier should the budget warnings fire?",
+      "header": "Threshold",
+      "options": [
+        {
+          "label": "You pick a value",
+          "adds": "Pick a sensible earlier threshold yourself and tell me what you chose and why."
+        },
+        {
+          "label": "Warn at 80%",
+          "adds": "Warn when 80% of the budget is used."
+        },
+        {
+          "label": "Warn at 50%",
+          "adds": "Warn when 50% of the budget is used."
+        },
+        {
+          "label": "Make configurable",
+          "adds": "Make the warning threshold a setting instead of a hard-coded value."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "How much earlier should the budget warnings fire?": "Warn at 80%"
+  },
+  "recommended": [
+    "You pick a value"
+  ],
+  "rewriteBeforeAnswers": "The budget warnings come too late. Find where they are triggered and make them fire earlier. Change only the warning trigger, and don't add tests, docs or files. Tell me what the threshold was before and after.",
+  "outcome": "rewritten",
+  "final": "The budget warnings come too late. Find where they are triggered and make them fire earlier. Change only the warning trigger, and don't add tests, docs or files. Tell me what the threshold was before and after. Warn when 80% of the budget is used.",
+  "leak": []
+}

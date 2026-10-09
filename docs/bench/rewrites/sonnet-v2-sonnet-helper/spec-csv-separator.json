@@ -1,0 +1,49 @@
+{
+  "questions": [
+    {
+      "question": "How do you know what the finance import tool needs?",
+      "header": "Import spec",
+      "options": [
+        {
+          "label": "Spec file in repo",
+          "adds": "The import tool's requirements are written down in a file in this repo; find it and match the export to it."
+        },
+        {
+          "label": "Import errors",
+          "adds": "Finance's import currently fails with errors; I'll paste the error messages, so fix the export to resolve them."
+        },
+        {
+          "label": "Sample file",
+          "adds": "I'll give you a sample file the import tool accepts; make the export match its columns and formatting."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "How do you know what the finance import tool needs?": "I know it because finance's accounting tool reads semicolon-separated files."
+  },
+  "recommended": [
+    "Spec file in repo"
+  ],
+  "rewriteBeforeAnswers": "Finance imports our CSV exports into their accounting tool every month, and I want the CSV export to work with that import so they can load it without manual fixes. Don't change anything else about the export.",
+  "outcome": "rewritten",
+  "final": "Finance imports our CSV exports into their accounting tool every month, and I want the CSV export to work with that import so they can load it without manual fixes. Don't change anything else about the export. Import spec: I know it because finance's accounting tool reads semicolon-separated files..",
+  "leak": [
+    {
+      "question": "How do you know what the finance import tool needs?",
+      "value": "reads"
+    },
+    {
+      "question": "How do you know what the finance import tool needs?",
+      "value": "semicolon"
+    },
+    {
+      "question": "How do you know what the finance import tool needs?",
+      "value": "separated"
+    },
+    {
+      "question": "How do you know what the finance import tool needs?",
+      "value": "files"
+    }
+  ]
+}

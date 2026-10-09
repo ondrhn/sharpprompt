@@ -1,0 +1,32 @@
+{
+  "questions": [
+    {
+      "question": "How should the currency be shown next to amounts?",
+      "header": "Format",
+      "options": [
+        {
+          "label": "Currency code",
+          "adds": "Show it as the ISO code after the amount, for example 12.50 USD."
+        },
+        {
+          "label": "Currency symbol",
+          "adds": "Show it as the symbol before the amount, for example $12.50."
+        },
+        {
+          "label": "Separate column",
+          "adds": "Show it in its own column or field, separate from the amount."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "How should the currency be shown next to amounts?": "Currency code"
+  },
+  "recommended": [
+    "Currency code"
+  ],
+  "rewriteBeforeAnswers": "Show the currency in the CLI output next to every amount it prints. If this could be read more than one way, take the most direct reading and tell me your assumption. Done when running the CLI shows the currency beside each amount and the existing tests still pass.",
+  "outcome": "rewritten",
+  "final": "Show the currency in the CLI output next to every amount it prints. If this could be read more than one way, take the most direct reading and tell me your assumption. Done when running the CLI shows the currency beside each amount and the existing tests still pass. Show it as the ISO code after the amount, for example 12.50 USD.",
+  "leak": []
+}
