@@ -1,0 +1,1 @@
+Make the CSV export work with finance's import tool. Finance imports our CSV exports into their accounting tool every month, so the export has to match what that tool reads. Done when the export output matches the format I specify and the existing tests still pass. The import expects semicolon-separated values. Date format: I don't know the date format finance's import expects..

@@ -1,0 +1,37 @@
+{
+  "questions": [
+    {
+      "question": "What precision should the totals round to?",
+      "header": "Rounding",
+      "options": [
+        {
+          "label": "Whole units, no cents",
+          "adds": "Round each total to whole units with no cents."
+        },
+        {
+          "label": "Nearest 10 cents",
+          "adds": "Round each total to the nearest 10 cents."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What precision should the totals round to?": "Nearest 5 cents (0.05)."
+  },
+  "recommended": [
+    "Whole units, no cents"
+  ],
+  "rewriteBeforeAnswers": "Round the report totals so they stop showing odd cents, since finance keeps asking about them. Tell me which code does the rounding and what changed when you're done.",
+  "outcome": "rewritten",
+  "final": "Round the report totals so they stop showing odd cents, since finance keeps asking about them. Tell me which code does the rounding and what changed when you're done. Rounding: Nearest 5 cents (0.05)..",
+  "leak": [
+    {
+      "question": "What precision should the totals round to?",
+      "value": "5"
+    },
+    {
+      "question": "What precision should the totals round to?",
+      "value": "0.05"
+    }
+  ]
+}

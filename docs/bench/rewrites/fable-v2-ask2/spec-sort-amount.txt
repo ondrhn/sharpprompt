@@ -1,0 +1,1 @@
+Sort the categories in the CLI output better. Find where they are printed and change only their order. When you're done, tell me where you made the change and show me the new output. Sort order: By amount, largest first..

@@ -1,0 +1,1 @@
+Make the CSV export work with finance's import tool. Finance imports our CSV exports into their accounting tool every month, so the export has to match what that import accepts. Done when the export output matches that expectation and you report what you changed. Finance's import tool expects semicolon-separated values.

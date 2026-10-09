@@ -1,0 +1,33 @@
+{
+  "questions": [
+    {
+      "question": "What precision should the report totals be rounded to?",
+      "header": "Rounding",
+      "options": [
+        {
+          "label": "Whole units",
+          "adds": "Round each report total to the nearest whole unit, so 1234.56 becomes 1235."
+        },
+        {
+          "label": "Nearest 10 cents",
+          "adds": "Round each report total to the nearest 0.10, so 1234.56 becomes 1234.60."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What precision should the report totals be rounded to?": "Nearest 5 cents."
+  },
+  "recommended": [
+    "Whole units"
+  ],
+  "rewriteBeforeAnswers": "Round the report totals so finance stops asking about the odd cents. Don't add tests or new files. Done when the totals come out rounded and the existing tests still pass.",
+  "outcome": "rewritten",
+  "final": "Round the report totals so finance stops asking about the odd cents. Don't add tests or new files. Done when the totals come out rounded and the existing tests still pass. Rounding: Nearest 5 cents..",
+  "leak": [
+    {
+      "question": "What precision should the report totals be rounded to?",
+      "value": "5"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{"id":"spec-csv-separator","arm":"rewritten","order":1,"repeat":1,"session":"c1d1444a-3586-474c-b8a2-80cbd86290fc","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T12:49:22.113Z"}
+{"id":"spec-near-75","arm":"rewritten","order":1,"repeat":1,"session":"4e75d366-639c-4515-8209-4c0b9cac2192","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T12:49:51.927Z"}
+{"id":"spec-date-format","arm":"rewritten","order":1,"repeat":1,"session":"373753af-7a38-4718-8d6a-b51ecb9dedd4","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T12:50:45.246Z"}
+{"id":"spec-refunds","arm":"rewritten","order":1,"repeat":1,"session":"f0d0657c-4f6f-472c-abd1-3d4b2fe33b63","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T12:51:47.948Z"}
+{"id":"spec-sort-amount","arm":"rewritten","order":1,"repeat":1,"session":"28616fa5-00ba-4892-8765-beba7a35246b","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T12:52:08.572Z"}
+{"id":"spec-top3-other","arm":"rewritten","order":1,"repeat":1,"session":"df409c1d-a6b4-4388-bc9a-1ee76f8311eb","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T12:52:52.057Z"}
+{"id":"spec-round-005","arm":"rewritten","order":1,"repeat":1,"session":"48e23f8e-c4ab-433d-a837-59aaa81c1297","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T12:53:46.465Z"}
+{"id":"spec-eur-suffix","arm":"rewritten","order":1,"repeat":1,"session":"ba9017b6-6d44-45ab-b3c3-8e4a0058443d","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T12:54:22.000Z"}
+{"id":"spec-hide-small","arm":"rewritten","order":1,"repeat":1,"session":"2e518f85-2582-4f4a-bc01-c2e1482d4f1e","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T12:55:24.849Z"}
+{"id":"spec-column-order","arm":"rewritten","order":1,"repeat":1,"session":"2a4ca128-93c7-4fe7-9f72-917ed9c47be2","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T12:56:06.383Z"}

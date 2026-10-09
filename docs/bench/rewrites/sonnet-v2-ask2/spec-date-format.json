@@ -1,0 +1,36 @@
+{
+  "questions": [
+    {
+      "question": "Which date format does finance expect in the CSV export?",
+      "header": "Date format",
+      "options": [
+        {
+          "label": "YYYY-MM-DD",
+          "adds": "Dates in the CSV export must be written as YYYY-MM-DD."
+        },
+        {
+          "label": "DD/MM/YYYY",
+          "adds": "Dates in the CSV export must be written as DD/MM/YYYY."
+        },
+        {
+          "label": "MM/DD/YYYY",
+          "adds": "Dates in the CSV export must be written as MM/DD/YYYY."
+        },
+        {
+          "label": "DD.MM.YYYY",
+          "adds": "Dates in the CSV export must be written as DD.MM.YYYY."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which date format does finance expect in the CSV export?": "DD.MM.YYYY"
+  },
+  "recommended": [
+    "YYYY-MM-DD"
+  ],
+  "rewriteBeforeAnswers": "Finance reads the CSV export by hand before importing it, so the dates in it need to match the format finance expects. Change only how dates are written in the export, and leave the other columns alone. Done when the export's dates are in that format and the existing tests still pass.",
+  "outcome": "rewritten",
+  "final": "Finance reads the CSV export by hand before importing it, so the dates in it need to match the format finance expects. Change only how dates are written in the export, and leave the other columns alone. Done when the export's dates are in that format and the existing tests still pass. Dates in the CSV export must be written as DD.MM.YYYY.",
+  "leak": []
+}

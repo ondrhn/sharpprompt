@@ -1,0 +1,1 @@
+Reorder the CSV export columns to match what finance's import expects, since the import reads columns by position. Change only the column order and leave the values and everything else in the export as it is. Done when a sample export lists the columns in that order. Column order: Amount first, then date, then category, then name..

@@ -1,0 +1,52 @@
+{
+  "questions": [
+    {
+      "question": "What field delimiter does finance's import expect?",
+      "header": "Delimiter",
+      "options": [
+        {
+          "label": "Comma",
+          "adds": "The import expects comma-separated values."
+        },
+        {
+          "label": "Semicolon",
+          "adds": "The import expects semicolon-separated values."
+        },
+        {
+          "label": "Tab",
+          "adds": "The import expects tab-separated values."
+        }
+      ]
+    },
+    {
+      "question": "What date format does finance's import expect?",
+      "header": "Date format",
+      "options": [
+        {
+          "label": "YYYY-MM-DD",
+          "adds": "Dates must be formatted as YYYY-MM-DD."
+        },
+        {
+          "label": "DD.MM.YYYY",
+          "adds": "Dates must be formatted as DD.MM.YYYY."
+        },
+        {
+          "label": "MM/DD/YYYY",
+          "adds": "Dates must be formatted as MM/DD/YYYY."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What field delimiter does finance's import expect?": "Semicolon",
+    "What date format does finance's import expect?": "I don't know the date format finance's import expects."
+  },
+  "recommended": [
+    "Comma",
+    "YYYY-MM-DD"
+  ],
+  "rewriteBeforeAnswers": "Make the CSV export work with finance's import tool. Finance imports our CSV exports into their accounting tool every month, so the export has to match what that tool reads. Done when the export output matches the format I specify and the existing tests still pass.",
+  "outcome": "rewritten",
+  "final": "Make the CSV export work with finance's import tool. Finance imports our CSV exports into their accounting tool every month, so the export has to match what that tool reads. Done when the export output matches the format I specify and the existing tests still pass. The import expects semicolon-separated values. Date format: I don't know the date format finance's import expects..",
+  "leak": []
+}

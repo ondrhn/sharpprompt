@@ -1,0 +1,1 @@
+Change the date format in the CSV export to match what finance uses. Finance reads the file by hand before importing it. Done when exported dates use that format and the current tests still pass. Leave the rest of the export as it is. Format dates in the CSV export as DD.MM.YYYY.

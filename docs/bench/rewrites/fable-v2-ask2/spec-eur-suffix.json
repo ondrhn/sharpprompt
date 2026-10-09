@@ -1,0 +1,32 @@
+{
+  "questions": [
+    {
+      "question": "Which currency should appear in the output?",
+      "header": "Currency",
+      "options": [
+        {
+          "label": "Currency already in data",
+          "adds": "Use the currency already stored with each amount."
+        },
+        {
+          "label": "EUR",
+          "adds": "Show the currency as EUR."
+        },
+        {
+          "label": "USD",
+          "adds": "Show the currency as USD."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which currency should appear in the output?": "EUR"
+  },
+  "recommended": [
+    "Currency already in data"
+  ],
+  "rewriteBeforeAnswers": "Show the currency in the CLI output, next to each amount it applies to. Done when running the CLI shows the currency beside every amount it prints.",
+  "outcome": "rewritten",
+  "final": "Show the currency in the CLI output, next to each amount it applies to. Done when running the CLI shows the currency beside every amount it prints. Show the currency as EUR.",
+  "leak": []
+}

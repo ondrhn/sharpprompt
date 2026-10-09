@@ -1,0 +1,1 @@
+Make the budget warnings fire earlier than they do now. Find the code that sends them and change when it triggers, without changing anything else. Done when the existing tests pass. The warning should fire once spending reaches 75% of the budget.

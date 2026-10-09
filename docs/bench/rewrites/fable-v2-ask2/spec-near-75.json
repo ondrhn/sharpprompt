@@ -1,0 +1,37 @@
+{
+  "questions": [
+    {
+      "question": "At what share of the budget should the warning fire?",
+      "header": "Threshold",
+      "options": [
+        {
+          "label": "80% of budget",
+          "adds": "Warn at 80% of the budget."
+        },
+        {
+          "label": "50% of budget",
+          "adds": "Warn at 50% of the budget."
+        },
+        {
+          "label": "90% of budget",
+          "adds": "Warn at 90% of the budget."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "At what share of the budget should the warning fire?": "75% of the budget."
+  },
+  "recommended": [
+    "80% of budget"
+  ],
+  "rewriteBeforeAnswers": "Make the budget warnings fire earlier than they do now, so there is more time to act before the limit is reached. Done when the existing tests pass.",
+  "outcome": "rewritten",
+  "final": "Make the budget warnings fire earlier than they do now, so there is more time to act before the limit is reached. Done when the existing tests pass. Threshold: 75% of the budget..",
+  "leak": [
+    {
+      "question": "At what share of the budget should the warning fire?",
+      "value": "75"
+    }
+  ]
+}

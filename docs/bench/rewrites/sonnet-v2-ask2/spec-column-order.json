@@ -1,0 +1,33 @@
+{
+  "questions": [
+    {
+      "question": "What column order does finance's import expect?",
+      "header": "Column order",
+      "options": [
+        {
+          "label": "Same as JSON report",
+          "adds": "Order the CSV columns the same way as the fields in the JSON report."
+        },
+        {
+          "label": "Alphabetical by name",
+          "adds": "Order the CSV columns alphabetically by column name."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What column order does finance's import expect?": "amount, date, category, name."
+  },
+  "recommended": [
+    "Same as JSON report"
+  ],
+  "rewriteBeforeAnswers": "Reorder the CSV export columns to match the order finance's import expects, since it reads columns by position. Change only the column order, not the values or other output. Done when the CSV header and rows come out in that order and the existing tests still pass.",
+  "outcome": "rewritten",
+  "final": "Reorder the CSV export columns to match the order finance's import expects, since it reads columns by position. Change only the column order, not the values or other output. Done when the CSV header and rows come out in that order and the existing tests still pass. Column order: amount, date, category, name..",
+  "leak": [
+    {
+      "question": "What column order does finance's import expect?",
+      "value": "category"
+    }
+  ]
+}

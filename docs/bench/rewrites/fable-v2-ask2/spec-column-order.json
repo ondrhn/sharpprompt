@@ -1,0 +1,33 @@
+{
+  "questions": [
+    {
+      "question": "What column order does finance's import expect?",
+      "header": "Column order",
+      "options": [
+        {
+          "label": "Date, amount, account",
+          "adds": "Order the export columns as: date, amount, account."
+        },
+        {
+          "label": "Account, date, amount",
+          "adds": "Order the export columns as: account, date, amount."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What column order does finance's import expect?": "Amount first, then date, then category, then name."
+  },
+  "recommended": [
+    "Date, amount, account"
+  ],
+  "rewriteBeforeAnswers": "Reorder the CSV export columns to match what finance's import expects, since the import reads columns by position. Change only the column order and leave the values and everything else in the export as it is. Done when a sample export lists the columns in that order.",
+  "outcome": "rewritten",
+  "final": "Reorder the CSV export columns to match what finance's import expects, since the import reads columns by position. Change only the column order and leave the values and everything else in the export as it is. Done when a sample export lists the columns in that order. Column order: Amount first, then date, then category, then name..",
+  "leak": [
+    {
+      "question": "What column order does finance's import expect?",
+      "value": "category"
+    }
+  ]
+}

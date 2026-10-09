@@ -1,0 +1,1 @@
+Finance reads the CSV export by hand before importing it, so the dates in it need to match the format finance expects. Change only how dates are written in the export, and leave the other columns alone. Done when the export's dates are in that format and the existing tests still pass. Dates in the CSV export must be written as DD.MM.YYYY.

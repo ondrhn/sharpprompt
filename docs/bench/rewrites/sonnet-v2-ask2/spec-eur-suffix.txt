@@ -1,0 +1,1 @@
+Show the currency in the CLI output. Show the currency as its ISO code, such as EUR or USD.

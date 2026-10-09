@@ -1,0 +1,1 @@
+Some rows in the bank export now have negative amounts, and they still aren't handled properly. Find where the export's amounts are parsed and make negative amounts import correctly, keeping the sign. Take the most direct reading of "properly" and state the assumption you made. Done when the existing tests pass and a negative-amount row comes through correctly.

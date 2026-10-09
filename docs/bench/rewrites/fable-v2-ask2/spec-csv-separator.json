@@ -1,0 +1,32 @@
+{
+  "questions": [
+    {
+      "question": "What file format does finance's import tool expect?",
+      "header": "File format",
+      "options": [
+        {
+          "label": "Semicolon-separated",
+          "adds": "Finance's import tool expects semicolon-separated values."
+        },
+        {
+          "label": "Comma-separated",
+          "adds": "Finance's import tool expects comma-separated values with ISO dates."
+        },
+        {
+          "label": "Tab-separated",
+          "adds": "Finance's import tool expects tab-separated values."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What file format does finance's import tool expect?": "Semicolon-separated"
+  },
+  "recommended": [
+    "Semicolon-separated"
+  ],
+  "rewriteBeforeAnswers": "Make the CSV export work with finance's import tool. Finance imports our CSV exports into their accounting tool every month, so the export has to match what that import accepts. Done when the export output matches that expectation and you report what you changed.",
+  "outcome": "rewritten",
+  "final": "Make the CSV export work with finance's import tool. Finance imports our CSV exports into their accounting tool every month, so the export has to match what that import accepts. Done when the export output matches that expectation and you report what you changed. Finance's import tool expects semicolon-separated values.",
+  "leak": []
+}

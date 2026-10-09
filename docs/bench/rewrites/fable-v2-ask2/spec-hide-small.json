@@ -1,0 +1,32 @@
+{
+  "questions": [
+    {
+      "question": "What total counts as tiny enough to hide?",
+      "header": "Threshold",
+      "options": [
+        {
+          "label": "Under 5 EUR",
+          "adds": "Hide any category whose total is under 5 EUR."
+        },
+        {
+          "label": "Under 10 EUR",
+          "adds": "Hide any category whose total is under 10 EUR."
+        },
+        {
+          "label": "Under 1% of total",
+          "adds": "Hide any category that is under 1% of the report total."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What total counts as tiny enough to hide?": "Under 10 EUR"
+  },
+  "recommended": [
+    "Under 5 EUR"
+  ],
+  "rewriteBeforeAnswers": "Hide the tiny categories from the report, the ones with only a few euros spent next to the big ones. Done when the report no longer lists them and the existing tests still pass.",
+  "outcome": "rewritten",
+  "final": "Hide the tiny categories from the report, the ones with only a few euros spent next to the big ones. Done when the report no longer lists them and the existing tests still pass. Hide any category whose total is under 10 EUR.",
+  "leak": []
+}

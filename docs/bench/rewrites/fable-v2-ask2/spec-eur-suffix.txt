@@ -1,0 +1,1 @@
+Show the currency in the CLI output, next to each amount it applies to. Done when running the CLI shows the currency beside every amount it prints. Show the currency as EUR.

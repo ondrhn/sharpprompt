@@ -1,0 +1,10 @@
+{"id":"spec-csv-separator","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","questions":1,"leaks":0,"ms":7573,"words":[9,50]}
+{"id":"spec-near-75","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","questions":1,"leaks":1,"ms":5002,"words":[9,33]}
+{"id":"spec-date-format","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","questions":1,"leaks":0,"ms":5165,"words":[12,52]}
+{"id":"spec-refunds","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","questions":0,"leaks":0,"ms":4611,"words":[8,58]}
+{"id":"spec-sort-amount","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","questions":1,"leaks":0,"ms":6783,"words":[8,40]}
+{"id":"spec-top3-other","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","questions":1,"leaks":0,"ms":6384,"words":[9,45]}
+{"id":"spec-round-005","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","questions":1,"leaks":2,"ms":5777,"words":[7,34]}
+{"id":"spec-eur-suffix","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","questions":1,"leaks":0,"ms":6001,"words":[7,32]}
+{"id":"spec-hide-small","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","questions":1,"leaks":0,"ms":5009,"words":[7,43]}
+{"id":"spec-column-order","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","questions":1,"leaks":1,"ms":6766,"words":[8,57]}

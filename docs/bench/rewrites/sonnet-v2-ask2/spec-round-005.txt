@@ -1,0 +1,1 @@
+Round the report totals so finance stops asking about the odd cents. Don't add tests or new files. Done when the totals come out rounded and the existing tests still pass. Rounding: Nearest 5 cents..

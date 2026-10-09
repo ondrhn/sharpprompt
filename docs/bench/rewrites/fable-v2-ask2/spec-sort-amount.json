@@ -1,0 +1,32 @@
+{
+  "questions": [
+    {
+      "question": "What order should the categories be sorted in?",
+      "header": "Sort order",
+      "options": [
+        {
+          "label": "Alphabetical",
+          "adds": "Sort the categories alphabetically by name."
+        },
+        {
+          "label": "By count, largest first",
+          "adds": "Sort the categories by item count, largest first."
+        },
+        {
+          "label": "By count, smallest first",
+          "adds": "Sort the categories by item count, smallest first."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What order should the categories be sorted in?": "By amount, largest first."
+  },
+  "recommended": [
+    "Alphabetical"
+  ],
+  "rewriteBeforeAnswers": "Sort the categories in the CLI output better. Find where they are printed and change only their order. When you're done, tell me where you made the change and show me the new output.",
+  "outcome": "rewritten",
+  "final": "Sort the categories in the CLI output better. Find where they are printed and change only their order. When you're done, tell me where you made the change and show me the new output. Sort order: By amount, largest first..",
+  "leak": []
+}

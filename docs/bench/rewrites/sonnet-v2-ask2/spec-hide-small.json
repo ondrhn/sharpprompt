@@ -1,0 +1,32 @@
+{
+  "questions": [
+    {
+      "question": "Below what total spend should a category be hidden?",
+      "header": "Threshold",
+      "options": [
+        {
+          "label": "10 EUR",
+          "adds": "Hide any category whose total spend is under 10 EUR."
+        },
+        {
+          "label": "5 EUR",
+          "adds": "Hide any category whose total spend is under 5 EUR."
+        },
+        {
+          "label": "50 EUR",
+          "adds": "Hide any category whose total spend is under 50 EUR."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Below what total spend should a category be hidden?": "10 EUR"
+  },
+  "recommended": [
+    "10 EUR"
+  ],
+  "rewriteBeforeAnswers": "Hide the categories with only a few euros spent from the report, so only the large ones are listed. Done when the report shows just the large categories.",
+  "outcome": "rewritten",
+  "final": "Hide the categories with only a few euros spent from the report, so only the large ones are listed. Done when the report shows just the large categories. Hide any category whose total spend is under 10 EUR.",
+  "leak": []
+}

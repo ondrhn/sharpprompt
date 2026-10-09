@@ -1,0 +1,32 @@
+{
+  "questions": [
+    {
+      "question": "At what share of the budget should the warning fire?",
+      "header": "Threshold",
+      "options": [
+        {
+          "label": "75% of budget",
+          "adds": "The warning should fire once spending reaches 75% of the budget."
+        },
+        {
+          "label": "90% of budget",
+          "adds": "The warning should fire once spending reaches 90% of the budget."
+        },
+        {
+          "label": "50% of budget",
+          "adds": "The warning should fire once spending reaches 50% of the budget."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "At what share of the budget should the warning fire?": "75% of budget"
+  },
+  "recommended": [
+    "75% of budget"
+  ],
+  "rewriteBeforeAnswers": "Make the budget warnings fire earlier than they do now. Find the code that sends them and change when it triggers, without changing anything else. Done when the existing tests pass.",
+  "outcome": "rewritten",
+  "final": "Make the budget warnings fire earlier than they do now. Find the code that sends them and change when it triggers, without changing anything else. Done when the existing tests pass. The warning should fire once spending reaches 75% of the budget.",
+  "leak": []
+}

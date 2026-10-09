@@ -1,0 +1,1 @@
+The monthly email lists every category, so people stop reading halfway through. Cut the list down to a short set of categories. Don't add tests, docs or files. Tell me which categories you removed. Done when the email shows only the kept categories and the existing tests pass. Keep the top 3 categories.

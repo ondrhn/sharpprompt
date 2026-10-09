@@ -1,0 +1,10 @@
+{"id":"spec-csv-separator","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","questions":2,"leaks":0,"ms":6565,"words":[9,62]}
+{"id":"spec-near-75","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","questions":1,"leaks":0,"ms":4659,"words":[9,42]}
+{"id":"spec-date-format","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","questions":1,"leaks":0,"ms":6176,"words":[12,62]}
+{"id":"spec-refunds","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","questions":1,"leaks":0,"ms":6061,"words":[8,59]}
+{"id":"spec-sort-amount","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","questions":1,"leaks":1,"ms":5794,"words":[8,29]}
+{"id":"spec-top3-other","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","questions":1,"leaks":0,"ms":23771,"words":[9,53]}
+{"id":"spec-round-005","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","questions":1,"leaks":1,"ms":5717,"words":[7,35]}
+{"id":"spec-eur-suffix","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","questions":1,"leaks":0,"ms":4888,"words":[7,19]}
+{"id":"spec-hide-small","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","questions":1,"leaks":0,"ms":5217,"words":[7,38]}
+{"id":"spec-column-order","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","questions":1,"leaks":1,"ms":9822,"words":[8,53]}

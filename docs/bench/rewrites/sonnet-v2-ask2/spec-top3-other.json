@@ -1,0 +1,32 @@
+{
+  "questions": [
+    {
+      "question": "How many categories should the email keep?",
+      "header": "Categories",
+      "options": [
+        {
+          "label": "3 categories",
+          "adds": "Keep the top 3 categories."
+        },
+        {
+          "label": "5 categories",
+          "adds": "Keep the top 5 categories."
+        },
+        {
+          "label": "7 categories",
+          "adds": "Keep the top 7 categories."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "How many categories should the email keep?": "3 categories"
+  },
+  "recommended": [
+    "3 categories"
+  ],
+  "rewriteBeforeAnswers": "The monthly email lists every category, so people stop reading halfway through. Cut the list down to a short set of categories. Don't add tests, docs or files. Tell me which categories you removed. Done when the email shows only the kept categories and the existing tests pass.",
+  "outcome": "rewritten",
+  "final": "The monthly email lists every category, so people stop reading halfway through. Cut the list down to a short set of categories. Don't add tests, docs or files. Tell me which categories you removed. Done when the email shows only the kept categories and the existing tests pass. Keep the top 3 categories.",
+  "leak": []
+}

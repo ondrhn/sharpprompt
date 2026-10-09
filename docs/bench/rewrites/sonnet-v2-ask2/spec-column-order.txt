@@ -1,0 +1,1 @@
+Reorder the CSV export columns to match the order finance's import expects, since it reads columns by position. Change only the column order, not the values or other output. Done when the CSV header and rows come out in that order and the existing tests still pass. Column order: amount, date, category, name..

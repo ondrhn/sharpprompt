@@ -1,0 +1,28 @@
+{
+  "questions": [
+    {
+      "question": "How should negative amounts be stored?",
+      "header": "Sign style",
+      "options": [
+        {
+          "label": "Keep the minus sign",
+          "adds": "Keep negative amounts as negative numbers, with the minus sign."
+        },
+        {
+          "label": "Positive, marked as debit",
+          "adds": "Store negative amounts as positive numbers and mark each row as a debit."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "How should negative amounts be stored?": "Keep the minus sign"
+  },
+  "recommended": [
+    "Keep the minus sign"
+  ],
+  "rewriteBeforeAnswers": "Some rows in the bank export now have negative amounts, and they are not handled correctly yet. Find where the export is parsed and fix how negative amounts are read so each row comes out right. Done when the existing test suite passes. Don't add new tests or files.",
+  "outcome": "rewritten",
+  "final": "Some rows in the bank export now have negative amounts, and they are not handled correctly yet. Find where the export is parsed and fix how negative amounts are read so each row comes out right. Done when the existing test suite passes. Don't add new tests or files. Keep negative amounts as negative numbers, with the minus sign.",
+  "leak": []
+}

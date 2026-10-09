@@ -1,0 +1,1 @@
+Hide the categories with only a few euros spent from the report, so only the large ones are listed. Done when the report shows just the large categories. Hide any category whose total spend is under 10 EUR.

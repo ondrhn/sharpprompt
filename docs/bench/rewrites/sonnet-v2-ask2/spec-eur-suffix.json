@@ -1,0 +1,28 @@
+{
+  "questions": [
+    {
+      "question": "How should the currency appear in the CLI output?",
+      "header": "Currency fmt",
+      "options": [
+        {
+          "label": "ISO code (EUR, USD)",
+          "adds": "Show the currency as its ISO code, such as EUR or USD."
+        },
+        {
+          "label": "Symbol (€, $)",
+          "adds": "Show the currency as its symbol, such as € or $."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "How should the currency appear in the CLI output?": "ISO code (EUR, USD)"
+  },
+  "recommended": [
+    "ISO code (EUR, USD)"
+  ],
+  "rewriteBeforeAnswers": "Show the currency in the CLI output.",
+  "outcome": "rewritten",
+  "final": "Show the currency in the CLI output. Show the currency as its ISO code, such as EUR or USD.",
+  "leak": []
+}

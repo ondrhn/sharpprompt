@@ -61,6 +61,18 @@ describe('prompts', () => {
     expect(forkPrompt(DRAFT, 'opus')).not.toContain('<session_facts>')
   })
 
+  test('ask wants the value only the user knows, with candidate values as options', () => {
+    for (const family of ['fable', 'sonnet'] as const) {
+      const p = completePrompt(DRAFT, family, [], [], { ask: true })
+      expect(p).toContain('the value itself is the question')
+      expect(p).toContain("ask for that expectation itself; it is not in the code")
+      expect(p).toContain('Options are candidate values')
+      expect(p).toContain('never a single example')
+      expect(p).toContain('if two values are missing, ask both')
+      expect(p).toContain('a value only the user knows is asked, not assumed')
+    }
+  })
+
   test('exemplars appear only when there are some, at most 20', () => {
     expect(forkPrompt(DRAFT, 'common')).not.toContain('<examples>')
     const list = Array.from({ length: 25 }, (_, i) => ({ original: `o${i}`, sent: `s${i}` }))
