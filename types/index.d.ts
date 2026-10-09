@@ -44,6 +44,8 @@ export type SharppromptPending = {
   kind: 'filled' | 'replaced' | 'restored'
   original: string
   rewritten: string
+  // The usage-log record of this rewrite, when the log is on.
+  log?: string
 }
 
 declare module 'claude-code' {

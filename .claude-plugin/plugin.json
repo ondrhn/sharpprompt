@@ -65,6 +65,12 @@
       "title": "Session facts",
       "description": "Give the rewriter the files this session read or changed and the last failed command, from the transcript only",
       "default": true
+    },
+    "log": {
+      "type": "boolean",
+      "title": "Usage log",
+      "description": "Keep each rewrite's draft, rewrite, questions and what you did with it (last 300), for /sharp stats and scripts/export_log.mjs. Stays on your machine",
+      "default": true
     }
   }
 }

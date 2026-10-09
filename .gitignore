@@ -1,2 +1,5 @@
 node_modules/
 .claude/
+
+# Usage exports hold the user's own prompts; committed only on purpose.
+docs/measurements/usage/*.jsonl

@@ -84,6 +84,8 @@ To load the clone in every session, add the folder to `CLAUDE_CODE_PLUGIN_DIRS` 
 
 `Ask before sending` and `Session facts` in `/config` turn the 0.2 helpers off. The `Rewrite language` setting in `/config` keeps the rewrite in the language you wrote in (`same`, the default) or always writes it in English (`en`), for when you type in another language and want Claude to get a clear English prompt.
 
+Usage log: for each prompt that goes to the rewriter, sharpprompt keeps your draft, the rewrite, any questions and your answers, the text it put in the box, what you did with it (sent as is, edited, took yours back, typed something else) and the length of the turn that followed. The last 300 stay in the plugin's store on your machine and nothing sends them anywhere. `/sharp stats` says how many there are; `node scripts/export_log.mjs` copies them into a JSONL file under `docs/measurements/usage/`, and `node scripts/usage_report.mjs <file>` turns that into a markdown summary. `Usage log` in `/config` turns it off.
+
 Modes: `fill` (default) puts the rewrite in the box. `replace` sends the rewrite and shows your original above the box with a way back. `context` sends your prompt as typed and gives Claude the rewrite beside it as a note.
 
 ## What it reaches
@@ -107,14 +109,14 @@ Validating hooks: hooks/hooks.json
   ❯ ./register.tsx answers its own command: command.run{command=sharp}
   ❯ ./register.tsx gating hook with .catch: prompt.submit
   ❯ ./register.tsx gating hook with .catch: tool.call
-  ❯ ./register.tsx calls: $.clock.after (via deliver), $.clock.now (via decide, rewrite), $.clock.sleep (via race), $.command.register, $.model.classify (via classify), $.model.complete (via rewrite), $.model.fork (via rewrite), $.prompt.fill (via deliver, restoreOriginal), $.prompt.read (via deliver), $.session.messages (via lastReply, recent, rewriteOptions), $.session.model (via record, rewrite), $.session.surface, $.state.get, $.state.set, $.store.get (via bump, exemplarsOf, push, readList, runCommand), $.store.set (via bump, deliver, push, settlePending), $.ui.ask (via askUser), $.ui.resolve
+  ❯ ./register.tsx calls: $.clock.after (via deliver), $.clock.now (via decide, rewrite, startLog), $.clock.sleep (via race), $.command.register, $.model.classify (via classify), $.model.complete (via rewrite), $.model.fork (via rewrite), $.prompt.fill (via deliver, restoreOriginal), $.prompt.read (via deliver), $.session.messages (via lastReply, recent, rewriteOptions), $.session.model (via record, rewrite, startLog), $.session.surface, $.state.get, $.state.set, $.store.get (via bump, exemplarsOf, push, readList, readLog, runCommand), $.store.set (via bump, deliver, push, settlePending, writeLog), $.ui.ask (via askUser), $.ui.resolve
   ❯ ./register.tsx state writes: sharpprompt.isOff, sharpprompt.lastDecision, sharpprompt.mode, sharpprompt.pending
   ❯ ./register.tsx state reads: sharpprompt.isOff, sharpprompt.lastDecision, sharpprompt.mode, sharpprompt.pending
 
 ✔ Validation passed
 ```
 
-That is the whole list: the model, the prompt box, the question dialog, the session's messages and model, its own state and store, the clock, its two commands and the band above the box. A prompt rewriter sees everything you type, so you should be able to check that it cannot send it anywhere.
+That is the whole list: the model, the prompt box, the question dialog, the session's messages and model, its own state and store (the usage log included), the clock, its two commands and the band above the box. A prompt rewriter sees everything you type, so you should be able to check that it cannot send it anywhere.
 
 ## Rules
 
@@ -171,7 +173,7 @@ Types come from the Claude Code build you run. Open an interactive session with 
 
 Rules and shapes live in `docs/`; `node scripts/build-bank.mjs` compiles them into `hooks/bank.ts`, because a mod cannot read files at run time. `--check` fails when the two drift.
 
-Checks: `claude plugin validate --strict .`, `claude plugin test .`, `tsc -p .`, `node scripts/build-bank.mjs --check`.
+Checks: `claude plugin validate --strict .`, `claude plugin test .`, `tsc -p .`, `node scripts/build-bank.mjs --check`, and for the export and report scripts `node --test scripts/usage.node-test.mjs`.
 
 Benchmark: `node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/bench.mjs --help`; the corpus and how to run it are in [docs/bench](docs/bench).
 

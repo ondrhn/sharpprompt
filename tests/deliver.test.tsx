@@ -304,3 +304,72 @@ test('session facts reach the rewrite prompt unless turned off', async ($, on) =
   // The test session has no rows, so no facts block.
   expect(w.forkPrompts[0]).not.toContain('<session_facts>')
 })
+
+// The usage log: one record per rewrite, filled in as the user acts on it.
+const TURN = { turnId: 't1', durationMs: 4200, isAborted: false, reason: 'answer', answer: 'Done.' } as const
+const logOf = (w: { store: Record<string, unknown> }) => (w.store.log ?? []) as Record<string, unknown>[]
+
+test('log: a rewrite sent as is, with the turn it started', async ($, on) => {
+  const w = world(on)
+  on('turn.complete', (_$, e) => ({ text: e.answer, reason: 'answer' as const }))
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  await $.prompt.submit({ text: REWRITTEN, ...typed })
+  await $.turn.complete(TURN)
+  expect(logOf(w)).toHaveLength(1)
+  expect(logOf(w)[0]).toMatchObject({ model: 'claude-opus-5-5', draft: ROUGH, verdict: 'rough', outcome: 'rewritten', via: 'fork', rewrite: REWRITTEN, delivered: 'fill', boxed: REWRITTEN, action: 'as-is', turn: { durationMs: 4200, tools: 0, asked: false, aborted: false } })
+  expect(typeof logOf(w)[0]?.at).toBe('string')
+})
+
+test('log: an edited rewrite keeps what was sent', async ($, on) => {
+  const w = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  const edited = REWRITTEN.replace('auth tests pass', 'auth and session tests pass, no new deps')
+  await $.prompt.submit({ text: edited, ...typed })
+  expect(logOf(w)[0]).toMatchObject({ action: 'edited', sent: edited })
+})
+
+test('log: r marks the original, and the turn after it is linked', async ($, on) => {
+  const w = world(on)
+  on('turn.complete', (_$, e) => ({ text: e.answer, reason: 'answer' as const }))
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  const ui = await $.ui.mount({ plugin: 'sharpprompt', surface: 'terminal', ...BAND })
+  await ui.press({ key: 'raw' })
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  await $.turn.complete(TURN)
+  expect(logOf(w)).toHaveLength(1)
+  expect(logOf(w)[0]).toMatchObject({ action: 'original', turn: { durationMs: 4200 } })
+})
+
+test('log: typing something else while the rewrite waits marks it abandoned', async ($, on) => {
+  const w = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  await $.prompt.submit({ text: 'completely unrelated question about the deploy pipeline and its caching layer', ...typed })
+  expect(logOf(w)[0]).toMatchObject({ action: 'abandoned' })
+  expect(logOf(w)).toHaveLength(2)
+})
+
+test('log: questions, answers and the text that went in the box', async ($, on) => {
+  const w = world(on, { fork: WITH_QUESTION, ask: { [SEP]: 'Comma' } })
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(logOf(w)[0]).toMatchObject({ questions: [{ question: SEP, options: ['Semicolon', 'Comma'] }], answers: { [SEP]: 'Comma' }, boxed: `${REWRITTEN} Keep the comma.` })
+})
+
+test('log: a closed dialog is recorded and the draft went as typed', async ($, on) => {
+  const w = world(on, { fork: WITH_QUESTION, ask: 'dismiss' })
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(logOf(w)[0]).toMatchObject({ answers: 'dismissed', delivered: 'typed' })
+})
+
+test('log: stats counts the records', async ($, on) => {
+  world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect((await $.command.run(cmd('sharp', 'stats'))).text).toContain('Log: 1 records')
+})
+
+test('log off: nothing is kept and stats says so', { options: { log: false } }, async ($, on) => {
+  const w = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  await $.prompt.submit({ text: REWRITTEN, ...typed })
+  expect(w.store.log).toBeUndefined()
+  expect((await $.command.run(cmd('sharp', 'stats'))).text).toContain('Log: off.')
+})

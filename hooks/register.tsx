@@ -3,6 +3,7 @@ import type { SharppromptDecision, SharppromptMode, SharppromptPending, Sharppro
 import { contextNote, describe, DROP_NOTE, EDIT_OVERLAP, HELP, overlap, parseCommand } from './flow'
 import { sessionFacts } from './facts'
 import { endsWithQuestion, gate } from './gate'
+import { clip, logLine, MAX_LOG, newRecord, patchLog, type LogRecord } from './log'
 import { applyAnswers, askInput, recommended, splitReply, type Question } from './questions'
 import { countKey, lastRewriteLine, MAX_RECORDS, summary, tokens, wordCount, type ClassifyRecord, type Counts, type RewriteRecord, type TurnRecord } from './stats'
 import { clean, completePrompt, familyOf, forkPrompt, type Exemplar, type Recent, type RewriteOptions } from './rewrite'
@@ -19,6 +20,8 @@ const modeOverride = { plugin: 'sharpprompt', key: 'mode' } as const
 // the main thread. Module state: a reload mid-turn loses one turn's record.
 let outgoing: TurnRecord['prompt'] | null = null
 let toolCalls = 0
+// The usage-log record of the prompt that started the running turn.
+let turnLog: string | null = null
 
 type Options = Readonly<Record<string, unknown>>
 
@@ -188,6 +191,45 @@ async function decide($: EngineInterface, e: PromptSubmitInput, options: Options
   return { verdict, text: e.text, classifyMs, rewrite: await rewrite($, e.text, helperModel(options), await rewriteOptions($, options)) }
 }
 
+// The usage log (hooks/log.ts). A failed write never stops the prompt.
+const logOn = (options: Options) => options.log !== false
+
+async function readLog($: EngineInterface): Promise<LogRecord[]> {
+  const v = await $.store.get('log')
+  return Array.isArray(v) ? (v as LogRecord[]) : []
+}
+
+async function writeLog($: EngineInterface, list: readonly LogRecord[]) {
+  try {
+    await $.store.set('log', list.slice(-MAX_LOG))
+  } catch {
+    // Over the store's size limit: keep the newer half.
+    await $.store.set('log', list.slice(-MAX_LOG / 2)).catch(() => {})
+  }
+}
+
+async function startLog($: EngineInterface, options: Options, d: SharppromptDecision): Promise<string | null> {
+  if (!logOn(options)) return null
+  try {
+    const now = await $.clock.now()
+    const list = await readLog($)
+    const rec = newRecord(`${now}-${list.length}`, new Date(now).toISOString(), await $.session.model(), d)
+    if (!rec) return null
+    await writeLog($, [...list, rec])
+    return rec.id
+  } catch {
+    return null
+  }
+}
+
+async function updateLog($: EngineInterface, id: string | null | undefined, patch: Partial<LogRecord>) {
+  if (!id) return
+  try {
+    const list = await readLog($)
+    if (list.some(r => r.id === id)) await writeLog($, patchLog(list, id, patch))
+  } catch {}
+}
+
 // A prompt sent while our suggestion is waiting is the user's answer to it,
 // not a new draft. When they edited it first, the edit is kept as an example
 // of how they like their prompts.
@@ -195,10 +237,19 @@ async function settlePending($: EngineInterface, text: string): Promise<'as-is' 
   const p = (await $.state.get(pending)).value
   if (!p || p.kind !== 'filled') return null
   await $.state.set(pending, null)
-  if (text === p.rewritten) return 'as-is'
-  if (overlap(text, p.rewritten) < EDIT_OVERLAP) return null
+  if (text === p.rewritten) {
+    await updateLog($, p.log, { action: 'as-is' })
+    turnLog = p.log ?? null
+    return 'as-is'
+  }
+  if (overlap(text, p.rewritten) < EDIT_OVERLAP) {
+    await updateLog($, p.log, { action: 'abandoned' })
+    return null
+  }
   const list = await exemplarsOf($)
   await $.store.set('exemplars', [...list, { original: p.rewritten, sent: text }].slice(-20))
+  await updateLog($, p.log, { action: 'edited', sent: clip(text) })
+  turnLog = p.log ?? null
   return 'edited'
 }
 
@@ -240,7 +291,7 @@ async function record($: EngineInterface, d: SharppromptDecision) {
   await push($, 'rewrites', item)
 }
 
-async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: string, mode: SharppromptMode, next: (e: PromptSubmitInput) => Promise<PromptSubmitResult>): Promise<PromptSubmitResult> {
+async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: string, mode: SharppromptMode, next: (e: PromptSubmitInput) => Promise<PromptSubmitResult>, log: string | null = null): Promise<PromptSubmitResult> {
   // VS Code and headless sessions draw no box and no band: there the rewrite
   // can only ride along as context.
   const surface = await $.session.surface()
@@ -248,24 +299,31 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
   const how = mode === 'fill' && !drawn ? 'context' : mode
 
   if (how === 'context') {
+    await updateLog($, log, { delivered: 'context', boxed: clip(rewritten) })
+    turnLog = log
     outgoing = 'context'
     return next({ ...e, context: [...(e.context ?? []), contextNote(rewritten)] })
   }
 
   if (how === 'replace') {
     await $.store.set('lastOriginal', e.text)
-    await $.state.set(pending, { kind: 'replaced', original: e.text, rewritten })
+    await $.state.set(pending, { kind: 'replaced', original: e.text, rewritten, ...(log ? { log } : {}) })
+    await updateLog($, log, { delivered: 'replace', boxed: clip(rewritten) })
+    turnLog = log
     outgoing = 'rewritten'
     return next({ ...e, text: rewritten })
   }
 
   const filled = await $.prompt.fill({ text: rewritten, mode: 'replace' })
   if (!filled.isFilled) {
+    await updateLog($, log, { delivered: 'typed' })
+    turnLog = log
     outgoing = 'typed'
     return next(e)
   }
   await $.store.set('lastOriginal', e.text)
-  await $.state.set(pending, { kind: 'filled', original: e.text, rewritten })
+  await $.state.set(pending, { kind: 'filled', original: e.text, rewritten, ...(log ? { log } : {}) })
+  await updateLog($, log, { delivered: 'fill', boxed: clip(rewritten) })
   // Since Claude Code 2.1.295 a dropped prompt is put back in the box after
   // our fill, so the box reads rewrite + original. The engine does that before
   // the next timer tick, so one tick later we set the rewrite again. On 2.1.293
@@ -286,6 +344,7 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
 async function restoreOriginal($: EngineInterface, p: SharppromptPending): Promise<boolean> {
   await $.state.set(pending, { ...p, kind: 'restored' })
   await bump($, { 'answer:original': 1 })
+  await updateLog($, p.log, { action: 'original' })
   const r = await $.prompt.fill({ text: p.original, mode: 'replace' })
   if (!r.isFilled) await $.state.set(pending, null)
   return r.isFilled
@@ -296,7 +355,9 @@ async function isRestored($: EngineInterface, text: string): Promise<boolean> {
   const p = (await $.state.get(pending)).value
   if (!p || p.kind !== 'restored') return false
   await $.state.set(pending, null)
-  return text === p.original
+  if (text !== p.original) return false
+  turnLog = p.log ?? null
+  return true
 }
 
 async function runCommand($: EngineInterface, args: string, options: Options): Promise<string> {
@@ -326,7 +387,7 @@ async function runCommand($: EngineInterface, args: string, options: Options): P
     case 'stats': {
       const v = await $.store.get('counts')
       const counts = v && typeof v === 'object' ? (v as Counts) : {}
-      return summary(counts, await readList<RewriteRecord>($, 'rewrites'), await readList<TurnRecord>($, 'turns'), await readList<ClassifyRecord>($, 'classified'))
+      return `${summary(counts, await readList<RewriteRecord>($, 'rewrites'), await readList<TurnRecord>($, 'turns'), await readList<ClassifyRecord>($, 'classified'))}\n${logLine(logOn(options), (await readLog($)).length)}`
     }
     case 'try': {
       const verdict = await classify($, c.text, helperModel(options))
@@ -355,6 +416,7 @@ export const register: Register = (on, options) => {
     const typedByUser = e.origin.kind === 'composer' || e.origin.kind === 'bridge'
     outgoing = null
     toolCalls = 0
+    turnLog = null
     if (typedByUser) {
       if (await isRestored($, e.text)) {
         const d: SharppromptDecision = { verdict: 'skip', reason: 'back-to-mine', text: e.text }
@@ -375,6 +437,7 @@ export const register: Register = (on, options) => {
     const d = await decide($, e, options, mode)
     await $.state.set(lastDecision, d)
     if (typedByUser) await record($, d)
+    const log = typedByUser ? await startLog($, options, d) : null
     let rewritten = 'rewrite' in d ? d.rewrite?.text : undefined
     const questions = ('rewrite' in d ? d.rewrite?.questions : undefined) ?? []
     if (rewritten && questions.length) {
@@ -383,16 +446,21 @@ export const register: Register = (on, options) => {
         const answers = await askUser($, questions)
         if (!answers) {
           await bump($, { 'ask:dismissed': 1 })
+          await updateLog($, log, { answers: 'dismissed', delivered: 'typed' })
+          turnLog = log
           if (typedByUser) outgoing = 'typed'
           return next(e)
         }
         await bump($, { 'ask:answered': 1 })
+        await updateLog($, log, { answers })
         rewritten = applyAnswers(rewritten, questions, answers)
       } else {
         rewritten = recommended(rewritten, questions)
       }
     }
-    if (rewritten) return deliver($, e, rewritten, mode, next)
+    if (rewritten) return deliver($, e, rewritten, mode, next, log)
+    await updateLog($, log, { delivered: 'typed' })
+    turnLog = log
     if (typedByUser) outgoing = 'typed'
     return next(d.text !== e.text ? { ...e, text: d.text } : e)
   }).catch(($, e, next) => next(e))
@@ -416,6 +484,8 @@ export const register: Register = (on, options) => {
       }
       outgoing = null
       await push($, 'turns', turn)
+      await updateLog($, turnLog, { turn: { durationMs: turn.durationMs, tools: turn.tools, asked: turn.asked, aborted: turn.aborted } })
+      turnLog = null
     }
     if (late.forks > 0) {
       const add = { 'late:forks': late.forks, 'late:input': late.usage.input_tokens + late.usage.cache_read_input_tokens + late.usage.cache_creation_input_tokens, 'late:output': late.usage.output_tokens }
