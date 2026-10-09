@@ -24,13 +24,17 @@ const BAND = {
 
 // The engine beneath the plugin, recording what reaches the model, the box
 // and the bottom of prompt.submit.
-function world(on: On, opts: { surface?: RenderSurface | null; fillOk?: boolean; label?: string; forkMs?: number; box?: (fills: string[]) => string } = {}) {
+function world(
+  on: On,
+  opts: { surface?: RenderSurface | null; fillOk?: boolean; label?: string; forkMs?: number; box?: (fills: string[]) => string; fork?: string; ask?: Record<string, string> | 'dismiss' } = {},
+) {
   const w = {
     sent: [] as { text: string; context?: readonly string[]; origin: unknown }[],
     fills: [] as string[],
     classify: 0,
     store: {} as Record<string, unknown>,
     forkPrompts: [] as string[],
+    asked: [] as unknown[],
     clock: mock.clock(on),
   }
   // A store in memory that the test can read back.
@@ -54,7 +58,14 @@ function world(on: On, opts: { surface?: RenderSurface | null; fillOk?: boolean;
   on('model.fork', async (_$, e) => {
     w.forkPrompts.push(e.prompt)
     if (opts.forkMs) await w.clock.sleep(opts.forkMs)
-    return { value: answer(REWRITTEN) }
+    return { value: answer(opts.fork ?? REWRITTEN) }
+  })
+  // $.ui.ask is a tool.call of AskUserQuestion beneath the plugin.
+  on('tool.call', { tool: 'AskUserQuestion' }, (_$, e) => {
+    w.asked.push(e)
+    if (opts.ask === 'dismiss') throw new Error('dismissed')
+    const q = (e as unknown as { questions: { question: string }[] }).questions[0]!.question
+    return { result: { questions: [], answers: { [q]: opts.ask?.[q] ?? '' } } } as never
   })
   on('prompt.read', () => ({ value: { text: opts.box ? opts.box(w.fills) : (w.fills.at(-1) ?? ''), cursor: 0 } }))
   on('prompt.fill', (_$, e) => {
@@ -252,4 +263,44 @@ test('by default the rewrite keeps the user language', async ($, on) => {
   const w = world(on)
   await $.prompt.submit({ text: ROUGH, ...typed })
   expect(w.forkPrompts[0]).not.toContain('Write the rewrite in English')
+})
+
+const SEP = 'Which separator should the CSV use?'
+const WITH_QUESTION = `${REWRITTEN}\nQUESTIONS: ${JSON.stringify([{ question: SEP, header: 'Separator', options: [{ label: 'Semicolon', adds: 'Use a semicolon as the separator.' }, { label: 'Comma', adds: 'Keep the comma.' }] }])}`
+
+test('a rewrite with a question asks it and adds the answer', async ($, on) => {
+  const w = world(on, { fork: WITH_QUESTION, ask: { [SEP]: 'Comma' } })
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(w.asked).toHaveLength(1)
+  expect(w.fills[0]).toBe(`${REWRITTEN} Keep the comma.`)
+  expect(w.forkPrompts[0]).toContain('QUESTIONS:')
+})
+
+test('closing the dialog sends the prompt as typed', async ($, on) => {
+  const w = world(on, { fork: WITH_QUESTION, ask: 'dismiss' })
+  const r = await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(r.text).toBe(ROUGH)
+  expect(w.fills).toHaveLength(0)
+  expect(w.store.counts).toMatchObject({ 'ask:dismissed': 1 })
+})
+
+test('with no dialog to show, the recommended answers are used', async ($, on) => {
+  const w = world(on, { fork: WITH_QUESTION, surface: 'vscode' })
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(w.asked).toHaveLength(0)
+  expect(w.sent[0]?.context?.[0]).toContain(`${REWRITTEN} Use a semicolon as the separator.`)
+})
+
+test('askBeforeSend off: no question instructions and no dialog', { options: { askBeforeSend: false } }, async ($, on) => {
+  const w = world(on, { fork: WITH_QUESTION })
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(w.forkPrompts[0]).not.toContain('QUESTIONS:')
+  expect(w.asked).toHaveLength(0)
+})
+
+test('session facts reach the rewrite prompt unless turned off', async ($, on) => {
+  const w = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  // The test session has no rows, so no facts block.
+  expect(w.forkPrompts[0]).not.toContain('<session_facts>')
 })

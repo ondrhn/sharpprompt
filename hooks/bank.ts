@@ -46,6 +46,10 @@ export const RULES: Record<Family, readonly Rule[]> = {
     {
       "id": "stay-short",
       "text": "The rewrite is at most twice the length of the original or 60 words, whichever is more, and never more than 180 words. Write it in the user's language and voice (or in English when the rewriteLanguage setting says en), first person, as if they had typed it carefully. No headings, no XML tags, no preamble."
+    },
+    {
+      "id": "latest-reference",
+      "text": "When a reference in the draft (\"that function\", \"the file\", \"the test\") fits more than one thing in the conversation, take the most recent one and name it, with its file when there is one."
     }
   ],
   "fable": [

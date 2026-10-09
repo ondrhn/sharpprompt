@@ -1,6 +1,6 @@
 {
   "name": "sharpprompt",
-  "version": "0.1.1",
+  "version": "0.2.0-dev",
   "description": "Lets clear prompts through untouched and rewrites rough ones into the prompt box for you to check before sending.",
   "author": {
     "name": "Onderhan Islekoglu",
@@ -53,6 +53,18 @@
         "same",
         "en"
       ]
+    },
+    "askBeforeSend": {
+      "type": "boolean",
+      "title": "Ask before sending",
+      "description": "When a rough prompt leaves out something the conversation does not answer, ask up to three questions in one dialog before the rewrite goes in the box",
+      "default": true
+    },
+    "sessionFacts": {
+      "type": "boolean",
+      "title": "Session facts",
+      "description": "Give the rewriter the files this session read or changed and the last failed command, from the transcript only",
+      "default": true
     }
   }
 }

@@ -53,6 +53,14 @@ describe('prompts', () => {
     expect(forkPrompt(DRAFT, 'sonnet', [], { language: 'same' })).not.toContain('Write the rewrite in English')
   })
 
+  test('ask adds the question instructions; facts go in their own block', () => {
+    const p = forkPrompt(DRAFT, 'opus', [], { ask: true, facts: 'Files changed this session: calc.py' })
+    expect(p).toContain('write a line QUESTIONS: followed by a JSON array')
+    expect(p).toContain('<session_facts>\nFiles changed this session: calc.py\n</session_facts>')
+    expect(forkPrompt(DRAFT, 'opus')).not.toContain('QUESTIONS:')
+    expect(forkPrompt(DRAFT, 'opus')).not.toContain('<session_facts>')
+  })
+
   test('exemplars appear only when there are some, at most 20', () => {
     expect(forkPrompt(DRAFT, 'common')).not.toContain('<examples>')
     const list = Array.from({ length: 25 }, (_, i) => ({ original: `o${i}`, sent: `s${i}` }))

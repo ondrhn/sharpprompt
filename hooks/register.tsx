@@ -1,7 +1,9 @@
 import type { EngineInterface, ModelUsage, PromptSubmitInput, PromptSubmitResult, Register } from 'claude-code'
 import type { SharppromptDecision, SharppromptMode, SharppromptPending, SharppromptRewrite, SharppromptVerdict } from '../types'
 import { contextNote, describe, DROP_NOTE, EDIT_OVERLAP, HELP, overlap, parseCommand } from './flow'
+import { sessionFacts } from './facts'
 import { endsWithQuestion, gate } from './gate'
+import { applyAnswers, askInput, recommended, splitReply, type Question } from './questions'
 import { countKey, lastRewriteLine, MAX_RECORDS, summary, tokens, wordCount, type ClassifyRecord, type Counts, type RewriteRecord, type TurnRecord } from './stats'
 import { clean, completePrompt, familyOf, forkPrompt, type Exemplar, type Recent, type RewriteOptions } from './rewrite'
 
@@ -115,10 +117,11 @@ async function rewrite($: EngineInterface, draft: string, helper: string, opts: 
   }
   if (!reply.isAnswered) return { outcome: 'error', via, ms: await took(), detail: reply.reason }
 
-  const c = clean(reply.text, draft)
+  const { body, questions } = opts.ask ? splitReply(reply.text) : { body: reply.text, questions: [] }
+  const c = clean(body, draft)
   const ms = await took()
   if ('rejected' in c) return { outcome: c.rejected, via, ms, usage: reply.usage }
-  return { outcome: 'rewritten', via, ms, usage: reply.usage, text: c.rewritten }
+  return { outcome: 'rewritten', via, ms, usage: reply.usage, text: c.rewritten, ...(questions.length ? { questions } : {}) }
 }
 
 async function lastReply($: EngineInterface): Promise<string> {
@@ -131,7 +134,31 @@ async function lastReply($: EngineInterface): Promise<string> {
 }
 
 const helperModel = (options: Options) => (typeof options.optimizerModel === 'string' ? options.optimizerModel : 'haiku')
-const rewriteOptions = (options: Options): RewriteOptions => ({ language: options.rewriteLanguage === 'en' ? 'en' : 'same' })
+// Both v0.2 helpers are on unless the user turned them off.
+async function rewriteOptions($: EngineInterface, options: Options): Promise<RewriteOptions> {
+  const facts = options.sessionFacts === false ? '' : sessionFacts(await $.session.messages())
+  return {
+    language: options.rewriteLanguage === 'en' ? 'en' : 'same',
+    ask: options.askBeforeSend !== false,
+    ...(facts ? { facts } : {}),
+  }
+}
+
+// The engine shows a plugin's questions one dialog at a time ($.ui.ask), so
+// the rewriter asks at most two. null when the person closes either dialog
+// or it cannot be shown: the prompt then goes out as typed.
+async function askUser($: EngineInterface, questions: readonly Question[]): Promise<Record<string, string> | null> {
+  const answers: Record<string, string> = {}
+  try {
+    for (const [i, q] of askInput(questions).questions.entries()) {
+      const header = questions.length > 1 ? `${q.header.slice(0, 8)} ${i + 1}/${questions.length}` : q.header
+      answers[q.question] = await $.ui.ask(q.question, { options: q.options.map(o => o.label), header })
+    }
+    return answers
+  } catch {
+    return null
+  }
+}
 
 async function modeOf($: EngineInterface, options: Options): Promise<SharppromptMode> {
   const o = (await $.state.get(modeOverride)).value
@@ -158,7 +185,7 @@ async function decide($: EngineInterface, e: PromptSubmitInput, options: Options
   const verdict = await classify($, e.text, helperModel(options))
   const classifyMs = (await $.clock.now()) - t0
   if (verdict !== 'rough') return { verdict, text: e.text, classifyMs }
-  return { verdict, text: e.text, classifyMs, rewrite: await rewrite($, e.text, helperModel(options), rewriteOptions(options)) }
+  return { verdict, text: e.text, classifyMs, rewrite: await rewrite($, e.text, helperModel(options), await rewriteOptions($, options)) }
 }
 
 // A prompt sent while our suggestion is waiting is the user's answer to it,
@@ -303,8 +330,9 @@ async function runCommand($: EngineInterface, args: string, options: Options): P
     }
     case 'try': {
       const verdict = await classify($, c.text, helperModel(options))
-      const r = await rewrite($, c.text, helperModel(options), rewriteOptions(options))
-      return `classify: ${verdict}\nrewrite: ${r.outcome} via ${r.via} in ${r.ms} ms${r.text ? `\n\n${r.text}` : ''}`
+      const r = await rewrite($, c.text, helperModel(options), await rewriteOptions($, options))
+      const asks = r.questions?.length ? `\n\nWould ask:\n${r.questions.map(q => `- ${q.question} ${q.options.map(o => o.label).join(' / ')}`).join('\n')}` : ''
+      return `classify: ${verdict}\nrewrite: ${r.outcome} via ${r.via} in ${r.ms} ms${r.text ? `\n\n${r.text}` : ''}${asks}`
     }
     case 'help':
       return `${c.error ? `${c.error}\n` : ''}${HELP}`
@@ -347,7 +375,23 @@ export const register: Register = (on, options) => {
     const d = await decide($, e, options, mode)
     await $.state.set(lastDecision, d)
     if (typedByUser) await record($, d)
-    const rewritten = 'rewrite' in d ? d.rewrite?.text : undefined
+    let rewritten = 'rewrite' in d ? d.rewrite?.text : undefined
+    const questions = ('rewrite' in d ? d.rewrite?.questions : undefined) ?? []
+    if (rewritten && questions.length) {
+      const surface = await $.session.surface()
+      if (surface === 'terminal' || surface === 'desktop') {
+        const answers = await askUser($, questions)
+        if (!answers) {
+          await bump($, { 'ask:dismissed': 1 })
+          if (typedByUser) outgoing = 'typed'
+          return next(e)
+        }
+        await bump($, { 'ask:answered': 1 })
+        rewritten = applyAnswers(rewritten, questions, answers)
+      } else {
+        rewritten = recommended(rewritten, questions)
+      }
+    }
     if (rewritten) return deliver($, e, rewritten, mode, next)
     if (typedByUser) outgoing = 'typed'
     return next(d.text !== e.text ? { ...e, text: d.text } : e)

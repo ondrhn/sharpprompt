@@ -20,12 +20,16 @@ export type SharppromptVerdict = 'clear' | 'rough' | 'timeout' | 'error'
 
 // How a rewrite went. Only 'rewritten' carries text; every other outcome
 // sends the prompt as typed.
+export type SharppromptQuestion = { question: string; header: string; options: { label: string; adds: string }[] }
+
 export type SharppromptRewrite = {
   outcome: 'rewritten' | 'keep' | 'same' | 'empty' | 'too-long' | 'timeout' | 'error'
   via: 'fork' | 'complete'
   ms: number
   text?: string
   detail?: string
+  // Gaps the rewriter wanted to ask about; their answers are added to text.
+  questions?: SharppromptQuestion[]
   usage?: { input_tokens: number; output_tokens: number; cache_read_input_tokens: number; cache_creation_input_tokens: number }
 }
 

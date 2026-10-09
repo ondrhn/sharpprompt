@@ -1,7 +1,10 @@
 # Changelog
 
-## Unreleased
+## Unreleased (0.2.0-dev)
 
+- Ask before sending: when a rough prompt leaves out something the conversation does not answer and that would change the work, up to two questions, each in its own dialog with a recommended answer; closing one sends the prompt as typed. Setting `askBeforeSend`.
+- Session facts: the rewriter is told which files this session read or changed and the last failed command, from the transcript only. Setting `sessionFacts`.
+- New rule: a reference that fits several things in the conversation means the most recent one, named.
 - New setting `rewriteLanguage`: `same` (default) keeps your language, `en` always rewrites into English.
 
 ## 0.1.1 (9 October 2026)

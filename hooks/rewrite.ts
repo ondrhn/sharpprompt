@@ -11,7 +11,15 @@ export type Exemplar = { original: string; sent: string }
 
 // 'same' keeps the user's language; 'en' asks for English whatever the
 // draft is written in (the rewriteLanguage setting).
-export type RewriteOptions = { language?: 'same' | 'en' }
+export type RewriteOptions = {
+  language?: 'same' | 'en'
+  // May the rewriter ask about gaps before the prompt goes out?
+  ask?: boolean
+  // What the session touched, from the transcript (see facts.ts).
+  facts?: string
+}
+
+const ASK = `If the draft leaves out something that the conversation does not answer and that would change the work (which file or function, which of two behaviours, a format or limit), you may ask about it, at most 2 questions. Do not ask what you can reasonably infer, and never ask whether to add tests (the answer is no). If you ask, leave those points out of the rewrite, because the answers will be added after it. Then, after the rewrite, write a line QUESTIONS: followed by a JSON array, each item {"question": "...?", "header": "<12 characters", "options": [{"label": "<1-5 words>", "adds": "<the sentence to add to the prompt if picked>"}]}, 2 to 4 options each, your recommended option first. If nothing needs asking, write no QUESTIONS line.`
 
 const ENGLISH = `Write the rewrite in English, whatever language the draft is in; this overrides the rules about the user's language. Keep file names, function names, commands and quoted text exactly as written. If the draft is not in English, do not reply ${'KEEP'}: translate it while you make it clear.`
 
@@ -63,7 +71,7 @@ export function wordLimit(draft: string): number {
 function instructions(family: Family, list: readonly Exemplar[], limit: number, opts: RewriteOptions): string {
   return `Rules:
 ${rulesFor(family)}
-${opts.language === 'en' ? `\n${ENGLISH}\n` : ''}
+${opts.language === 'en' ? `\n${ENGLISH}\n` : ''}${opts.ask ? `\n${ASK}\n` : ''}
 Task shapes, to see what a good prompt of each kind carries. Pick the closest one, or none:
 ${shapes()}
 ${exemplars(list)}
@@ -75,7 +83,7 @@ Give the rewritten prompt and nothing else, at most ${limit} words.`
 // "the file above" can be resolved without us quoting anything.
 export function forkPrompt(draft: string, family: Family, list: readonly Exemplar[] = [], opts: RewriteOptions = {}): string {
   return `This message is from the sharpprompt plugin, not the user, and is not a task to carry out. The user has typed the draft below as their next message to you and has not sent it yet. Rewrite it so it is clear for you to act on in this conversation, keeping their intent and voice.
-
+${factsBlock(opts)}
 <draft>
 ${draft}
 </draft>
@@ -85,6 +93,10 @@ ${instructions(family, list, wordLimit(draft), opts)}`
 
 export type Recent = { role: 'user' | 'assistant'; text: string }
 
+function factsBlock(opts: RewriteOptions): string {
+  return opts.facts ? `\nWhat this session has touched, from its transcript:\n<session_facts>\n${opts.facts}\n</session_facts>\n` : ''
+}
+
 // For $.model.complete when there is nothing to fork yet: no history, so we
 // hand over the last few messages ourselves, cut short.
 export function completePrompt(draft: string, family: Family, recent: readonly Recent[], list: readonly Exemplar[] = [], opts: RewriteOptions = {}): string {
@@ -93,7 +105,7 @@ export function completePrompt(draft: string, family: Family, recent: readonly R
     .map(m => `<${m.role}>${clip(m.text, 600)}</${m.role}>`)
     .join('\n')
   return `A user of Claude Code has typed the draft below as their next message and has not sent it yet. Rewrite it so it is clear for Claude to act on, keeping their intent and voice.
-${convo ? `\nThe last messages of the conversation, cut short:\n<conversation>\n${convo}\n</conversation>\n` : ''}
+${convo ? `\nThe last messages of the conversation, cut short:\n<conversation>\n${convo}\n</conversation>\n` : ''}${factsBlock(opts)}
 <draft>
 ${draft}
 </draft>

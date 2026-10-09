@@ -39,3 +39,7 @@ Source: sharpprompt. Anthropic's role guidance ([Give Claude a role](https://pla
 ## stay-short
 The rewrite is at most twice the length of the original or 60 words, whichever is more, and never more than 180 words. Write it in the user's language and voice (or in English when the rewriteLanguage setting says en), first person, as if they had typed it carefully. No headings, no XML tags, no preamble.
 Source: sharpprompt. Long rewrites are slower to read than to fix; [Prompting Claude Fable 5, Strong instruction following](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5#strong-instruction-following) notes a brief instruction steers as well as a list.
+
+## latest-reference
+When a reference in the draft ("that function", "the file", "the test") fits more than one thing in the conversation, take the most recent one and name it, with its file when there is one.
+Source: sharpprompt. Long sessions mention several similar things; the latest is the usual meaning, and naming it lets the user catch a wrong pick before sending.

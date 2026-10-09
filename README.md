@@ -47,6 +47,7 @@ Recorded with [vhs](docs/demo.tape) on Claude Code 2.1.295.
 1. A gate with no model lets through slash commands, `#` lines, prompts under 40 characters, pastes over 20,000, anything you did not type (task notifications, other sessions, plugins), and your answer to a question Claude just asked. It takes about 17 microseconds per prompt on a desktop CPU (mean of 100,000 calls; see [tests/gate.bench.test.ts](tests/gate.bench.test.ts)).
 2. A small model (Haiku by default) labels the rest clear or rough, with a 2.5 second limit. Clear goes out as typed.
 3. A rough prompt is rewritten by your session's own model, forked from the conversation so it can resolve references, and put in your box. If the model thinks the draft is fine, nothing changes.
+4. Since 0.2: when the draft leaves out something the conversation does not answer and that would change the work (which file, which of two behaviours, a format), the rewriter may ask, at most two questions, each in its own dialog with its recommended answer first. Your answers are added to the rewrite. Close a dialog and your prompt goes out as typed. It also reads, from the transcript only, which files this session read or changed and the last command that failed, so "that file" and "fix that" can be named.
 
 Anything that fails sends your prompt as typed.
 
@@ -81,7 +82,7 @@ To load the clone in every session, add the folder to `CLAUDE_CODE_PLUGIN_DIRS` 
 | `stats` | what sharpprompt has done so far (see Measurements) |
 | `try <prompt>` | shows the rewrite without sending anything |
 
-The `Rewrite language` setting in `/config` keeps the rewrite in the language you wrote in (`same`, the default) or always writes it in English (`en`), for when you type in another language and want Claude to get a clear English prompt.
+`Ask before sending` and `Session facts` in `/config` turn the 0.2 helpers off. The `Rewrite language` setting in `/config` keeps the rewrite in the language you wrote in (`same`, the default) or always writes it in English (`en`), for when you type in another language and want Claude to get a clear English prompt.
 
 Modes: `fill` (default) puts the rewrite in the box. `replace` sends the rewrite and shows your original above the box with a way back. `context` sends your prompt as typed and gives Claude the rewrite beside it as a note.
 
@@ -106,14 +107,14 @@ Validating hooks: hooks/hooks.json
   ❯ ./register.tsx answers its own command: command.run{command=sharp}
   ❯ ./register.tsx gating hook with .catch: prompt.submit
   ❯ ./register.tsx gating hook with .catch: tool.call
-  ❯ ./register.tsx calls: $.clock.after (via deliver), $.clock.now (via decide, rewrite), $.clock.sleep (via race), $.command.register, $.model.classify (via classify), $.model.complete (via rewrite), $.model.fork (via rewrite), $.prompt.fill (via deliver, restoreOriginal), $.prompt.read (via deliver), $.session.messages (via lastReply, recent), $.session.model (via record, rewrite), $.session.surface (via deliver), $.state.get, $.state.set, $.store.get (via bump, exemplarsOf, push, readList, runCommand), $.store.set (via bump, deliver, push, settlePending), $.ui.resolve
+  ❯ ./register.tsx calls: $.clock.after (via deliver), $.clock.now (via decide, rewrite), $.clock.sleep (via race), $.command.register, $.model.classify (via classify), $.model.complete (via rewrite), $.model.fork (via rewrite), $.prompt.fill (via deliver, restoreOriginal), $.prompt.read (via deliver), $.session.messages (via lastReply, recent, rewriteOptions), $.session.model (via record, rewrite), $.session.surface, $.state.get, $.state.set, $.store.get (via bump, exemplarsOf, push, readList, runCommand), $.store.set (via bump, deliver, push, settlePending), $.ui.ask (via askUser), $.ui.resolve
   ❯ ./register.tsx state writes: sharpprompt.isOff, sharpprompt.lastDecision, sharpprompt.mode, sharpprompt.pending
   ❯ ./register.tsx state reads: sharpprompt.isOff, sharpprompt.lastDecision, sharpprompt.mode, sharpprompt.pending
 
 ✔ Validation passed
 ```
 
-That is the whole list: the model, the prompt box, the session's messages and model, its own state and store, the clock, its two commands and the band above the box. A prompt rewriter sees everything you type, so you should be able to check that it cannot send it anywhere.
+That is the whole list: the model, the prompt box, the question dialog, the session's messages and model, its own state and store, the clock, its two commands and the band above the box. A prompt rewriter sees everything you type, so you should be able to check that it cannot send it anywhere.
 
 ## Rules
 
@@ -145,7 +146,7 @@ Benchmark, 30 cases, the prompt as typed against the rewrite: no measurable diff
 
 Each version gets a file in [docs/measurements](docs/measurements) with the method and the raw table, and a row here. The sample is small; none of this shows yet whether rewriting makes Claude's work better. `/sharp stats` keeps the same numbers for your own sessions, on your machine only, and compares turns that started from your text with turns that started from a rewrite.
 
-Tests: 57, in [tests/](tests), run with `claude plugin test .`.
+Tests: 76, in [tests/](tests), run with `claude plugin test .`.
 
 ## FAQ
 
