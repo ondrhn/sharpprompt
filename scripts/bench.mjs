@@ -57,11 +57,12 @@ function complete(model, prompt) {
   try {
     const r = spawnSync('claude', ['-p', '--model', model, '--tools', '', '--setting-sources', '', '--no-session-persistence', '--output-format', 'json'], {
       cwd: dir,
+      env: childEnv(),
       input: prompt,
       encoding: 'utf8',
-      timeout: 120_000,
+      timeout: 300_000,
     })
-    if (r.status !== 0) return { error: (r.stderr || r.stdout || '').slice(0, 300) }
+    if (r.status !== 0) return { error: `exit ${r.status}${r.signal ? ` ${r.signal}` : ''}${r.error ? ` ${r.error.message}` : ''}: ${(r.stderr || r.stdout || '').slice(0, 300)}` }
     const out = JSON.parse(r.stdout)
     return { text: out.result ?? '', ms: out.duration_ms, usage: out.usage }
   } finally {
@@ -345,7 +346,7 @@ function summary() {
 
 function askJSON(model, prompt) {
   const r = complete(model, prompt)
-  if (r.error) return { error: r.error }
+  if ('error' in r) return { error: r.error }
   const m = r.text.match(/\{[\s\S]*\}/)
   try {
     return m ? JSON.parse(m[0]) : { error: `no JSON in: ${r.text.slice(0, 200)}` }
