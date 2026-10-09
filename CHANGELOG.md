@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A status line under the prompt box while sharpprompt checks or rewrites a prompt, cleared when the wait ends on every path.
 - CI: a GitHub Actions workflow runs validate, the plugin tests, the bank check and the script tests on each push and pull request; `tsc` stays local.
 - README: a When it helps section, from the measurements: no difference on ordinary prompts, a gain when the prompt leaves out something only you know, and what it costs per prompt.
 - `scripts/token_overhead.mjs`: sharpprompt's own tokens (rewrites, late forks, classify estimated) against the interactive sessions' tokens in a window, by kind and at API prices. Rewrite, classify and late-fork records now carry their time.

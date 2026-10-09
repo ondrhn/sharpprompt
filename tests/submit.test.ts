@@ -15,7 +15,11 @@ function world(
   on: On,
   opts: { rows?: SessionMessage[]; label?: string | 'hang' | 'throw'; fork?: Reply; complete?: ModelCompleteResult | 'hang' } = {},
 ) {
-  const calls = { classify: 0, fork: 0, complete: 0, prompts: [] as string[], decisions: [] as any[], clock: mock.clock(on) }
+  const calls = { classify: 0, fork: 0, complete: 0, prompts: [] as string[], decisions: [] as any[], statuses: [] as (string | undefined)[], clock: mock.clock(on) }
+  on('ui.status', (_$, e) => {
+    calls.statuses.push(e.text)
+    return { value: undefined }
+  })
   mock.store(on)
   on('session.model', () => ({ value: 'claude-opus-5-5' }))
   on('session.surface', () => ({ value: 'terminal' }))
@@ -170,4 +174,51 @@ test('a peer message is left alone', async ($, on) => {
   const r = await $.prompt.submit({ text: ROUGH, wait: false, origin: { kind: 'peer' } })
   expect(r.text).toBe(ROUGH)
   expect(calls.classify).toBe(0)
+})
+
+// The status line under the box while the prompt is held.
+const CHECKING = 'sharpprompt: checking'
+const REWRITING = 'sharpprompt: rewriting'
+
+test('status: checking, then rewriting, then cleared for a rough prompt', async ($, on) => {
+  const calls = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(calls.statuses).toEqual([CHECKING, REWRITING, undefined])
+})
+
+test('status: a clear prompt clears it after the check', async ($, on) => {
+  const calls = world(on, { label: 'clear' })
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(calls.statuses).toEqual([CHECKING, undefined])
+})
+
+test('status: shown while the fork runs and cleared when it times out', async ($, on) => {
+  const calls = world(on, { fork: 'hang' })
+  const pending = $.prompt.submit({ text: ROUGH, ...typed })
+  await calls.clock.settle()
+  expect(calls.statuses).toEqual([CHECKING, REWRITING])
+  await calls.clock.advance(5_000)
+  await pending
+  expect(calls.statuses).toEqual([CHECKING, REWRITING, undefined])
+})
+
+test('status: cleared after a classifier error', async ($, on) => {
+  const calls = world(on, { label: 'throw' })
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(calls.statuses).toEqual([CHECKING, undefined])
+})
+
+test('status: cleared after a classifier that hangs', async ($, on) => {
+  const calls = world(on, { label: 'hang' })
+  const pending = $.prompt.submit({ text: ROUGH, ...typed })
+  await calls.clock.advance(2_500)
+  await pending
+  expect(calls.statuses).toEqual([CHECKING, undefined])
+})
+
+test('status: never shown when the gate or mode off lets the prompt through', { options: { mode: 'off' } }, async ($, on) => {
+  const calls = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  await $.prompt.submit({ text: 'raw: ' + ROUGH, ...typed })
+  expect(calls.statuses).toEqual([])
 })

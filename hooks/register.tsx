@@ -32,6 +32,9 @@ const CLEAR = 'clear and specific'
 const ROUGH = 'rough: vague or missing what to deliver'
 export const REWRITE_MS = 5_000
 
+export const STATUS_CHECKING = 'sharpprompt: checking'
+export const STATUS_REWRITING = 'sharpprompt: rewriting'
+
 // Tokens a fork spent after it lost its race: it finished in the background
 // and was billed anyway. Read out by the stats in a later step.
 export const late = { forks: 0, usage: { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } }
@@ -184,11 +187,19 @@ async function decide($: EngineInterface, e: PromptSubmitInput, options: Options
 
   if (endsWithQuestion(await lastReply($))) return { verdict: 'skip', reason: 'answer', text: e.text }
 
-  const t0 = await $.clock.now()
-  const verdict = await classify($, e.text, helperModel(options))
-  const classifyMs = (await $.clock.now()) - t0
-  if (verdict !== 'rough') return { verdict, text: e.text, classifyMs }
-  return { verdict, text: e.text, classifyMs, rewrite: await rewrite($, e.text, helperModel(options), await rewriteOptions($, options)) }
+  // The prompt is held while we wait, and nothing else on screen says why:
+  // a status line under the box does, and goes as soon as the wait ends.
+  try {
+    $.ui.status(STATUS_CHECKING)
+    const t0 = await $.clock.now()
+    const verdict = await classify($, e.text, helperModel(options))
+    const classifyMs = (await $.clock.now()) - t0
+    if (verdict !== 'rough') return { verdict, text: e.text, classifyMs }
+    $.ui.status(STATUS_REWRITING)
+    return { verdict, text: e.text, classifyMs, rewrite: await rewrite($, e.text, helperModel(options), await rewriteOptions($, options)) }
+  } finally {
+    $.ui.status(undefined)
+  }
 }
 
 // The usage log (hooks/log.ts). A failed write never stops the prompt.

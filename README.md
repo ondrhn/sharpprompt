@@ -59,6 +59,8 @@ Recorded with [vhs](docs/demo.tape) on Claude Code 2.1.295.
 3. A rough prompt is rewritten by your session's own model, forked from the conversation so it can resolve references, and put in your box. If the model thinks the draft is fine, nothing changes.
 4. Since 0.2: when the draft leaves out something the conversation does not answer and that would change the work (which file, which of two behaviours, a format), the rewriter may ask, at most two questions, each in its own dialog with its recommended answer first. Your answers are added to the rewrite. Close a dialog and your prompt goes out as typed. It also reads, from the transcript only, which files this session read or changed and the last command that failed, so "that file" and "fix that" can be named.
 
+While the prompt is held, a line under the box says `sharpprompt: checking` or `sharpprompt: rewriting`, and goes when the wait ends.
+
 Anything that fails sends your prompt as typed.
 
 ## Install
