@@ -107,3 +107,22 @@ test('token overhead: plugin calls against interactive session tokens in the win
     rmSync(dir, { recursive: true, force: true })
   }
 })
+
+test('clear rules: coverage and misses against labels', async () => {
+  const { cover, evaluate } = await import('./clear_rules.mjs')
+  const corpus = [
+    { text: 'fix the off-by-one in calc.py:12 so the median of an even list averages the two middle values' },
+    { text: 'make it better' },
+    { text: '1. add a test\n2. run it\nthen tell me what failed' },
+  ]
+  assert.equal(cover(corpus)['file:line'], 1)
+  assert.equal(cover(corpus)['numbered steps'], 1)
+  const r = evaluate(corpus, [
+    { text: corpus[0].text, label: 'clear' },
+    { text: corpus[1].text, label: 'rough' },
+    { text: corpus[2].text, label: 'rough' },
+  ])
+  assert.deepEqual(r.rules['file:line'], { takes: 1, misses: 0 })
+  assert.deepEqual(r.rules['numbered steps'], { takes: 1, misses: 1 })
+  assert.ok(r.kept.includes('file:line') && !r.kept.includes('numbered steps'))
+})

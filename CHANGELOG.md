@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `scripts/clear_rules.mjs`: candidate rules for letting plainly clear prompts skip the classifier, with a labelling and evaluation step. None was added: on 300 real prompts all of them together would have skipped 11.3% of classifier calls, under the 15% bar ([report](docs/measurements/latency-2026-10-10.md)).
 - Rewrite records keep the reply's length before cleaning, and the usage log keeps how long filling the box took, to see where the wait and the output tokens go.
 - A status line under the prompt box while sharpprompt checks or rewrites a prompt, cleared when the wait ends on every path.
 - CI: a GitHub Actions workflow runs validate, the plugin tests, the bank check and the script tests on each push and pull request; `tsc` stays local.
