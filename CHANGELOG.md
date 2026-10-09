@@ -1,11 +1,12 @@
 # Changelog
 
-## Unreleased (0.2.0-dev)
+## 0.2.0 (9 October 2026)
 
 - Ask before sending: when a rough prompt leaves out something the conversation does not answer and that would change the work, up to two questions, each in its own dialog with a recommended answer; closing one sends the prompt as typed. Setting `askBeforeSend`.
 - Session facts: the rewriter is told which files this session read or changed and the last failed command, from the transcript only. Setting `sessionFacts`.
 - New rule: a reference that fits several things in the conversation means the most recent one, named.
 - New setting `rewriteLanguage`: `same` (default) keeps your language, `en` always rewrites into English.
+- Benchmark v2: 30 cases where the prompt leaves out something only the user knows, with the rewrite's questions answered by an oracle model. Passing checks went from 13 to 25 of 30 on Sonnet 5.5 and from 12 to 25 on Fable 5.1, all of it in hidden-requirement and remote-reference cases ([Sonnet](docs/measurements/bench-2026-10-09-v2-sonnet-5-5.md), [Fable](docs/measurements/bench-2026-10-09-v2-fable-5-1.md)). The judge's sign test now prints four decimals.
 
 ## 0.1.1 (9 October 2026)
 
