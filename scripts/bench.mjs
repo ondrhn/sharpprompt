@@ -558,7 +558,7 @@ function judge() {
   const scored = rows.filter(x => x.scores.raw && x.scores.rewritten)
   const mean = xs => xs.reduce((s, v) => s + v, 0) / (xs.length || 1)
   const diffs = scored.map(x => x.scores.rewritten - x.scores.raw)
-  console.log(`judge ${model}: rewritten won ${w}, raw won ${l}, tie ${t}; sign test p = ${signTest(w, l).toFixed(3)} (ties left out)`)
+  console.log(`judge ${model}: rewritten won ${w}, raw won ${l}, tie ${t}; sign test p = ${signTest(w, l).toFixed(4)} (ties left out)`)
   console.log(`scores 1-5: raw mean ${mean(scored.map(x => x.scores.raw)).toFixed(2)}, rewritten mean ${mean(scored.map(x => x.scores.rewritten)).toFixed(2)}, paired difference mean ${mean(diffs).toFixed(2)} (n=${scored.length})`)
 }
 
