@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Ask instruction asks for the value the user knows (separator, threshold, count, order, currency, date format); measured on 10 hidden-spec cases ([report](docs/measurements/bench-2026-10-09-v2-ask2.md)) and 10 more written blind to the instruction ([report](docs/measurements/bench-2026-10-10-v2-spec2.md)).
+- Benchmark: a hidden-spec-2 corpus of 10 cases from a generator that never saw the instruction (`docs/bench/make_cases_spec2.md`), and `rewrites --ask old|new` to run the old and new instruction on the same cases. Passing checks, prompt as typed / old / new: Sonnet 5.5 1 / 6 / 7, Fable 5.1 2 / 1 / 6.
+
 ## 0.2.0 (9 October 2026)
 
 - Ask before sending: when a rough prompt leaves out something the conversation does not answer and that would change the work, up to two questions, each in its own dialog with a recommended answer; closing one sends the prompt as typed. Setting `askBeforeSend`.
