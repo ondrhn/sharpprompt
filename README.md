@@ -141,7 +141,7 @@ Each rule is in [docs/rules](docs/rules) with a link to the Anthropic page it co
 |---|---|---|---|---|---|---|
 | [0.1.0](docs/measurements/v0.1.0.md) | 8 Oct 2026 | 19 typed, 8 rewritten | 17 us | 1.0 s (n=9) | 3.1 s (n=6) | 0 |
 
-Benchmark, 30 cases, the prompt as typed against the rewrite: no measurable difference on Fable 5.1 (26 paired cases, [report](docs/measurements/bench-2026-10-09-fable-5-1.md)) or on Sonnet 5.5 (30 paired cases, [report](docs/measurements/bench-2026-10-09-sonnet-5-5.md)). A blind judge found none either.
+Benchmark, 30 cases, the prompt as typed against the rewrite: no measurable difference on Fable 5.1 (26 paired cases, [report](docs/measurements/bench-2026-10-09-fable-5-1.md)) or on Sonnet 5.5 (30 paired cases, [report](docs/measurements/bench-2026-10-09-sonnet-5-5.md)). A blind judge found none either. With Turkish drafts rewritten into English (Sonnet 5.5), task success and judge scores stayed the same while output tokens and time went down, mostly because the answers came back in English ([report](docs/measurements/bench-2026-10-09-tr-sonnet-5-5.md)).
 
 Each version gets a file in [docs/measurements](docs/measurements) with the method and the raw table, and a row here. The sample is small; none of this shows yet whether rewriting makes Claude's work better. `/sharp stats` keeps the same numbers for your own sessions, on your machine only, and compares turns that started from your text with turns that started from a rewrite.
 
