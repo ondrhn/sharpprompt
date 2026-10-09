@@ -9,6 +9,12 @@ export const KEEP = 'KEEP'
 
 export type Exemplar = { original: string; sent: string }
 
+// 'same' keeps the user's language; 'en' asks for English whatever the
+// draft is written in (the rewriteLanguage setting).
+export type RewriteOptions = { language?: 'same' | 'en' }
+
+const ENGLISH = `Write the rewrite in English, whatever language the draft is in; this overrides the rules about the user's language. Keep file names, function names, commands and quoted text exactly as written. If the draft is not in English, do not reply ${'KEEP'}: translate it while you make it clear.`
+
 export function familyOf(model: string): Family {
   const m = model.toLowerCase()
   for (const f of ['fable', 'opus', 'sonnet', 'haiku'] as const) {
@@ -54,10 +60,10 @@ export function wordLimit(draft: string): number {
   return Math.min(Math.max(2 * words(draft), MIN_ROOM), MAX_WORDS)
 }
 
-function instructions(family: Family, list: readonly Exemplar[], limit: number): string {
+function instructions(family: Family, list: readonly Exemplar[], limit: number, opts: RewriteOptions): string {
   return `Rules:
 ${rulesFor(family)}
-
+${opts.language === 'en' ? `\n${ENGLISH}\n` : ''}
 Task shapes, to see what a good prompt of each kind carries. Pick the closest one, or none:
 ${shapes()}
 ${exemplars(list)}
@@ -67,21 +73,21 @@ Give the rewritten prompt and nothing else, at most ${limit} words.`
 
 // For $.model.fork: the model sees the whole conversation before this, so
 // "the file above" can be resolved without us quoting anything.
-export function forkPrompt(draft: string, family: Family, list: readonly Exemplar[] = []): string {
+export function forkPrompt(draft: string, family: Family, list: readonly Exemplar[] = [], opts: RewriteOptions = {}): string {
   return `This message is from the sharpprompt plugin, not the user, and is not a task to carry out. The user has typed the draft below as their next message to you and has not sent it yet. Rewrite it so it is clear for you to act on in this conversation, keeping their intent and voice.
 
 <draft>
 ${draft}
 </draft>
 
-${instructions(family, list, wordLimit(draft))}`
+${instructions(family, list, wordLimit(draft), opts)}`
 }
 
 export type Recent = { role: 'user' | 'assistant'; text: string }
 
 // For $.model.complete when there is nothing to fork yet: no history, so we
 // hand over the last few messages ourselves, cut short.
-export function completePrompt(draft: string, family: Family, recent: readonly Recent[], list: readonly Exemplar[] = []): string {
+export function completePrompt(draft: string, family: Family, recent: readonly Recent[], list: readonly Exemplar[] = [], opts: RewriteOptions = {}): string {
   const convo = recent
     .slice(-4)
     .map(m => `<${m.role}>${clip(m.text, 600)}</${m.role}>`)
@@ -92,7 +98,7 @@ ${convo ? `\nThe last messages of the conversation, cut short:\n<conversation>\n
 ${draft}
 </draft>
 
-${instructions(family, list, wordLimit(draft))}`
+${instructions(family, list, wordLimit(draft), opts)}`
 }
 
 export type Cleaned = { rewritten: string } | { rejected: 'keep' | 'empty' | 'too-long' | 'same' }

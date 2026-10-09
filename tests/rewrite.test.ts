@@ -44,6 +44,15 @@ describe('prompts', () => {
     expect(p).not.toContain('x'.repeat(601))
   })
 
+  test('rewriteLanguage en asks for English and forbids KEEP for other languages; same leaves it out', () => {
+    const en = forkPrompt(DRAFT, 'sonnet', [], { language: 'en' })
+    expect(en).toContain('Write the rewrite in English, whatever language the draft is in')
+    expect(en).toContain('If the draft is not in English, do not reply KEEP')
+    expect(completePrompt(DRAFT, 'sonnet', [], [], { language: 'en' })).toContain('Write the rewrite in English')
+    expect(forkPrompt(DRAFT, 'sonnet')).not.toContain('Write the rewrite in English')
+    expect(forkPrompt(DRAFT, 'sonnet', [], { language: 'same' })).not.toContain('Write the rewrite in English')
+  })
+
   test('exemplars appear only when there are some, at most 20', () => {
     expect(forkPrompt(DRAFT, 'common')).not.toContain('<examples>')
     const list = Array.from({ length: 25 }, (_, i) => ({ original: `o${i}`, sent: `s${i}` }))

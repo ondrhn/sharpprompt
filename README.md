@@ -81,6 +81,8 @@ To load the clone in every session, add the folder to `CLAUDE_CODE_PLUGIN_DIRS` 
 | `stats` | what sharpprompt has done so far (see Measurements) |
 | `try <prompt>` | shows the rewrite without sending anything |
 
+The `Rewrite language` setting in `/config` keeps the rewrite in the language you wrote in (`same`, the default) or always writes it in English (`en`), for when you type in another language and want Claude to get a clear English prompt.
+
 Modes: `fill` (default) puts the rewrite in the box. `replace` sends the rewrite and shows your original above the box with a way back. `context` sends your prompt as typed and gives Claude the rewrite beside it as a note.
 
 ## What it reaches
@@ -143,7 +145,7 @@ Benchmark, 30 cases, the prompt as typed against the rewrite: no measurable diff
 
 Each version gets a file in [docs/measurements](docs/measurements) with the method and the raw table, and a row here. The sample is small; none of this shows yet whether rewriting makes Claude's work better. `/sharp stats` keeps the same numbers for your own sessions, on your machine only, and compares turns that started from your text with turns that started from a rewrite.
 
-Tests: 54, in [tests/](tests), run with `claude plugin test .`.
+Tests: 57, in [tests/](tests), run with `claude plugin test .`.
 
 ## FAQ
 

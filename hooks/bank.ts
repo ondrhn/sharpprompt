@@ -45,7 +45,7 @@ export const RULES: Record<Family, readonly Rule[]> = {
     },
     {
       "id": "stay-short",
-      "text": "The rewrite is at most twice the length of the original or 60 words, whichever is more, and never more than 180 words. Write it in the user's language and voice, first person, as if they had typed it carefully. No headings, no XML tags, no preamble."
+      "text": "The rewrite is at most twice the length of the original or 60 words, whichever is more, and never more than 180 words. Write it in the user's language and voice (or in English when the rewriteLanguage setting says en), first person, as if they had typed it carefully. No headings, no XML tags, no preamble."
     }
   ],
   "fable": [

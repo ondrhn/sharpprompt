@@ -3,7 +3,7 @@ import type { SharppromptDecision, SharppromptMode, SharppromptPending, Sharppro
 import { contextNote, describe, DROP_NOTE, EDIT_OVERLAP, HELP, overlap, parseCommand } from './flow'
 import { endsWithQuestion, gate } from './gate'
 import { countKey, lastRewriteLine, MAX_RECORDS, summary, tokens, wordCount, type ClassifyRecord, type Counts, type RewriteRecord, type TurnRecord } from './stats'
-import { clean, completePrompt, familyOf, forkPrompt, type Exemplar, type Recent } from './rewrite'
+import { clean, completePrompt, familyOf, forkPrompt, type Exemplar, type Recent, type RewriteOptions } from './rewrite'
 
 // The engine checks that $ never leaves this file, so everything that calls
 // it lives here and gate.ts stays pure.
@@ -87,13 +87,13 @@ async function exemplarsOf($: EngineInterface): Promise<Exemplar[]> {
 // Fork first: it reads the conversation from the prompt cache. With nothing
 // to fork yet (first turn, after /clear) a plain completion with the last few
 // messages pasted in. Both race the clock; losing means no rewrite.
-async function rewrite($: EngineInterface, draft: string, helper: string): Promise<SharppromptRewrite> {
+async function rewrite($: EngineInterface, draft: string, helper: string, opts: RewriteOptions = {}): Promise<SharppromptRewrite> {
   const started = await $.clock.now()
   const family = familyOf(await $.session.model())
   const examples = await exemplarsOf($)
   const took = async () => (await $.clock.now()) - started
 
-  const forking = $.model.fork({ prompt: forkPrompt(draft, family, examples) })
+  const forking = $.model.fork({ prompt: forkPrompt(draft, family, examples, opts) })
   const forked = await race($, forking, REWRITE_MS)
   if (forked === TIMEOUT) {
     void forking.then(r => ('usage' in r ? addLate(r.usage) : undefined), () => {})
@@ -106,7 +106,7 @@ async function rewrite($: EngineInterface, draft: string, helper: string): Promi
     via = 'complete'
     reply = await $.model.complete({
       model: helper,
-      prompt: completePrompt(draft, family, await recent($), examples),
+      prompt: completePrompt(draft, family, await recent($), examples, opts),
       maxTokens: 600,
       effort: 'low',
       timeoutMs: REWRITE_MS,
@@ -131,6 +131,7 @@ async function lastReply($: EngineInterface): Promise<string> {
 }
 
 const helperModel = (options: Options) => (typeof options.optimizerModel === 'string' ? options.optimizerModel : 'haiku')
+const rewriteOptions = (options: Options): RewriteOptions => ({ language: options.rewriteLanguage === 'en' ? 'en' : 'same' })
 
 async function modeOf($: EngineInterface, options: Options): Promise<SharppromptMode> {
   const o = (await $.state.get(modeOverride)).value
@@ -157,7 +158,7 @@ async function decide($: EngineInterface, e: PromptSubmitInput, options: Options
   const verdict = await classify($, e.text, helperModel(options))
   const classifyMs = (await $.clock.now()) - t0
   if (verdict !== 'rough') return { verdict, text: e.text, classifyMs }
-  return { verdict, text: e.text, classifyMs, rewrite: await rewrite($, e.text, helperModel(options)) }
+  return { verdict, text: e.text, classifyMs, rewrite: await rewrite($, e.text, helperModel(options), rewriteOptions(options)) }
 }
 
 // A prompt sent while our suggestion is waiting is the user's answer to it,
@@ -302,7 +303,7 @@ async function runCommand($: EngineInterface, args: string, options: Options): P
     }
     case 'try': {
       const verdict = await classify($, c.text, helperModel(options))
-      const r = await rewrite($, c.text, helperModel(options))
+      const r = await rewrite($, c.text, helperModel(options), rewriteOptions(options))
       return `classify: ${verdict}\nrewrite: ${r.outcome} via ${r.via} in ${r.ms} ms${r.text ? `\n\n${r.text}` : ''}`
     }
     case 'help':

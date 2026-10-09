@@ -43,6 +43,16 @@
       "title": "Minimum length",
       "description": "Prompts shorter than this pass through untouched",
       "default": 40
+    },
+    "rewriteLanguage": {
+      "type": "string",
+      "title": "Rewrite language",
+      "description": "same keeps the language you wrote in; en always rewrites into English",
+      "default": "same",
+      "options": [
+        "same",
+        "en"
+      ]
     }
   }
 }

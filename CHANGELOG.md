@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- New setting `rewriteLanguage`: `same` (default) keeps your language, `en` always rewrites into English.
+
 ## 0.1.1 (9 October 2026)
 
 - Fixed: on Claude Code 2.1.295 the dropped prompt was added back under the rewrite, so Enter sent both. The box is checked one timer tick after the drop and the rewrite is put back alone.

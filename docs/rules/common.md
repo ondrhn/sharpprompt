@@ -37,5 +37,5 @@ Do not open with a role ("You are an expert ..."). The prompt is a user turn ins
 Source: sharpprompt. Anthropic's role guidance ([Give Claude a role](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#give-claude-a-role)) is about system prompts; inside Claude Code the system prompt already exists, so a role line in the user's message adds nothing.
 
 ## stay-short
-The rewrite is at most twice the length of the original or 60 words, whichever is more, and never more than 180 words. Write it in the user's language and voice, first person, as if they had typed it carefully. No headings, no XML tags, no preamble.
+The rewrite is at most twice the length of the original or 60 words, whichever is more, and never more than 180 words. Write it in the user's language and voice (or in English when the rewriteLanguage setting says en), first person, as if they had typed it carefully. No headings, no XML tags, no preamble.
 Source: sharpprompt. Long rewrites are slower to read than to fix; [Prompting Claude Fable 5, Strong instruction following](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5#strong-instruction-following) notes a brief instruction steers as well as a list.

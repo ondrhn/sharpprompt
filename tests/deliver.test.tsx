@@ -30,6 +30,7 @@ function world(on: On, opts: { surface?: RenderSurface | null; fillOk?: boolean;
     fills: [] as string[],
     classify: 0,
     store: {} as Record<string, unknown>,
+    forkPrompts: [] as string[],
     clock: mock.clock(on),
   }
   // A store in memory that the test can read back.
@@ -50,7 +51,8 @@ function world(on: On, opts: { surface?: RenderSurface | null; fillOk?: boolean;
     w.classify++
     return { value: LABELS[opts.label ?? 'rough'] ?? opts.label }
   })
-  on('model.fork', async () => {
+  on('model.fork', async (_$, e) => {
+    w.forkPrompts.push(e.prompt)
     if (opts.forkMs) await w.clock.sleep(opts.forkMs)
     return { value: answer(REWRITTEN) }
   })
@@ -238,4 +240,16 @@ test('a box that already holds the rewrite alone is not filled again', async ($,
   await $.prompt.submit({ text: ROUGH, ...typed })
   await w.clock.settle()
   expect(w.fills).toEqual([REWRITTEN])
+})
+
+test('rewriteLanguage en reaches the rewrite prompt; the default does not', { options: { rewriteLanguage: 'en' } }, async ($, on) => {
+  const w = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(w.forkPrompts[0]).toContain('Write the rewrite in English')
+})
+
+test('by default the rewrite keeps the user language', async ($, on) => {
+  const w = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(w.forkPrompts[0]).not.toContain('Write the rewrite in English')
 })
