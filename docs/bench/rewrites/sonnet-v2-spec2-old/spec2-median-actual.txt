@@ -1,0 +1,1 @@
+Change the median calculation so it always returns an amount that was actually spent, meaning one of the real values in the data, not a figure averaged between two entries. Change nothing else, and don't add tests, docs, or files. Done when the existing tests pass. For an even number of amounts, take the lower of the two middle amounts.

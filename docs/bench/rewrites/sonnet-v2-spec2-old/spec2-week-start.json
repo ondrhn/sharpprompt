@@ -1,0 +1,28 @@
+{
+  "questions": [
+    {
+      "question": "Which week should Saturday and Sunday belong to?",
+      "header": "Week start",
+      "options": [
+        {
+          "label": "Monday start",
+          "adds": "Weeks start on Monday, so Saturday and Sunday belong to the Monday-to-Sunday week that ends on them."
+        },
+        {
+          "label": "Sunday start",
+          "adds": "Weeks start on Sunday, so Saturday belongs to the Sunday-to-Saturday week."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which week should Saturday and Sunday belong to?": "Sunday start"
+  },
+  "recommended": [
+    "Monday start"
+  ],
+  "rewriteBeforeAnswers": "Weekly grouping puts weekend days in the wrong week. Find week_key and fix it so they group into the correct week. Change only week_key, and don't add tests, docs or files. Done when the existing tests pass.",
+  "outcome": "rewritten",
+  "final": "Weekly grouping puts weekend days in the wrong week. Find week_key and fix it so they group into the correct week. Change only week_key, and don't add tests, docs or files. Done when the existing tests pass. Weeks start on Sunday, so Saturday belongs to the Sunday-to-Saturday week.",
+  "leak": []
+}

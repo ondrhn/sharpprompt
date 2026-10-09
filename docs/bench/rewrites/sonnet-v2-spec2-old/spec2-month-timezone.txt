@@ -1,0 +1,1 @@
+month_key breaks on bank timestamps. The bank now sends full UTC timestamps like 2026-02-01T03:00:00+00:00 instead of plain dates. Make month_key read them correctly. Done when the existing tests pass and month_key returns the right month for such a timestamp. Use the IANA timezone I give you as local time before taking the month.

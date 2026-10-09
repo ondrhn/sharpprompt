@@ -1,0 +1,1 @@
+The categories "Food" and "food" are counted separately. Merge them into one category so their items are counted together. Don't add tests or files. Done when the existing tests pass. Name the merged category Food.

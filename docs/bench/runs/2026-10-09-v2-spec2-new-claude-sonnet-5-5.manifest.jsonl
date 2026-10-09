@@ -1,0 +1,10 @@
+{"id":"spec2-decimal-comma","arm":"rewritten","order":1,"repeat":1,"session":"7d02dc20-9e83-45b3-95a6-379b0027b056","model":"claude-sonnet-5-5","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:05:29.182Z"}
+{"id":"spec2-week-start","arm":"rewritten","order":1,"repeat":1,"session":"769c0721-17fe-42e5-9468-6c11d1c9b089","model":"claude-sonnet-5-5","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:05:45.419Z"}
+{"id":"spec2-category-unit","arm":"rewritten","order":1,"repeat":1,"session":"6fa291ec-17d1-4772-ad92-b797d00b65a3","model":"claude-sonnet-5-5","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:06:03.799Z"}
+{"id":"spec2-month-timezone","arm":"rewritten","order":1,"repeat":1,"session":"2dfb48f6-5877-436c-b09e-8d564f77afa5","model":"claude-sonnet-5-5","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:06:21.458Z"}
+{"id":"spec2-report-language","arm":"rewritten","order":1,"repeat":1,"session":"e1f9970e-e289-4b11-b810-d4b89f78190b","model":"claude-sonnet-5-5","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:06:39.086Z"}
+{"id":"spec2-blank-name-placeholder","arm":"rewritten","order":1,"repeat":1,"session":"8895703e-1b76-4fbe-a8a1-ec56e50a817c","model":"claude-sonnet-5-5","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:07:07.518Z"}
+{"id":"spec2-median-actual","arm":"rewritten","order":1,"repeat":1,"session":"f1fcded7-938f-42de-ab85-a6b451494a90","model":"claude-sonnet-5-5","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:07:21.809Z"}
+{"id":"spec2-blank-category","arm":"rewritten","order":1,"repeat":1,"session":"af9e9e31-aa09-415a-821d-69721b533c0d","model":"claude-sonnet-5-5","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:07:35.400Z"}
+{"id":"spec2-alert-share","arm":"rewritten","order":1,"repeat":1,"session":"8bc745c9-3dc1-425b-8526-fc97af285d66","model":"claude-sonnet-5-5","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:07:59.775Z"}
+{"id":"spec2-category-case","arm":"rewritten","order":1,"repeat":1,"session":"68b4d3ba-bf11-42bf-a905-d37713efd14d","model":"claude-sonnet-5-5","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:08:14.591Z"}

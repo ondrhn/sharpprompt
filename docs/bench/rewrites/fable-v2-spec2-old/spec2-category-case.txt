@@ -1,0 +1,1 @@
+Two categories, "Food" and "food", are currently counted separately. Merge them into one category so their items are counted together. Done when the category counts show a single Food category. Keep the name "Food" for the merged category.

@@ -1,0 +1,28 @@
+{
+  "questions": [
+    {
+      "question": "Which day does a week start on?",
+      "header": "Week start",
+      "options": [
+        {
+          "label": "Monday",
+          "adds": "Weeks start on Monday, so Saturday and Sunday belong to the week that began the Monday before them."
+        },
+        {
+          "label": "Sunday",
+          "adds": "Weeks start on Sunday, so Saturday belongs to the week that began the Sunday before it, and Sunday begins a new week."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which day does a week start on?": "Sunday"
+  },
+  "recommended": [
+    "Monday"
+  ],
+  "rewriteBeforeAnswers": "Fix week_key so weekly grouping puts weekend days in the correct week. Change only week_key. Done when Saturday and Sunday rows group into the same week as the rest of their week.",
+  "outcome": "rewritten",
+  "final": "Fix week_key so weekly grouping puts weekend days in the correct week. Change only week_key. Done when Saturday and Sunday rows group into the same week as the rest of their week. Weeks start on Sunday, so Saturday belongs to the week that began the Sunday before it, and Sunday begins a new week.",
+  "leak": []
+}

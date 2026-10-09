@@ -1,0 +1,9 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Category totals from category_csv are loaded into the accounting ledger system, and the ledger import rejects them. Find the unit mismatch in the category_csv totals and fix it so the import accepts them. Done when the ledger import loads the category_csv totals without rejecting them.",
+  "outcome": "rewritten",
+  "final": "Category totals from category_csv are loaded into the accounting ledger system, and the ledger import rejects them. Find the unit mismatch in the category_csv totals and fix it so the import accepts them. Done when the ledger import loads the category_csv totals without rejecting them.",
+  "leak": []
+}

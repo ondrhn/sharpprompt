@@ -1,0 +1,1 @@
+The ledger import rejects the category totals from category_csv, which get loaded into the accounting ledger system. Make the totals match the unit the import expects so it accepts them. Done when the import accepts the category totals. Don't add tests, docs or files that were not asked for. The ledger expects the category totals in cents, so convert the CSV amounts to cents.

@@ -1,0 +1,1 @@
+Blank categories show up empty in the report. Change the report so a blank category displays a name instead. Done when a row for a blank category shows that name in the report output. Label name: Use the name "Misc"..

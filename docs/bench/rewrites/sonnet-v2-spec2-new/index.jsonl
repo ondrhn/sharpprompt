@@ -1,0 +1,10 @@
+{"id":"spec2-decimal-comma","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ask":"new","questions":0,"leaks":0,"ms":4276,"words":[11,51]}
+{"id":"spec2-week-start","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ask":"new","questions":1,"leaks":0,"ms":6159,"words":[11,54]}
+{"id":"spec2-category-unit","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ask":"new","questions":1,"leaks":0,"ms":6750,"words":[10,57]}
+{"id":"spec2-month-timezone","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ask":"new","questions":1,"leaks":2,"ms":6967,"words":[10,41]}
+{"id":"spec2-report-language","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ask":"new","questions":1,"leaks":0,"ms":6726,"words":[10,25]}
+{"id":"spec2-blank-name-placeholder","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ask":"new","questions":1,"leaks":1,"ms":6457,"words":[10,51]}
+{"id":"spec2-median-actual","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ask":"new","questions":0,"leaks":0,"ms":6062,"words":[10,43]}
+{"id":"spec2-blank-category","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ask":"new","questions":1,"leaks":1,"ms":5470,"words":[10,49]}
+{"id":"spec2-alert-share","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ask":"new","questions":0,"leaks":0,"ms":8840,"words":[10,59]}
+{"id":"spec2-category-case","outcome":"rewritten","helper":"haiku","family":"sonnet","language":"en","ask":"new","questions":1,"leaks":0,"ms":5544,"words":[10,35]}

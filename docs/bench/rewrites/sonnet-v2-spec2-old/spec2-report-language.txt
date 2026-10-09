@@ -1,0 +1,1 @@
+Translate the report labels into our team's language instead of English. Change only the label text shown in the reports. Leave the data, field names and logic as they are. Done when the labels that were in English now appear in the team's language. Language: Turkish.. Apply this to every report label in the project.

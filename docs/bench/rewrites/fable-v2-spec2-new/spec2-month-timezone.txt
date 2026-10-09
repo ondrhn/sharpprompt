@@ -1,0 +1,1 @@
+month_key breaks on the bank's new full UTC timestamps, like 2026-02-01T03:00:00+00:00, which used to be plain dates. Convert them to our local time so month_key returns the correct month. Done when month_key gives the right month for that example timestamp. Local time is America/New_York.

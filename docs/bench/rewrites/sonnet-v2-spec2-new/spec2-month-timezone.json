@@ -1,0 +1,41 @@
+{
+  "questions": [
+    {
+      "question": "Which timezone is our local time?",
+      "header": "Timezone",
+      "options": [
+        {
+          "label": "Europe/Istanbul",
+          "adds": "Convert timestamps to Europe/Istanbul time before taking the month."
+        },
+        {
+          "label": "Europe/Berlin",
+          "adds": "Convert timestamps to Europe/Berlin time before taking the month."
+        },
+        {
+          "label": "UTC",
+          "adds": "Convert timestamps to UTC before taking the month."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which timezone is our local time?": "America/New_York"
+  },
+  "recommended": [
+    "Europe/Istanbul"
+  ],
+  "rewriteBeforeAnswers": "Fix `month_key`, which breaks now that the bank sends full UTC timestamps like 2026-02-01T03:00:00+00:00 instead of plain dates. Convert each timestamp to our local time before taking its month. Done when the existing tests pass, without adding new tests.",
+  "outcome": "rewritten",
+  "final": "Fix `month_key`, which breaks now that the bank sends full UTC timestamps like 2026-02-01T03:00:00+00:00 instead of plain dates. Convert each timestamp to our local time before taking its month. Done when the existing tests pass, without adding new tests. Timezone: America/New_York.",
+  "leak": [
+    {
+      "question": "Which timezone is our local time?",
+      "value": "New_York"
+    },
+    {
+      "question": "Which timezone is our local time?",
+      "value": "america"
+    }
+  ]
+}

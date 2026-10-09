@@ -1,0 +1,9 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "In the report, blank categories currently show up empty. Give each blank category a visible name in the report, and leave categories that already have a name unchanged. Done when a report with a blank category shows that name where the empty cell was.",
+  "outcome": "rewritten",
+  "final": "In the report, blank categories currently show up empty. Give each blank category a visible name in the report, and leave categories that already have a name unchanged. Done when a report with a blank category shows that name where the empty cell was.",
+  "leak": []
+}

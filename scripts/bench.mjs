@@ -23,6 +23,8 @@
 //          --label <x>  a separate set: rewrites/<family>-<corpus>-<x>/ and runs
 //            <date>-<corpus>-<x>-<model>; the sets without a label stay as they are
 //          --arm raw|rewritten (run: only that arm)
+//          --ask old|new (rewrites, v2: the ask instruction; new is the one in
+//            hooks/rewrite.ts, old the text before 2bc8620, kept below)
 //          --pair <runs.jsonl> (summary, judge: take the arm a one-armed run
 //            lacks from this earlier run of the same model and corpus)
 //
@@ -70,7 +72,9 @@ const checksDir = corpus === 'v2' ? join(bench, 'checks-v2') : join(bench, 'chec
 function loadCases(name = corpus) {
   const all = readFileSync(join(bench, name ? `cases-${name}.jsonl` : 'cases.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l))
   const only = opt('only', '')
-  return only ? all.filter(c => only.split(',').includes(c.id)) : all
+  // An id ending in * takes every id with that start (spec2-*).
+  const match = id => only.split(',').some(o => (o.endsWith('*') ? id.startsWith(o.slice(0, -1)) : id === o))
+  return only ? all.filter(c => match(c.id)) : all
 }
 
 // Claude Code replaces its own binary when it updates, and a spawn in that
@@ -196,6 +200,18 @@ function audit() {
   console.log(`oracle leaks: ${n} cases`)
 }
 
+// The ask instruction before 2bc8620, for measuring the old against the new
+// one on cases neither was written from. hooks/rewrite.ts keeps only the new.
+const OLD_ASK = `If the draft leaves out something that the conversation does not answer and that would change the work (which file or function, which of two behaviours, a format or limit), you may ask about it, at most 2 questions. Do not ask what you can reasonably infer, and never ask whether to add tests (the answer is no). If you ask, leave those points out of the rewrite, because the answers will be added after it. Then, after the rewrite, write a line QUESTIONS: followed by a JSON array, each item {"question": "...?", "header": "<12 characters", "options": [{"label": "<1-5 words>", "adds": "<the sentence to add to the prompt if picked>"}]}, 2 to 4 options each, your recommended option first. If nothing needs asking, write no QUESTIONS line.`
+const NEW_ASK = readFileSync(join(root, 'hooks/rewrite.ts'), 'utf8').match(/^const ASK = `([^`]*)`$/m)?.[1]
+
+function withAsk(prompt) {
+  const which = opt('ask', 'new')
+  if (which === 'new') return prompt
+  if (which !== 'old' || !NEW_ASK || !prompt.includes(NEW_ASK)) throw new Error(`--ask ${which}: cannot swap the ask instruction`)
+  return prompt.replace(NEW_ASK, OLD_ASK)
+}
+
 function rewrites() {
   const helper = opt('helper', 'haiku')
   const family = opt('family', 'fable')
@@ -207,7 +223,7 @@ function rewrites() {
   for (const c of loadCases()) {
     const v2 = corpus === 'v2'
     const opts = v2 ? { language, ask: true, facts: sessionFacts(c.context), window: 100 } : { language }
-    const prompt = completePrompt(c.raw, family, c.context, [], opts)
+    const prompt = v2 ? withAsk(completePrompt(c.raw, family, c.context, [], opts)) : completePrompt(c.raw, family, c.context, [], opts)
     const r = complete(helper, prompt)
     let record = null
     if (v2 && !r.error) {
@@ -239,7 +255,7 @@ function rewrites() {
     }
     writeFileSync(join(dir, `${c.id}.txt`), text + '\n')
     if (record) writeFileSync(join(dir, `${c.id}.json`), JSON.stringify(record, null, 2) + '\n')
-    index.push({ id: c.id, outcome, helper, family, language, ...(record ? { questions: record.questions.length, leaks: record.leak.length } : {}), ...(r.error ? { error: r.error.slice(0, 200) } : {}), ms: r.ms ?? null, words: [c.raw.split(/\s+/).length, text.split(/\s+/).length] })
+    index.push({ id: c.id, outcome, helper, family, language, ...(v2 ? { ask: opt('ask', 'new') } : {}), ...(record ? { questions: record.questions.length, leaks: record.leak.length } : {}), ...(r.error ? { error: r.error.slice(0, 200) } : {}), ms: r.ms ?? null, words: [c.raw.split(/\s+/).length, text.split(/\s+/).length] })
     console.log(`${c.id}: ${outcome}${r.ms ? ` in ${r.ms} ms` : ''}`)
   }
   writeIndex(dir, index)

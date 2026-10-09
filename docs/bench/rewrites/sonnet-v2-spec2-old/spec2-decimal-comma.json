@@ -1,0 +1,49 @@
+{
+  "questions": [
+    {
+      "question": "Which numbers in the printed report are wrong?",
+      "header": "Which part",
+      "options": [
+        {
+          "label": "Totals",
+          "adds": "Only the totals are wrong."
+        },
+        {
+          "label": "Line items",
+          "adds": "The per-line values are wrong, not the totals."
+        },
+        {
+          "label": "Rounding",
+          "adds": "The figures are right, but the rounding or number format is wrong."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which numbers in the printed report are wrong?": "It's how the numbers are formatted, not their values; they need a comma as the decimal separator and no thousands separator."
+  },
+  "recommended": [
+    "Totals"
+  ],
+  "rewriteBeforeAnswers": "Finance reads the printed report from the monthly email, and some of its numbers look wrong to them. Find out what in print_report causes the wrong numbers and fix it so the printed report is correct. Done when the existing tests pass. Don't add tests, docs, or files.",
+  "outcome": "rewritten",
+  "final": "Finance reads the printed report from the monthly email, and some of its numbers look wrong to them. Find out what in print_report causes the wrong numbers and fix it so the printed report is correct. Done when the existing tests pass. Don't add tests, docs, or files. Which part: It's how the numbers are formatted, not their values; they need a comma as the decimal separator and no thousands separator..",
+  "leak": [
+    {
+      "question": "Which numbers in the printed report are wrong?",
+      "value": "comma"
+    },
+    {
+      "question": "Which numbers in the printed report are wrong?",
+      "value": "decimal"
+    },
+    {
+      "question": "Which numbers in the printed report are wrong?",
+      "value": "separator"
+    },
+    {
+      "question": "Which numbers in the printed report are wrong?",
+      "value": "thousands"
+    }
+  ]
+}

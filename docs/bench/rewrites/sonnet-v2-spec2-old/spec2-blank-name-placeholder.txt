@@ -1,0 +1,1 @@
+Some expense rows have no name, and the CSV import treats empty cells as errors. Change `report_csv` so blank name cells get filled in and the import accepts them. Leave the other columns and rows as they are. Done when importing a report with blank names succeeds. Fill value: Fill it with the text "n/a"..

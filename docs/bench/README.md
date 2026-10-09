@@ -40,4 +40,4 @@ node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs 
 node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/bench.mjs rewrites [--helper haiku] [--family fable] [--only id,id]
 ```
 
-`--family` is the rule family of the model the benchmark will run on.
+`--family` is the rule family of the model the benchmark will run on. With `--cases v2`, `--ask old` makes the rewrites with the ask instruction from before 2bc8620 (kept in `bench.mjs`) instead of the one in `hooks/rewrite.ts`; `--only spec2-*` takes every id with that start.

@@ -1,0 +1,1 @@
+Change the report labels from English into the team's language. Done when every report label shows in that language. Translate the report labels into Turkish.

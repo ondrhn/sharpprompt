@@ -1,0 +1,1 @@
+month_key breaks on the bank's timestamps, which now arrive as full UTC values like 2026-02-01T03:00:00+00:00 instead of plain dates. Make month_key parse them and convert to local time before taking the month. Done when a bank timestamp lands in the correct local month and the existing tests still pass. Convert to a fixed timezone that I will name.

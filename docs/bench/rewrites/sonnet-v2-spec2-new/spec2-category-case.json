@@ -1,0 +1,28 @@
+{
+  "questions": [
+    {
+      "question": "Which name should the merged category use?",
+      "header": "Category nam",
+      "options": [
+        {
+          "label": "Food",
+          "adds": "Name the merged category Food."
+        },
+        {
+          "label": "food",
+          "adds": "Name the merged category food."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which name should the merged category use?": "Food"
+  },
+  "recommended": [
+    "Food"
+  ],
+  "rewriteBeforeAnswers": "The categories \"Food\" and \"food\" are counted separately. Merge them into one category so their items are counted together. Don't add tests or files. Done when the existing tests pass.",
+  "outcome": "rewritten",
+  "final": "The categories \"Food\" and \"food\" are counted separately. Merge them into one category so their items are counted together. Don't add tests or files. Done when the existing tests pass. Name the merged category Food.",
+  "leak": []
+}

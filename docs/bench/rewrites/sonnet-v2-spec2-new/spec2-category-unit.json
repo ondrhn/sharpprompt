@@ -1,0 +1,32 @@
+{
+  "questions": [
+    {
+      "question": "What unit does the ledger import expect for the category totals?",
+      "header": "Ledger unit",
+      "options": [
+        {
+          "label": "Cents (minor units)",
+          "adds": "The ledger import expects the category totals in cents (minor units)."
+        },
+        {
+          "label": "Whole currency units",
+          "adds": "The ledger import expects the category totals in whole currency units, such as euros rather than cents."
+        },
+        {
+          "label": "Thousands",
+          "adds": "The ledger import expects the category totals in thousands of the currency."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What unit does the ledger import expect for the category totals?": "Cents (minor units)"
+  },
+  "recommended": [
+    "Cents (minor units)"
+  ],
+  "rewriteBeforeAnswers": "The ledger import rejects the category totals in category_csv, and those totals are loaded into our accounting ledger system. Fix the unit of those totals so the import accepts them, and change nothing else in the file's output. Done when the import accepts the category totals.",
+  "outcome": "rewritten",
+  "final": "The ledger import rejects the category totals in category_csv, and those totals are loaded into our accounting ledger system. Fix the unit of those totals so the import accepts them, and change nothing else in the file's output. Done when the import accepts the category totals. The ledger import expects the category totals in cents (minor units).",
+  "leak": []
+}

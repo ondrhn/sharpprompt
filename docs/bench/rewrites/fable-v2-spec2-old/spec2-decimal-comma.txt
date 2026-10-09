@@ -1,0 +1,1 @@
+Fix `print_report`: the numbers in the printed report look wrong to finance, who reads it from the monthly email. Find out why the figures are off and correct them. Done when `print_report` produces the right figures and the existing tests still pass. Wrong figs: The total and average figures in the report's first line look wrong..

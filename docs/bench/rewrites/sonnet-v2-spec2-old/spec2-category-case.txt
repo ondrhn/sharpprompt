@@ -1,0 +1,1 @@
+There are two food categories, "Food" and "food", that are counted separately. Merge them into one category so items from both are counted together. Done when only one food category remains and every item from either one is under it. Search the project for where the categories are defined and change that place.

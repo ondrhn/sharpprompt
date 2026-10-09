@@ -1,0 +1,32 @@
+{
+  "questions": [
+    {
+      "question": "What should report_csv write into blank name cells?",
+      "header": "Fill value",
+      "options": [
+        {
+          "label": "Fixed placeholder",
+          "adds": "Write the fixed placeholder text \"Unnamed\" into blank name cells."
+        },
+        {
+          "label": "Row ID",
+          "adds": "Write the expense row's ID into blank name cells."
+        },
+        {
+          "label": "Category name",
+          "adds": "Write the expense's category name into blank name cells."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What should report_csv write into blank name cells?": "Fixed placeholder"
+  },
+  "recommended": [
+    "Fixed placeholder"
+  ],
+  "rewriteBeforeAnswers": "Some expense rows have no name, and the CSV import treats empty cells as errors. Change report_csv so blank name cells get a value and the import accepts them. Done when the existing tests pass.",
+  "outcome": "rewritten",
+  "final": "Some expense rows have no name, and the CSV import treats empty cells as errors. Change report_csv so blank name cells get a value and the import accepts them. Done when the existing tests pass. Write the fixed placeholder text \"Unnamed\" into blank name cells.",
+  "leak": []
+}

@@ -1,0 +1,32 @@
+{
+  "questions": [
+    {
+      "question": "Which timezone is our local time?",
+      "header": "Timezone",
+      "options": [
+        {
+          "label": "Europe/Berlin",
+          "adds": "Local time is Europe/Berlin."
+        },
+        {
+          "label": "America/New_York",
+          "adds": "Local time is America/New_York."
+        },
+        {
+          "label": "Asia/Tokyo",
+          "adds": "Local time is Asia/Tokyo."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which timezone is our local time?": "America/New_York"
+  },
+  "recommended": [
+    "Europe/Berlin"
+  ],
+  "rewriteBeforeAnswers": "month_key breaks on the bank's new full UTC timestamps, like 2026-02-01T03:00:00+00:00, which used to be plain dates. Convert them to our local time so month_key returns the correct month. Done when month_key gives the right month for that example timestamp.",
+  "outcome": "rewritten",
+  "final": "month_key breaks on the bank's new full UTC timestamps, like 2026-02-01T03:00:00+00:00, which used to be plain dates. Convert them to our local time so month_key returns the correct month. Done when month_key gives the right month for that example timestamp. Local time is America/New_York.",
+  "leak": []
+}

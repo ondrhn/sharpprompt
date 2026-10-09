@@ -1,0 +1,1 @@
+The ledger import rejects the category CSV totals. Find where those totals are produced and fix the amount unit so the ledger accepts them. Done when the ledger import accepts the category totals. The ledger expects each category total in cents, as integer minor units.

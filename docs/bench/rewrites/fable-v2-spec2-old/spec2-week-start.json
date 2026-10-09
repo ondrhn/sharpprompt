@@ -1,0 +1,28 @@
+{
+  "questions": [
+    {
+      "question": "Which day should a week start on?",
+      "header": "Week start",
+      "options": [
+        {
+          "label": "Monday start",
+          "adds": "Weeks start on Monday, so Sunday belongs to the week that ends on it."
+        },
+        {
+          "label": "Sunday start",
+          "adds": "Weeks start on Sunday, so Saturday and Sunday belong to the same week."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which day should a week start on?": "Sunday start"
+  },
+  "recommended": [
+    "Monday start"
+  ],
+  "rewriteBeforeAnswers": "Fix week_key so weekend days are grouped into the correct week instead of the wrong one. Done when weekly grouping is correct and the existing tests still pass.",
+  "outcome": "rewritten",
+  "final": "Fix week_key so weekend days are grouped into the correct week instead of the wrong one. Done when weekly grouping is correct and the existing tests still pass. Weeks start on Sunday, so Saturday and Sunday belong to the same week.",
+  "leak": []
+}

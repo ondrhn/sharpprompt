@@ -1,0 +1,10 @@
+{"id":"spec2-decimal-comma","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","ask":"new","questions":0,"leaks":0,"ms":4470,"words":[11,39]}
+{"id":"spec2-week-start","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","ask":"new","questions":1,"leaks":0,"ms":4958,"words":[11,54]}
+{"id":"spec2-category-unit","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","ask":"new","questions":1,"leaks":0,"ms":4042,"words":[10,45]}
+{"id":"spec2-month-timezone","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","ask":"new","questions":1,"leaks":0,"ms":7164,"words":[10,44]}
+{"id":"spec2-report-language","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","ask":"new","questions":1,"leaks":0,"ms":5680,"words":[10,25]}
+{"id":"spec2-blank-name-placeholder","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","ask":"new","questions":1,"leaks":1,"ms":4244,"words":[10,37]}
+{"id":"spec2-median-actual","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","ask":"new","questions":0,"leaks":0,"ms":5248,"words":[10,49]}
+{"id":"spec2-blank-category","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","ask":"new","questions":1,"leaks":1,"ms":4948,"words":[10,40]}
+{"id":"spec2-alert-share","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","ask":"new","questions":0,"leaks":0,"ms":3425,"words":[10,55]}
+{"id":"spec2-category-case","outcome":"rewritten","helper":"haiku","family":"fable","language":"en","ask":"new","questions":0,"leaks":0,"ms":5523,"words":[10,36]}

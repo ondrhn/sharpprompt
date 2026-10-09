@@ -1,0 +1,9 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Change the report labels to the team's language instead of English. Find where the labels are defined and translate them, leaving the report data and logic unchanged. Done when every report label is translated and the existing tests still pass.",
+  "outcome": "rewritten",
+  "final": "Change the report labels to the team's language instead of English. Find where the labels are defined and translate them, leaving the report data and logic unchanged. Done when every report label is translated and the existing tests still pass.",
+  "leak": []
+}

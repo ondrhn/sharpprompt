@@ -1,0 +1,1 @@
+Change the report so a blank category shows a name instead of an empty cell. Done when a report with a blank category shows that name and the existing tests still pass. Don't add tests or files that weren't asked for. Blank label: Blank categories should be named "Misc"..

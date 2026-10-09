@@ -1,0 +1,37 @@
+{
+  "questions": [
+    {
+      "question": "What label should blank categories show in the report?",
+      "header": "Label name",
+      "options": [
+        {
+          "label": "Uncategorized",
+          "adds": "Use the label \"Uncategorized\" for blank categories."
+        },
+        {
+          "label": "Unknown",
+          "adds": "Use the label \"Unknown\" for blank categories."
+        },
+        {
+          "label": "Other",
+          "adds": "Use the label \"Other\" for blank categories."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What label should blank categories show in the report?": "Label them \"Misc\"."
+  },
+  "recommended": [
+    "Uncategorized"
+  ],
+  "rewriteBeforeAnswers": "Blank categories appear empty in the report. Find where the report renders categories and have blank ones show a label instead. Done when a blank category displays that label in the report and the existing tests still pass.",
+  "outcome": "rewritten",
+  "final": "Blank categories appear empty in the report. Find where the report renders categories and have blank ones show a label instead. Done when a blank category displays that label in the report and the existing tests still pass. Label name: Label them \"Misc\"..",
+  "leak": [
+    {
+      "question": "What label should blank categories show in the report?",
+      "value": "Misc"
+    }
+  ]
+}

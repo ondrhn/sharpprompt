@@ -1,0 +1,37 @@
+{
+  "questions": [
+    {
+      "question": "What should the blank names be filled with?",
+      "header": "Fill value",
+      "options": [
+        {
+          "label": "Unnamed",
+          "adds": "Fill each blank name with \"Unnamed\"."
+        },
+        {
+          "label": "Dash",
+          "adds": "Fill each blank name with \"-\"."
+        },
+        {
+          "label": "No name",
+          "adds": "Fill each blank name with \"(no name)\"."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What should the blank names be filled with?": "Fill them with the text \"n/a\"."
+  },
+  "recommended": [
+    "Unnamed"
+  ],
+  "rewriteBeforeAnswers": "Some expense rows have no name, and the import tool treats empty name cells as errors. In report_csv, fill in the blank names so the CSV import accepts those rows. Done when the import runs without errors on rows that had no name.",
+  "outcome": "rewritten",
+  "final": "Some expense rows have no name, and the import tool treats empty name cells as errors. In report_csv, fill in the blank names so the CSV import accepts those rows. Done when the import runs without errors on rows that had no name. Fill value: Fill them with the text \"n/a\"..",
+  "leak": [
+    {
+      "question": "What should the blank names be filled with?",
+      "value": "n/a"
+    }
+  ]
+}

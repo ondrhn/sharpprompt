@@ -1,0 +1,37 @@
+{
+  "questions": [
+    {
+      "question": "What should a blank name be filled with?",
+      "header": "Fill value",
+      "options": [
+        {
+          "label": "Placeholder text",
+          "adds": "Fill each blank name with the placeholder text \"Unnamed\"."
+        },
+        {
+          "label": "Category name",
+          "adds": "Fill each blank name with the expense's category."
+        },
+        {
+          "label": "Row ID",
+          "adds": "Fill each blank name with the row's ID."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What should a blank name be filled with?": "Fill it with the text \"n/a\"."
+  },
+  "recommended": [
+    "Placeholder text"
+  ],
+  "rewriteBeforeAnswers": "Some expense rows have no name, and the CSV import treats empty cells as errors. Change `report_csv` so blank name cells get filled in and the import accepts them. Leave the other columns and rows as they are. Done when importing a report with blank names succeeds.",
+  "outcome": "rewritten",
+  "final": "Some expense rows have no name, and the CSV import treats empty cells as errors. Change `report_csv` so blank name cells get filled in and the import accepts them. Leave the other columns and rows as they are. Done when importing a report with blank names succeeds. Fill value: Fill it with the text \"n/a\"..",
+  "leak": [
+    {
+      "question": "What should a blank name be filled with?",
+      "value": "n/a"
+    }
+  ]
+}

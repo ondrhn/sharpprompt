@@ -1,0 +1,1 @@
+Fix week_key so weekly grouping puts weekend days in the correct week. Change only week_key. Done when Saturday and Sunday rows group into the same week as the rest of their week. Weeks start on Sunday, so Saturday belongs to the week that began the Sunday before it, and Sunday begins a new week.

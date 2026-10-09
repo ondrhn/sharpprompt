@@ -1,0 +1,9 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Check every median calculation in this project and make sure each one uses only amounts that were really spent. Fix any that don't, and list what you changed. Done when the existing tests pass.",
+  "outcome": "rewritten",
+  "final": "Check every median calculation in this project and make sure each one uses only amounts that were really spent. Fix any that don't, and list what you changed. Done when the existing tests pass.",
+  "leak": []
+}

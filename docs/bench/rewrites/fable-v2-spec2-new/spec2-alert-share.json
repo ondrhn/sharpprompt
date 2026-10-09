@@ -1,0 +1,9 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Change the budget alert messages to show each amount as a percentage of its budget limit instead of the raw amount. The alerts go to a chat channel where nobody remembers what each limit is, so the percentage is what readers need. Done when the alert text shows a percentage and the existing tests pass.",
+  "outcome": "rewritten",
+  "final": "Change the budget alert messages to show each amount as a percentage of its budget limit instead of the raw amount. The alerts go to a chat channel where nobody remembers what each limit is, so the percentage is what readers need. Done when the alert text shows a percentage and the existing tests pass.",
+  "leak": []
+}

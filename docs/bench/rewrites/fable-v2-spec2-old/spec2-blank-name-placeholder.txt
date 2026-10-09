@@ -1,0 +1,1 @@
+Some expense rows have no name, and the CSV import treats empty cells as errors. Change report_csv so blank name cells get a value and the import accepts them. Done when the existing tests pass. Write the fixed placeholder text "Unnamed" into blank name cells.

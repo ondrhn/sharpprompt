@@ -1,0 +1,33 @@
+{
+  "questions": [
+    {
+      "question": "What name should blank categories show in the report?",
+      "header": "Label name",
+      "options": [
+        {
+          "label": "Uncategorized",
+          "adds": "Show blank categories as \"Uncategorized\" in the report."
+        },
+        {
+          "label": "Other",
+          "adds": "Show blank categories as \"Other\" in the report."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What name should blank categories show in the report?": "Use the name \"Misc\"."
+  },
+  "recommended": [
+    "Uncategorized"
+  ],
+  "rewriteBeforeAnswers": "Blank categories show up empty in the report. Change the report so a blank category displays a name instead. Done when a row for a blank category shows that name in the report output.",
+  "outcome": "rewritten",
+  "final": "Blank categories show up empty in the report. Change the report so a blank category displays a name instead. Done when a row for a blank category shows that name in the report output. Label name: Use the name \"Misc\"..",
+  "leak": [
+    {
+      "question": "What name should blank categories show in the report?",
+      "value": "Misc"
+    }
+  ]
+}

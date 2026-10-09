@@ -1,0 +1,1 @@
+Make sure the median should always be an amount that was really spent. Find where the median is calculated in this project. If it can return a value that no actual spending matches, change it to return one of the real spent amounts. Done when the existing tests pass.

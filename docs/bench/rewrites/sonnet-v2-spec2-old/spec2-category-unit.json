@@ -1,0 +1,28 @@
+{
+  "questions": [
+    {
+      "question": "Which unit does the ledger import expect for the category totals?",
+      "header": "Ledger unit",
+      "options": [
+        {
+          "label": "Cents",
+          "adds": "The ledger expects the category totals in cents, so convert the CSV amounts to cents."
+        },
+        {
+          "label": "Whole currency units",
+          "adds": "The ledger expects the category totals in whole currency units, so convert the CSV amounts from cents."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which unit does the ledger import expect for the category totals?": "Cents"
+  },
+  "recommended": [
+    "Cents"
+  ],
+  "rewriteBeforeAnswers": "The ledger import rejects the category totals from category_csv, which get loaded into the accounting ledger system. Make the totals match the unit the import expects so it accepts them. Done when the import accepts the category totals. Don't add tests, docs or files that were not asked for.",
+  "outcome": "rewritten",
+  "final": "The ledger import rejects the category totals from category_csv, which get loaded into the accounting ledger system. Make the totals match the unit the import expects so it accepts them. Done when the import accepts the category totals. Don't add tests, docs or files that were not asked for. The ledger expects the category totals in cents, so convert the CSV amounts to cents.",
+  "leak": []
+}

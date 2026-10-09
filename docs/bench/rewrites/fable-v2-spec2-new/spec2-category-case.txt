@@ -1,0 +1,1 @@
+Find where the categories "Food" and "food" are defined and merge them into one category, so items under either name are counted together. Done when only one food category remains and the existing tests still pass.

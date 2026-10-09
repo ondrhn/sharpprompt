@@ -1,0 +1,53 @@
+{
+  "questions": [
+    {
+      "question": "Which language should the labels use?",
+      "header": "Language",
+      "options": [
+        {
+          "label": "German",
+          "adds": "Write the labels in German."
+        },
+        {
+          "label": "Spanish",
+          "adds": "Write the labels in Spanish."
+        },
+        {
+          "label": "Other language",
+          "adds": "Write the labels in the language I name here."
+        }
+      ]
+    },
+    {
+      "question": "Which reports should change?",
+      "header": "Scope",
+      "options": [
+        {
+          "label": "Every report",
+          "adds": "Apply this to every report label in the project."
+        },
+        {
+          "label": "One report",
+          "adds": "Apply this only to the report I name."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which language should the labels use?": "Turkish.",
+    "Which reports should change?": "Every report"
+  },
+  "recommended": [
+    "German",
+    "Every report"
+  ],
+  "rewriteBeforeAnswers": "Translate the report labels into our team's language instead of English. Change only the label text shown in the reports. Leave the data, field names and logic as they are. Done when the labels that were in English now appear in the team's language.",
+  "outcome": "rewritten",
+  "final": "Translate the report labels into our team's language instead of English. Change only the label text shown in the reports. Leave the data, field names and logic as they are. Done when the labels that were in English now appear in the team's language. Language: Turkish.. Apply this to every report label in the project.",
+  "leak": [
+    {
+      "question": "Which language should the labels use?",
+      "value": "turkish"
+    }
+  ]
+}

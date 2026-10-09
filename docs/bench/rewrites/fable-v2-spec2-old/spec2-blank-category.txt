@@ -1,0 +1,1 @@
+Blank categories appear empty in the report. Find where the report renders categories and have blank ones show a label instead. Done when a blank category displays that label in the report and the existing tests still pass. Label name: Label them "Misc"..

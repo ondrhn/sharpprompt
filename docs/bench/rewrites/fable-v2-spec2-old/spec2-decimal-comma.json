@@ -1,0 +1,41 @@
+{
+  "questions": [
+    {
+      "question": "Which figures look wrong?",
+      "header": "Wrong figs",
+      "options": [
+        {
+          "label": "Totals only",
+          "adds": "Only the totals are wrong."
+        },
+        {
+          "label": "Line items",
+          "adds": "The individual line items are wrong."
+        },
+        {
+          "label": "Not sure yet",
+          "adds": "I have not yet checked which figures are wrong."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which figures look wrong?": "The total and average figures in the report's first line look wrong."
+  },
+  "recommended": [
+    "Totals only"
+  ],
+  "rewriteBeforeAnswers": "Fix `print_report`: the numbers in the printed report look wrong to finance, who reads it from the monthly email. Find out why the figures are off and correct them. Done when `print_report` produces the right figures and the existing tests still pass.",
+  "outcome": "rewritten",
+  "final": "Fix `print_report`: the numbers in the printed report look wrong to finance, who reads it from the monthly email. Find out why the figures are off and correct them. Done when `print_report` produces the right figures and the existing tests still pass. Wrong figs: The total and average figures in the report's first line look wrong..",
+  "leak": [
+    {
+      "question": "Which figures look wrong?",
+      "value": "average"
+    },
+    {
+      "question": "Which figures look wrong?",
+      "value": "first"
+    }
+  ]
+}

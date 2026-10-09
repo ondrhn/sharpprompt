@@ -1,0 +1,10 @@
+{"id":"spec2-decimal-comma","arm":"rewritten","order":1,"repeat":1,"session":"9ce70350-96bc-4a47-8aff-b00e7643bb07","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:05:55.487Z"}
+{"id":"spec2-week-start","arm":"rewritten","order":1,"repeat":1,"session":"1a8b2bcf-4863-4d84-acc2-ef27b5dac5c1","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:07:04.350Z"}
+{"id":"spec2-category-unit","arm":"rewritten","order":1,"repeat":1,"session":"f3ff0e72-b4e7-48ad-a363-c21c632277cf","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:07:42.056Z"}
+{"id":"spec2-month-timezone","arm":"rewritten","order":1,"repeat":1,"session":"aece1858-29e8-4a0c-a564-b6aefe15e829","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:08:22.053Z"}
+{"id":"spec2-report-language","arm":"rewritten","order":1,"repeat":1,"session":"f9ded617-7c69-474f-bafa-45a3ce5e4881","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:09:07.495Z"}
+{"id":"spec2-blank-name-placeholder","arm":"rewritten","order":1,"repeat":1,"session":"04a270a2-766e-4ea7-8887-be5f0d6d1bf2","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:09:44.654Z"}
+{"id":"spec2-median-actual","arm":"rewritten","order":1,"repeat":1,"session":"67f5a3f4-7e2e-4037-9107-541df6d4ef61","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:10:05.196Z"}
+{"id":"spec2-blank-category","arm":"rewritten","order":1,"repeat":1,"session":"90c738d4-6413-41be-a360-3cf377912db4","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:10:42.111Z"}
+{"id":"spec2-alert-share","arm":"rewritten","order":1,"repeat":1,"session":"25367bd1-e51d-401e-8ed6-0f56912fe23a","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:11:43.664Z"}
+{"id":"spec2-category-case","arm":"rewritten","order":1,"repeat":1,"session":"1c57fc0f-aa2d-4331-b26c-83ccc20c6f76","model":"claude-fable-5-1","claudeCode":"2.1.295 (Claude Code)","at":"2026-10-09T17:12:47.008Z"}

@@ -1,0 +1,1 @@
+Fix week_key so weekend days are grouped into the correct week instead of the wrong one. Done when weekly grouping is correct and the existing tests still pass. Weeks start on Sunday, so Saturday and Sunday belong to the same week.

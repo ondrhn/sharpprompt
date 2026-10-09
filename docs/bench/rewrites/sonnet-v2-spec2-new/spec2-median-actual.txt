@@ -1,0 +1,1 @@
+Change the median calculation so it always returns an amount that was really spent, meaning a value that appears in the data, not one computed between two entries. Leave the rest of the behaviour as it is. Done when the existing tests pass.

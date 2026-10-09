@@ -1,0 +1,1 @@
+Fix `month_key`, which breaks now that the bank sends full UTC timestamps like 2026-02-01T03:00:00+00:00 instead of plain dates. Convert each timestamp to our local time before taking its month. Done when the existing tests pass, without adding new tests. Timezone: America/New_York.

@@ -1,0 +1,37 @@
+{
+  "questions": [
+    {
+      "question": "What name should blank categories show in the report?",
+      "header": "Blank label",
+      "options": [
+        {
+          "label": "Uncategorized",
+          "adds": "Blank categories should show the name \"Uncategorized\"."
+        },
+        {
+          "label": "Other",
+          "adds": "Blank categories should show the name \"Other\"."
+        },
+        {
+          "label": "(none)",
+          "adds": "Blank categories should show the name \"(none)\"."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What name should blank categories show in the report?": "Blank categories should be named \"Misc\"."
+  },
+  "recommended": [
+    "Uncategorized"
+  ],
+  "rewriteBeforeAnswers": "Change the report so a blank category shows a name instead of an empty cell. Done when a report with a blank category shows that name and the existing tests still pass. Don't add tests or files that weren't asked for.",
+  "outcome": "rewritten",
+  "final": "Change the report so a blank category shows a name instead of an empty cell. Done when a report with a blank category shows that name and the existing tests still pass. Don't add tests or files that weren't asked for. Blank label: Blank categories should be named \"Misc\"..",
+  "leak": [
+    {
+      "question": "What name should blank categories show in the report?",
+      "value": "Misc"
+    }
+  ]
+}

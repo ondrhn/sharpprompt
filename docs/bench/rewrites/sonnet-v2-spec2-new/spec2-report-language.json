@@ -1,0 +1,32 @@
+{
+  "questions": [
+    {
+      "question": "Which language should the report labels use?",
+      "header": "Language",
+      "options": [
+        {
+          "label": "Turkish",
+          "adds": "Translate the report labels into Turkish."
+        },
+        {
+          "label": "German",
+          "adds": "Translate the report labels into German."
+        },
+        {
+          "label": "Spanish",
+          "adds": "Translate the report labels into Spanish."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which language should the report labels use?": "Turkish"
+  },
+  "recommended": [
+    "Turkish"
+  ],
+  "rewriteBeforeAnswers": "Change the report labels from English into the team's language. Done when every report label shows in that language.",
+  "outcome": "rewritten",
+  "final": "Change the report labels from English into the team's language. Done when every report label shows in that language. Translate the report labels into Turkish.",
+  "leak": []
+}

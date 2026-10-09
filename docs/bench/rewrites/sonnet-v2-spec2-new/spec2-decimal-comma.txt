@@ -1,0 +1,1 @@
+Finance reads the printed report from the monthly email and says its numbers look wrong. Find out why the numbers printed by print_report are off and fix print_report so they are correct. Don't add tests or files. Done when the printed numbers match the underlying data and the existing tests pass.

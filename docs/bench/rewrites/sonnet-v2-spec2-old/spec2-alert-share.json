@@ -1,0 +1,9 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Change budget alerts to show each amount as a share of its budget, not raw amounts. Alerts go to a chat channel where nobody remembers what each limit is, so the share must make sense alone. Find the code that builds the alert lines and update it. Done when the alerts show percentages and the existing tests pass.",
+  "outcome": "rewritten",
+  "final": "Change budget alerts to show each amount as a share of its budget, not raw amounts. Alerts go to a chat channel where nobody remembers what each limit is, so the share must make sense alone. Find the code that builds the alert lines and update it. Done when the alerts show percentages and the existing tests pass.",
+  "leak": []
+}

@@ -1,0 +1,32 @@
+{
+  "questions": [
+    {
+      "question": "For an even number of amounts, which real value should the median use?",
+      "header": "Which median",
+      "options": [
+        {
+          "label": "Lower middle value",
+          "adds": "For an even number of amounts, take the lower of the two middle amounts."
+        },
+        {
+          "label": "Upper middle value",
+          "adds": "For an even number of amounts, take the upper of the two middle amounts."
+        },
+        {
+          "label": "Closest to mean",
+          "adds": "For an even number of amounts, take whichever of the two middle amounts is closer to the mean."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "For an even number of amounts, which real value should the median use?": "Lower middle value"
+  },
+  "recommended": [
+    "Lower middle value"
+  ],
+  "rewriteBeforeAnswers": "Change the median calculation so it always returns an amount that was actually spent, meaning one of the real values in the data, not a figure averaged between two entries. Change nothing else, and don't add tests, docs, or files. Done when the existing tests pass.",
+  "outcome": "rewritten",
+  "final": "Change the median calculation so it always returns an amount that was actually spent, meaning one of the real values in the data, not a figure averaged between two entries. Change nothing else, and don't add tests, docs, or files. Done when the existing tests pass. For an even number of amounts, take the lower of the two middle amounts.",
+  "leak": []
+}
