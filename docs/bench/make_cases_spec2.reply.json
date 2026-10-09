@@ -1,0 +1,285 @@
+[
+ {
+  "id": "spec2-bank-encoding",
+  "family": "hidden-spec-2",
+  "shape": "fix",
+  "context": [
+   {
+    "role": "user",
+    "text": "The rows file comes straight from the bank's export tool, which runs on an old Windows machine."
+   }
+  ],
+  "raw": "cli crashes on the bank's rows file, fix how it reads it",
+  "hidden": {
+   "spec": "cli.main must read the rows file as Windows-1252 (cp1252), so a category like 'Caf\u00e9' saved in cp1252 prints as 'Caf\u00e9'.",
+   "why": "The file's text encoding is not stated anywhere, and utf-8 is the usual guess."
+  },
+  "expect": "main opens the rows file with encoding cp1252 and prints accented names correctly.",
+  "check": {
+   "script": "spec2_bank_encoding.py",
+   "args": []
+  },
+  "check_source": "import os\nimport tempfile\n\nfrom _common import check, cli\n\np = os.path.join(tempfile.mkdtemp(), \"bank.csv\")\nwith open(p, \"wb\") as f:\n    f.write(\"date,name,category,amount\\n2026-09-02,Bakery,Caf\u00e9,10.00\\n\".encode(\"cp1252\"))\nout = cli(p)\ncheck(\"  Caf\u00e9: 10.00\" in out, \"cp1252 file should be read correctly\")\nprint(\"ok\")\n"
+ },
+ {
+  "id": "spec2-decimal-comma",
+  "family": "hidden-spec-2",
+  "shape": "fix",
+  "context": [
+   {
+    "role": "user",
+    "text": "Finance reads the printed report from the monthly email."
+   }
+  ],
+  "raw": "numbers in the printed report look wrong to finance, fix print_report",
+  "hidden": {
+   "spec": "print_report must print numbers with a comma as the decimal separator and no thousands separator; for rows.csv the first line is 'total 1051,50  average 262,88'.",
+   "why": "Which number style finance expects is not in the code or the request."
+  },
+  "expect": "print_report writes totals and averages with a decimal comma.",
+  "check": {
+   "script": "spec2_decimal_comma.py",
+   "args": []
+  },
+  "check_source": "from _common import check, cli\n\nout = cli()\nfirst = out.splitlines()[0]\ncheck(first == \"total 1051,50  average 262,88\", f\"unexpected first line: {first!r}\")\nprint(\"ok\")\n"
+ },
+ {
+  "id": "spec2-week-start",
+  "family": "hidden-spec-2",
+  "shape": "fix",
+  "context": [],
+  "raw": "weekly grouping puts the weekend in the wrong week, fix week_key",
+  "hidden": {
+   "spec": "week_key must treat Sunday as the first day of the week: 2026-01-04 (Sunday) through 2026-01-10 (Saturday) share a key, and 2026-01-11 starts a new one.",
+   "why": "The code uses ISO weeks, and which day the team's week starts on is not written anywhere."
+  },
+  "expect": "week_key groups weeks from Sunday to Saturday.",
+  "check": {
+   "script": "spec2_week_start.py",
+   "args": []
+  },
+  "check_source": "from _common import check\nfrom dates import week_key\n\ncheck(week_key(\"2026-01-04\") == week_key(\"2026-01-10\"), \"Sunday..Saturday should share a key\")\ncheck(week_key(\"2026-01-04\") == week_key(\"2026-01-05\"), \"Sunday and Monday should share a key\")\ncheck(week_key(\"2026-01-03\") != week_key(\"2026-01-04\"), \"Saturday and next Sunday should differ\")\ncheck(week_key(\"2026-01-10\") != week_key(\"2026-01-11\"), \"next Sunday starts a new week\")\nprint(\"ok\")\n"
+ },
+ {
+  "id": "spec2-category-unit",
+  "family": "hidden-spec-2",
+  "shape": "fix",
+  "context": [
+   {
+    "role": "user",
+    "text": "Category totals from category_csv get loaded into the accounting ledger system."
+   }
+  ],
+  "raw": "ledger import rejects the category csv totals, fix the unit",
+  "hidden": {
+   "spec": "category_csv must write each total as an integer number of cents, e.g. category_csv({'Food': 42.5}) has the line 'Food,4250'.",
+   "why": "The unit the ledger expects is not in the code or the request; whole currency units would also be a plausible guess."
+  },
+  "expect": "category_csv writes totals as integer cents.",
+  "check": {
+   "script": "spec2_category_unit.py",
+   "args": []
+  },
+  "check_source": "from _common import check\nfrom export import category_csv\n\nlines = category_csv({\"Food\": 42.5, \"Fun\": 9.0}).splitlines()\ncheck(lines == [\"category,total\", \"Food,4250\", \"Fun,900\"], f\"unexpected lines: {lines!r}\")\nprint(\"ok\")\n"
+ },
+ {
+  "id": "spec2-month-timezone",
+  "family": "hidden-spec-2",
+  "shape": "fix",
+  "context": [
+   {
+    "role": "user",
+    "text": "The bank now sends full UTC timestamps like 2026-02-01T03:00:00+00:00 instead of plain dates."
+   }
+  ],
+  "raw": "month_key breaks on bank timestamps, convert to our local time",
+  "hidden": {
+   "spec": "month_key must convert a UTC timestamp to America/New_York before taking the month: '2026-02-01T03:00:00+00:00' -> '2026-01'.",
+   "why": "The team's local time zone is not stated anywhere in the project."
+  },
+  "expect": "month_key converts timestamps to New York time before extracting the month.",
+  "check": {
+   "script": "spec2_month_timezone.py",
+   "args": []
+  },
+  "check_source": "from _common import check\nfrom dates import month_key\n\ncheck(month_key(\"2026-02-01T03:00:00+00:00\") == \"2026-01\", \"Feb 1 03:00 UTC is still January in New York\")\ncheck(month_key(\"2026-07-01T02:00:00+00:00\") == \"2026-06\", \"Jul 1 02:00 UTC is still June in New York\")\ncheck(month_key(\"2026-03-15T12:00:00+00:00\") == \"2026-03\", \"midday stays in March\")\nprint(\"ok\")\n"
+ },
+ {
+  "id": "spec2-report-language",
+  "family": "hidden-spec-2",
+  "shape": "fix",
+  "context": [],
+  "raw": "report labels should be in the team's language, not english",
+  "hidden": {
+   "spec": "print_report's first line must use Turkish labels: 'toplam 1051.50  ortalama 262.88' for rows.csv.",
+   "why": "The team's language and exact wording are not in the code or the request."
+  },
+  "expect": "print_report labels total and average as toplam and ortalama.",
+  "check": {
+   "script": "spec2_report_language.py",
+   "args": []
+  },
+  "check_source": "from _common import check, cli\n\nfirst = cli().splitlines()[0]\ncheck(first == \"toplam 1051.50  ortalama 262.88\", f\"unexpected first line: {first!r}\")\nprint(\"ok\")\n"
+ },
+ {
+  "id": "spec2-blank-name-placeholder",
+  "family": "hidden-spec-2",
+  "shape": "fix",
+  "context": [
+   {
+    "role": "user",
+    "text": "Some expense rows have no name and the import tool treats empty cells as errors."
+   }
+  ],
+  "raw": "blank names break the csv import, fill them in report_csv",
+  "hidden": {
+   "spec": "report_csv must write 'n/a' when a row's name is empty, e.g. '2026-09-02,n/a,Food,12.40'.",
+   "why": "The placeholder text is the team's choice; '-', 'unknown' or 'N/A' are equally reasonable."
+  },
+  "expect": "report_csv writes n/a for empty names.",
+  "check": {
+   "script": "spec2_blank_name_placeholder.py",
+   "args": []
+  },
+  "check_source": "from _common import check\nfrom export import report_csv\n\nrows = [{\"date\": \"2026-09-02\", \"name\": \"\", \"category\": \"Food\", \"amount\": \"12.40\"}]\nlines = report_csv(rows).splitlines()\ncheck(lines[1] == \"2026-09-02,n/a,Food,12.40\", f\"unexpected row: {lines[1]!r}\")\nprint(\"ok\")\n"
+ },
+ {
+  "id": "spec2-no-header",
+  "family": "hidden-spec-2",
+  "shape": "fix",
+  "context": [
+   {
+    "role": "user",
+    "text": "The importer on the other side is configured with its own column names."
+   }
+  ],
+  "raw": "importer already has its own headings, adjust report_csv for it",
+  "hidden": {
+   "spec": "report_csv must not write a header line: its output starts directly with the first data row.",
+   "why": "Whether the header should be dropped is not stated; the request only says the importer has its own headings."
+  },
+  "expect": "report_csv output contains only data rows.",
+  "check": {
+   "script": "spec2_no_header.py",
+   "args": []
+  },
+  "check_source": "from _common import check\nfrom export import report_csv\n\nrows = [{\"date\": \"2026-09-02\", \"name\": \"Bakery\", \"category\": \"Food\", \"amount\": \"12.40\"}]\nlines = report_csv(rows).splitlines()\ncheck(lines == [\"2026-09-02,Bakery,Food,12.40\"], f\"unexpected lines: {lines!r}\")\ncheck(report_csv([]).strip() == \"\", \"empty input should give no lines\")\nprint(\"ok\")\n"
+ },
+ {
+  "id": "spec2-median-actual",
+  "family": "hidden-spec-2",
+  "shape": "fix",
+  "context": [],
+  "raw": "median should always be an amount that was really spent",
+  "hidden": {
+   "spec": "median of an even-length list must return the lower of the two middle values: median([1, 2, 3, 4]) == 2 and median([10, 20]) == 10.",
+   "why": "Choosing the lower or the upper middle value is arbitrary and the request does not say which."
+  },
+  "expect": "median returns the lower middle element for even-length lists.",
+  "check": {
+   "script": "spec2_median_actual.py",
+   "args": []
+  },
+  "check_source": "from _common import check\nfrom calc import median\n\ncheck(median([1, 2, 3, 4]) == 2, \"median of 1..4 should be 2\")\ncheck(median([10, 20]) == 10, \"median of 10,20 should be 10\")\ncheck(median([5, 1, 3]) == 3, \"odd length unchanged\")\nprint(\"ok\")\n"
+ },
+ {
+  "id": "spec2-blank-category",
+  "family": "hidden-spec-2",
+  "shape": "fix",
+  "context": [],
+  "raw": "blank categories show up empty in the report, name them",
+  "hidden": {
+   "spec": "normalize_category must return 'Misc' for a blank or whitespace-only category name.",
+   "why": "The fallback category name is the team's choice; 'Other' or 'Uncategorized' would be as reasonable."
+  },
+  "expect": "normalize_category maps blank names to Misc.",
+  "check": {
+   "script": "spec2_blank_category.py",
+   "args": []
+  },
+  "check_source": "from _common import check\nfrom budget import normalize_category\n\ncheck(normalize_category(\"\") == \"Misc\", \"empty should be Misc\")\ncheck(normalize_category(\"   \") == \"Misc\", \"whitespace should be Misc\")\ncheck(normalize_category(\" Food \") == \"Food\", \"normal names still stripped\")\nprint(\"ok\")\n"
+ },
+ {
+  "id": "spec2-alert-share",
+  "family": "hidden-spec-2",
+  "shape": "fix",
+  "context": [
+   {
+    "role": "user",
+    "text": "The alert lines go into a chat channel where nobody remembers what each limit is."
+   }
+  ],
+  "raw": "budget alerts should show a share instead of raw amounts",
+  "hidden": {
+   "spec": "alerts must format each line as the spent share of the limit with no decimals: alerts({'Food': 150.0}, {'Food': 100.0}) == ['Food: 150%'].",
+   "why": "Whether the share is of the limit or the overspend, and its exact wording, is not stated."
+  },
+  "expect": "alerts returns lines like 'Food: 150%'.",
+  "check": {
+   "script": "spec2_alert_share.py",
+   "args": []
+  },
+  "check_source": "from _common import check\nfrom budget import alerts\n\nres = alerts({\"Food\": 150.0}, {\"Food\": 100.0})\ncheck(res == [\"Food: 150%\"], f\"unexpected alerts: {res!r}\")\nprint(\"ok\")\n"
+ },
+ {
+  "id": "spec2-empty-average",
+  "family": "hidden-spec-2",
+  "shape": "fix",
+  "context": [
+   {
+    "role": "user",
+    "text": "The monthly email job also runs for months where nothing was spent."
+   }
+  ],
+  "raw": "monthly report crashes when there are no rows, fix average",
+  "hidden": {
+   "spec": "average of an empty list must return 0 (so report([])['average'] == 0).",
+   "why": "The value for an empty input is a choice; None or NaN would also be reasonable."
+  },
+  "expect": "average returns 0 for an empty list and report no longer crashes.",
+  "check": {
+   "script": "spec2_empty_average.py",
+   "args": []
+  },
+  "check_source": "from _common import check\nfrom calc import average, report\n\ncheck(average([]) == 0, \"average of nothing should be 0\")\ncheck(report([])[\"average\"] == 0, \"empty report average should be 0\")\ncheck(average([1, 2, 3]) == 2, \"normal average unchanged\")\nprint(\"ok\")\n"
+ },
+ {
+  "id": "spec2-category-case",
+  "family": "hidden-spec-2",
+  "shape": "fix",
+  "context": [],
+  "raw": "Food and food are counted as separate categories, merge them",
+  "hidden": {
+   "spec": "normalize_category must return the name stripped and lowercased, so ' Food ' becomes 'food' and the report shows one 'food' line (42.50 for rows.csv).",
+   "why": "Which spelling the merged category keeps (Food, food or FOOD) is not stated."
+  },
+  "expect": "normalize_category lowercases names so the report merges Food and food into 'food'.",
+  "check": {
+   "script": "spec2_category_case.py",
+   "args": []
+  },
+  "check_source": "from _common import check, cli\nfrom budget import normalize_category\n\ncheck(normalize_category(\" Food \") == \"food\", \"should be stripped and lowercase\")\ncheck(normalize_category(\"food\") == \"food\", \"lowercase stays\")\nout = cli()\ncheck(\"  food: 42.50\" in out, \"merged lowercase line missing\")\ncheck(\"Food:\" not in out, \"capitalised line should be gone\")\nprint(\"ok\")\n"
+ },
+ {
+  "id": "spec2-csv-line-ending",
+  "family": "hidden-spec-2",
+  "shape": "fix",
+  "context": [
+   {
+    "role": "user",
+    "text": "The people using report_csv open the file in an old Windows tool."
+   }
+  ],
+  "raw": "windows tool shows the whole report_csv export as one line",
+  "hidden": {
+   "spec": "report_csv must end every line, including the last, with '\\r\\n' and contain no bare '\\n'.",
+   "why": "The line terminator the tool needs is not stated in the code or the request."
+  },
+  "expect": "report_csv uses CRLF line endings throughout.",
+  "check": {
+   "script": "spec2_csv_line_ending.py",
+   "args": []
+  },
+  "check_source": "from _common import check\nfrom export import report_csv\n\nrows = [{\"date\": \"2026-09-02\", \"name\": \"Bakery\", \"category\": \"Food\", \"amount\": \"12.40\"}]\nout = report_csv(rows)\ncheck(out == \"date,name,category,amount\\r\\n2026-09-02,Bakery,Food,12.40\\r\\n\", f\"unexpected output: {out!r}\")\nprint(\"ok\")\n"
+ }
+]
