@@ -34,3 +34,19 @@ node scripts/usage_report.mjs docs/measurements/usage/2026-10-28.jsonl
 ```
 
 Export dosyasinda yazdigin prompt'larin metni var. Commit edilip edilmeyecegine sen karar verirsin; varsayilan olarak commit edilmez.
+
+## Token ek yuku
+
+Soru: eklenti acikken bir gunluk calismada harcanan token'in yuzde kaci eklentinin kendi cagrilarina gidiyor (classify, rewrite, yarisi kaybedip arkada biten fork'lar)?
+
+- Eklenti kurulduktan sonraki ilk 24 saat. Onder normal calisir, ozel bir sey yapmaz.
+- 24 saat dolunca:
+
+```sh
+node scripts/token_overhead.mjs --out docs/measurements/token-overhead-<tarih>.md
+```
+
+- Varsayilan pencere son 24 saat. Baska pencere icin `--from 2026-10-14T09:00:00Z --to 2026-10-15T09:00:00Z`.
+- Oturum tarafi yalniz interaktif oturumlar (transcript'te `entrypoint: cli`). `claude -p` kosulari, bench dahil, sayilmaz. Bir proje klasoru disarida kalsin istenirse `--exclude-project <ad parcasi>`.
+- Classify token'i tahmindir: motor classify icin usage dondurmuyor. Haiku oldugu icin dolar satirinda payi kucuk.
+- Cikti API fiyatiyla dolar karsiligi verir. Max kotasi token sayisina birebir bagli degil; bu yuzde "API olsaydi" karsiligidir.

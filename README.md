@@ -109,7 +109,7 @@ Validating hooks: hooks/hooks.json
   ❯ ./register.tsx answers its own command: command.run{command=sharp}
   ❯ ./register.tsx gating hook with .catch: prompt.submit
   ❯ ./register.tsx gating hook with .catch: tool.call
-  ❯ ./register.tsx calls: $.clock.after (via deliver), $.clock.now (via decide, rewrite, startLog), $.clock.sleep (via race), $.command.register, $.model.classify (via classify), $.model.complete (via rewrite), $.model.fork (via rewrite), $.prompt.fill (via deliver, restoreOriginal), $.prompt.read (via deliver), $.session.messages (via lastReply, recent, rewriteOptions), $.session.model (via record, rewrite, startLog), $.session.surface, $.state.get, $.state.set, $.store.get (via bump, exemplarsOf, push, readList, readLog, runCommand), $.store.set (via bump, deliver, push, settlePending, writeLog), $.ui.ask (via askUser), $.ui.resolve
+  ❯ ./register.tsx calls: $.clock.after (via deliver), $.clock.now, $.clock.sleep (via race), $.command.register, $.model.classify (via classify), $.model.complete (via rewrite), $.model.fork (via rewrite), $.prompt.fill (via deliver, restoreOriginal), $.prompt.read (via deliver), $.session.messages (via lastReply, recent, rewriteOptions), $.session.model, $.session.surface, $.state.get, $.state.set, $.store.get (via bump, exemplarsOf, push, readList, readLog, runCommand), $.store.set (via bump, deliver, push, settlePending, writeLog), $.ui.ask (via askUser), $.ui.resolve
   ❯ ./register.tsx state writes: sharpprompt.isOff, sharpprompt.lastDecision, sharpprompt.mode, sharpprompt.pending
   ❯ ./register.tsx state reads: sharpprompt.isOff, sharpprompt.lastDecision, sharpprompt.mode, sharpprompt.pending
 
@@ -173,7 +173,7 @@ Types come from the Claude Code build you run. Open an interactive session with 
 
 Rules and shapes live in `docs/`; `node scripts/build-bank.mjs` compiles them into `hooks/bank.ts`, because a mod cannot read files at run time. `--check` fails when the two drift.
 
-Checks: `claude plugin validate --strict .`, `claude plugin test .`, `tsc -p .`, `node scripts/build-bank.mjs --check`, and for the export and report scripts `node --test scripts/usage.node-test.mjs`.
+Checks: `claude plugin validate --strict .`, `claude plugin test .`, `tsc -p .`, `node scripts/build-bank.mjs --check`, and for the export, report and token overhead scripts `node --test scripts/usage.node-test.mjs`.
 
 Benchmark: `node --experimental-strip-types --no-warnings --import ./scripts/ts-resolve.mjs scripts/bench.mjs --help`; the corpus and how to run it are in [docs/bench](docs/bench).
 

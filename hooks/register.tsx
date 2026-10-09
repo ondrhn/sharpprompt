@@ -5,7 +5,7 @@ import { sessionFacts } from './facts'
 import { endsWithQuestion, gate } from './gate'
 import { clip, logLine, MAX_LOG, newRecord, patchLog, type LogRecord } from './log'
 import { applyAnswers, askInput, recommended, splitReply, type Question } from './questions'
-import { countKey, lastRewriteLine, MAX_RECORDS, summary, tokens, wordCount, type ClassifyRecord, type Counts, type RewriteRecord, type TurnRecord } from './stats'
+import { countKey, lastRewriteLine, MAX_RECORDS, summary, tokens, wordCount, type ClassifyRecord, type Counts, type DecisionRecord, type LateRecord, type RewriteRecord, type TurnRecord } from './stats'
 import { clean, completePrompt, familyOf, forkPrompt, type Exemplar, type Recent, type RewriteOptions } from './rewrite'
 
 // The engine checks that $ never leaves this file, so everything that calls
@@ -260,7 +260,7 @@ async function bump($: EngineInterface, add: Counts) {
   await $.store.set('counts', counts)
 }
 
-async function push<T>($: EngineInterface, key: 'rewrites' | 'turns' | 'classified', item: T) {
+async function push<T>($: EngineInterface, key: 'rewrites' | 'turns' | 'classified' | 'decisions' | 'late', item: T) {
   const v = await $.store.get(key)
   const list = Array.isArray(v) ? (v as T[]) : []
   await $.store.set(key, [...list, item].slice(-MAX_RECORDS))
@@ -271,10 +271,14 @@ async function readList<T>($: EngineInterface, key: 'rewrites' | 'turns' | 'clas
   return Array.isArray(v) ? (v as T[]) : []
 }
 
-async function record($: EngineInterface, d: SharppromptDecision) {
+// Times are kept so scripts/token_overhead.mjs can take a window of them.
+async function record($: EngineInterface, d: SharppromptDecision, helper: string) {
+  const at = await $.clock.now()
   await bump($, { [countKey(d)]: 1 })
+  const seen: DecisionRecord = { at, key: countKey(d) }
+  await push($, 'decisions', seen)
   if ('classifyMs' in d && d.classifyMs !== undefined) {
-    const item: ClassifyRecord = { verdict: d.verdict, ms: d.classifyMs, words: wordCount(d.text) }
+    const item: ClassifyRecord = { verdict: d.verdict, ms: d.classifyMs, words: wordCount(d.text), at, model: helper }
     await push($, 'classified', item)
   }
   if (!('rewrite' in d) || !d.rewrite) return
@@ -287,6 +291,8 @@ async function record($: EngineInterface, d: SharppromptDecision) {
     usage: tokens(r.usage),
     words: r.text ? [wordCount(d.text), wordCount(r.text)] : [wordCount(d.text)],
     model: await $.session.model(),
+    at,
+    ...(r.via === 'complete' ? { helper } : {}),
   }
   await push($, 'rewrites', item)
 }
@@ -421,7 +427,7 @@ export const register: Register = (on, options) => {
       if (await isRestored($, e.text)) {
         const d: SharppromptDecision = { verdict: 'skip', reason: 'back-to-mine', text: e.text }
         await $.state.set(lastDecision, d)
-        await record($, d)
+        await record($, d, helperModel(options))
         outgoing = 'typed'
         return next(e)
       }
@@ -436,7 +442,7 @@ export const register: Register = (on, options) => {
     const mode = await modeOf($, options)
     const d = await decide($, e, options, mode)
     await $.state.set(lastDecision, d)
-    if (typedByUser) await record($, d)
+    if (typedByUser) await record($, d, helperModel(options))
     const log = typedByUser ? await startLog($, options, d) : null
     let rewritten = 'rewrite' in d ? d.rewrite?.text : undefined
     const questions = ('rewrite' in d ? d.rewrite?.questions : undefined) ?? []
@@ -489,9 +495,11 @@ export const register: Register = (on, options) => {
     }
     if (late.forks > 0) {
       const add = { 'late:forks': late.forks, 'late:input': late.usage.input_tokens + late.usage.cache_read_input_tokens + late.usage.cache_creation_input_tokens, 'late:output': late.usage.output_tokens }
+      const item: LateRecord = { at: await $.clock.now(), forks: late.forks, model: await $.session.model(), usage: tokens(late.usage) }
       late.forks = 0
       late.usage = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 }
       await bump($, add)
+      await push($, 'late', item)
     }
     return next(e)
   })

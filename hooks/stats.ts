@@ -26,10 +26,22 @@ export type RewriteRecord = {
   words?: [number, number?]
   // The session model the fork ran on.
   model?: string
+  // When it happened (ms since the epoch), and the helper model when the
+  // rewrite was the fallback completion rather than a fork.
+  at?: number
+  helper?: string
 }
 
 // Every classified prompt, so short-but-rough patterns show once n grows.
-export type ClassifyRecord = { verdict: string; ms: number; words: number }
+// The engine's classify returns a label only, no token usage; the words and
+// the helper model let scripts/token_overhead.mjs estimate it.
+export type ClassifyRecord = { verdict: string; ms: number; words: number; at?: number; model?: string }
+
+// Every prompt a person typed and how it went (the counts key), with its time.
+export type DecisionRecord = { at: number; key: string }
+
+// Forks that lost the race and finished anyway, flushed at the end of a turn.
+export type LateRecord = { at: number; forks: number; model?: string; usage?: Tokens }
 
 export type Counts = Record<string, number>
 

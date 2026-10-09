@@ -207,7 +207,8 @@ test('a turn is recorded with how its prompt got there', async ($, on) => {
   await $.turn.complete(turn)
   expect(w.store.turns).toHaveLength(1)
   expect(w.store.counts).toMatchObject({ 'verdict:rough': 1, 'answer:as-is': 1 })
-  expect(w.store.rewrites).toEqual([{ outcome: 'rewritten', via: 'fork', ms: 0, classifyMs: 0, usage: { input: 10, output: 20, cacheRead: 0, cacheWrite: 0 }, words: [14, 20], model: 'claude-opus-5-5' }])
+  expect(w.store.rewrites).toEqual([{ outcome: 'rewritten', via: 'fork', ms: 0, classifyMs: 0, usage: { input: 10, output: 20, cacheRead: 0, cacheWrite: 0 }, words: [14, 20], model: 'claude-opus-5-5', at: w.clock.now() }])
+  expect(w.store.decisions).toEqual([{ at: w.clock.now(), key: 'verdict:rough' }])
 })
 
 test('stats prints a summary and says when n is too small', async ($, on) => {
@@ -230,12 +231,13 @@ test('a fork that loses the race is still counted once it finishes', async ($, o
   await $.turn.complete({ turnId: 't1', durationMs: 1000, isAborted: false, reason: 'answer', answer: 'ok.' })
   expect(w.store.counts).toMatchObject({ 'late:forks': 1, 'late:output': 20, 'late:input': 10 })
   expect(w.store.rewrites).toEqual([expect.objectContaining({ outcome: 'timeout', via: 'fork' })])
+  expect(w.store.late).toEqual([{ at: w.clock.now(), forks: 1, model: 'claude-opus-5-5', usage: { input: 10, output: 20, cacheRead: 0, cacheWrite: 0 } }])
 })
 
 test('classify time is kept for clear prompts too', async ($, on) => {
   const w = world(on, { label: 'clear' })
   await $.prompt.submit({ text: ROUGH, ...typed })
-  expect(w.store.classified).toEqual([{ verdict: 'clear', ms: 0, words: 14 }])
+  expect(w.store.classified).toEqual([{ verdict: 'clear', ms: 0, words: 14, at: w.clock.now(), model: 'haiku' }])
   expect(w.store.rewrites).toBeUndefined()
 })
 
