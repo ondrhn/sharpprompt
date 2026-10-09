@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- README: a When it helps section, from the measurements: no difference on ordinary prompts, a gain when the prompt leaves out something only you know, and what it costs per prompt.
 - `scripts/token_overhead.mjs`: sharpprompt's own tokens (rewrites, late forks, classify estimated) against the interactive sessions' tokens in a window, by kind and at API prices. Rewrite, classify and late-fork records now carry their time.
 - Usage log: for each rewrite the draft, the rewrite, questions and answers, the text put in the box, what you did with it and the turn that followed; last 300, on your machine only, `Usage log` in `/config` turns it off. `/sharp stats` counts the records; `scripts/export_log.mjs` copies them to a JSONL file and `scripts/usage_report.mjs` summarises one.
 - Ask instruction asks for the value the user knows (separator, threshold, count, order, currency, date format); measured on 10 hidden-spec cases ([report](docs/measurements/bench-2026-10-09-v2-ask2.md)) and 10 more written blind to the instruction ([report](docs/measurements/bench-2026-10-10-v2-spec2.md)).

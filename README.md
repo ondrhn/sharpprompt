@@ -12,6 +12,16 @@ sharpprompt is a Claude Code mod that looks at each prompt you type before it go
 When one is rough (vague, missing what you want back, leaning on "that thing above"), it rewrites it with the conversation in view and puts the rewrite in your prompt box.
 You press Enter, edit it, or take your own text back; it never sends anything for you.
 
+## When it helps
+
+On ordinary prompts it makes no measurable difference. We ran 30 everyday cases on Fable 5.1 and Sonnet 5.5, the prompt as typed against the rewrite, and neither the checks nor a blind judge found one.
+
+It helps when the prompt leaves out something only you know. That can be a requirement you never wrote down, like the separator another team's import wants, or a vague pointer back into a long conversation ("that thing above"). On 30 cases built that way, passing checks went from 13 to 25 on Sonnet 5.5 and from 12 to 25 on Fable 5.1. All of the gain came from those two kinds; on the third kind in that set, the session's last failed test, the model did as well without the rewrite. On 10 later cases, written by a model that never saw the rewrite instructions, the rewrite passed 7 and 6 of 10, the prompt as typed 1 and 2.
+
+The cost: each prompt that gets past the gate goes to Haiku for a clear-or-rough label (about a second), and a rough one is rewritten by a fork of your session's model (about three seconds, reading the conversation from the prompt cache).
+
+If you type short commands, or already spell out what you want, you will get little from it.
+
 ## What it looks like
 
 From a real session. The conversation had just covered `hooks/gate.ts`, and this was typed:
@@ -146,9 +156,9 @@ Each rule is in [docs/rules](docs/rules) with a link to the Anthropic page it co
 
 Benchmark, 30 cases, the prompt as typed against the rewrite: no measurable difference on Fable 5.1 (26 paired cases, [report](docs/measurements/bench-2026-10-09-fable-5-1.md)) or on Sonnet 5.5 (30 paired cases, [report](docs/measurements/bench-2026-10-09-sonnet-5-5.md)). A blind judge found none either. With Turkish drafts rewritten into English (Sonnet 5.5), task success and judge scores stayed the same while output tokens and time went down, mostly because the answers came back in English ([report](docs/measurements/bench-2026-10-09-tr-sonnet-5-5.md)). On a second corpus of 30 cases built so the model lacks something only the user knows (an unstated requirement, a vague pointer back into a long conversation, the session's last test run), the rewrite, with its questions answered by a model that knows what the user meant, raised passing checks from 13 to 25 on Sonnet 5.5 and from 12 to 25 on Fable 5.1, all of it in the first two kinds of case ([Sonnet](docs/measurements/bench-2026-10-09-v2-sonnet-5-5.md), [Fable](docs/measurements/bench-2026-10-09-v2-fable-5-1.md)). On ten new hidden-spec cases, written by a model that never saw the rewrite instructions, the rewritten prompt passed 7 of 10 checks on Sonnet 5.5 and 6 on Fable 5.1, against 1 and 2 for the prompt as typed ([report](docs/measurements/bench-2026-10-10-v2-spec2.md)).
 
-Each version gets a file in [docs/measurements](docs/measurements) with the method and the raw table, and a row here. On ordinary prompts the rewrite made no measurable difference. When the prompt leaves out something only you know, the rewrite's questions recovered about half of it (hidden requirement) or all of it (a vague pointer back into the conversation); see the v2 reports. The rewrites in the benchmark were written by Haiku; the plugin forks the session model. `/sharp stats` keeps the same numbers for your own sessions, on your machine only, and compares turns that started from your text with turns that started from a rewrite.
+Each version gets a file in [docs/measurements](docs/measurements) with the method and the raw table, and a row here. The rewrites in the benchmark were written by Haiku; the plugin forks the session model. `/sharp stats` keeps the same numbers for your own sessions, on your machine only, and compares turns that started from your text with turns that started from a rewrite.
 
-Tests: 76, in [tests/](tests), run with `claude plugin test .`.
+Tests: 85 in [tests/](tests), run with `claude plugin test .`, and 3 for the scripts, run with `node --test scripts/usage.node-test.mjs`.
 
 ## FAQ
 
