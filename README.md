@@ -160,7 +160,7 @@ Benchmark, 30 cases, the prompt as typed against the rewrite: no measurable diff
 
 Each version gets a file in [docs/measurements](docs/measurements) with the method and the raw table, and a row here. The rewrites in the benchmark were written by Haiku; the plugin forks the session model. `/sharp stats` keeps the same numbers for your own sessions, on your machine only, and compares turns that started from your text with turns that started from a rewrite.
 
-Tests: 85 in [tests/](tests), run with `claude plugin test .`, and 3 for the scripts, run with `node --test scripts/usage.node-test.mjs`. Both run on every push and pull request ([test workflow](.github/workflows/test.yml)).
+Tests: 91 in [tests/](tests), run with `claude plugin test .`, and 4 for the scripts, run with `node --test scripts/usage.node-test.mjs`. Both run on every push and pull request ([test workflow](.github/workflows/test.yml)).
 
 ## FAQ
 
