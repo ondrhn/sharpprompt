@@ -1,0 +1,27 @@
+{
+  "questions": [
+    {
+      "question": "Should the totals be rounded to whole units or to two decimal places?",
+      "header": "Precision",
+      "options": [
+        {
+          "label": "Whole units",
+          "adds": "Round the totals to whole units, with no cents."
+        },
+        {
+          "label": "Two decimals",
+          "adds": "Round the totals to two decimal places."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Should the totals be rounded to whole units or to two decimal places?": "Neither; round to the nearest 0.05."
+  },
+  "recommended": [
+    "Whole units"
+  ],
+  "rewriteBeforeAnswers": "Round the report totals so finance stops seeing the odd cents they keep asking about. Change only how the totals are calculated and rounded, and leave other output as it is. Don't add tests or files. Done when the existing tests pass.",
+  "outcome": "rewritten",
+  "final": "Round the report totals so finance stops seeing the odd cents they keep asking about. Change only how the totals are calculated and rounded, and leave other output as it is. Don't add tests or files. Done when the existing tests pass. Precision: Neither; round to the nearest 0.05.."
+}

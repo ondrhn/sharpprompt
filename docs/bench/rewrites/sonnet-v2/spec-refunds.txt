@@ -1,0 +1,1 @@
+Some rows in the bank export now have negative amounts, and they keep showing up. Handle them properly so the export is read correctly. Done when the export loads with those rows handled correctly. Negatives: Treat them as refunds, leaving them out of the category totals and reporting their sum as a positive number in report()['refunds'], while the overall total stays net..

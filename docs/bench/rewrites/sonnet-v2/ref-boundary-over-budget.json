@@ -1,0 +1,27 @@
+{
+  "questions": [
+    {
+      "question": "Should near_budget also count the exact 90% boundary?",
+      "header": "near_budget",
+      "options": [
+        {
+          "label": "Only over_budget",
+          "adds": "Leave near_budget unchanged."
+        },
+        {
+          "label": "Both checks",
+          "adds": "Also change near_budget to spent >= 0.9 * limit."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Should near_budget also count the exact 90% boundary?": "Only over_budget"
+  },
+  "recommended": [
+    "Only over_budget"
+  ],
+  "rewriteBeforeAnswers": "Change `over_budget` in budget.py so that spending exactly equal to the limit counts as over budget (`spent >= limit`). Leave the other checks alone and don't add tests or files. Done when the existing tests still pass with `python3 run_tests.py`.",
+  "outcome": "rewritten",
+  "final": "Change `over_budget` in budget.py so that spending exactly equal to the limit counts as over budget (`spent >= limit`). Leave the other checks alone and don't add tests or files. Done when the existing tests still pass with `python3 run_tests.py`. Leave near_budget unchanged."
+}

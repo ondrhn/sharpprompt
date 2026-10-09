@@ -1,0 +1,27 @@
+{
+  "questions": [
+    {
+      "question": "Should the fix go in the amount parsing code or in the test's expected value?",
+      "header": "Fix where?",
+      "options": [
+        {
+          "label": "Fix parsing code",
+          "adds": "Change the amount parsing so the test passes, and leave the test's expected value as it is."
+        },
+        {
+          "label": "Fix the test",
+          "adds": "Correct the test's expected value and leave the parsing code unchanged."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Should the fix go in the amount parsing code or in the test's expected value?": "Fix parsing code"
+  },
+  "recommended": [
+    "Fix parsing code"
+  ],
+  "rewriteBeforeAnswers": "Fix the failing test test_regressions.test_euro_amounts, which fails in run_tests.py while the other tests pass. Done when python3 run_tests.py reports every test passing.",
+  "outcome": "rewritten",
+  "final": "Fix the failing test test_regressions.test_euro_amounts, which fails in run_tests.py while the other tests pass. Done when python3 run_tests.py reports every test passing. Change the amount parsing so the test passes, and leave the test's expected value as it is."
+}

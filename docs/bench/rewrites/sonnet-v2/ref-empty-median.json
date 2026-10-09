@@ -1,0 +1,27 @@
+{
+  "questions": [
+    {
+      "question": "Should average in calc.py also return 0 for an empty list?",
+      "header": "Average too",
+      "options": [
+        {
+          "label": "Yes, also average",
+          "adds": "Also make average in calc.py return 0 for an empty list instead of raising ZeroDivisionError."
+        },
+        {
+          "label": "No, median only",
+          "adds": "Leave average in calc.py unchanged."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Should average in calc.py also return 0 for an empty list?": "No, median only"
+  },
+  "recommended": [
+    "Yes, also average"
+  ],
+  "rewriteBeforeAnswers": "Make `median` in calc.py return 0 when given an empty list instead of raising IndexError. Leave its behaviour for non-empty lists unchanged, and don't add tests or other changes. Done when `python3 run_tests.py` passes.",
+  "outcome": "rewritten",
+  "final": "Make `median` in calc.py return 0 when given an empty list instead of raising IndexError. Leave its behaviour for non-empty lists unchanged, and don't add tests or other changes. Done when `python3 run_tests.py` passes. Leave average in calc.py unchanged."
+}

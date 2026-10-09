@@ -1,0 +1,1 @@
+Make the CSV export work with the import tool finance uses each month to load our exports into their accounting software. Match the format that tool expects, and change only the export. Done when the existing tests still pass. Don't add tests or docs that weren't asked for. Finance's import rejects the current export file.

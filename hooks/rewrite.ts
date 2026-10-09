@@ -17,6 +17,9 @@ export type RewriteOptions = {
   ask?: boolean
   // What the session touched, from the transcript (see facts.ts).
   facts?: string
+  // How many of the last messages the fallback completion sees (default 4).
+  // The benchmark passes them all, standing in for the fork it cannot use.
+  window?: number
 }
 
 const ASK = `If the draft leaves out something that the conversation does not answer and that would change the work (which file or function, which of two behaviours, a format or limit), you may ask about it, at most 2 questions. Do not ask what you can reasonably infer, and never ask whether to add tests (the answer is no). If you ask, leave those points out of the rewrite, because the answers will be added after it. Then, after the rewrite, write a line QUESTIONS: followed by a JSON array, each item {"question": "...?", "header": "<12 characters", "options": [{"label": "<1-5 words>", "adds": "<the sentence to add to the prompt if picked>"}]}, 2 to 4 options each, your recommended option first. If nothing needs asking, write no QUESTIONS line.`
@@ -101,7 +104,7 @@ function factsBlock(opts: RewriteOptions): string {
 // hand over the last few messages ourselves, cut short.
 export function completePrompt(draft: string, family: Family, recent: readonly Recent[], list: readonly Exemplar[] = [], opts: RewriteOptions = {}): string {
   const convo = recent
-    .slice(-4)
+    .slice(-(opts.window ?? 4))
     .map(m => `<${m.role}>${clip(m.text, 600)}</${m.role}>`)
     .join('\n')
   return `A user of Claude Code has typed the draft below as their next message and has not sent it yet. Rewrite it so it is clear for Claude to act on, keeping their intent and voice.

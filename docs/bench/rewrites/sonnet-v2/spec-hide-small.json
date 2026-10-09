@@ -1,0 +1,31 @@
+{
+  "questions": [
+    {
+      "question": "How should small categories be cut off?",
+      "header": "Cutoff rule",
+      "options": [
+        {
+          "label": "Fixed euro amount",
+          "adds": "Hide categories whose total is below 5 EUR."
+        },
+        {
+          "label": "Share of total",
+          "adds": "Hide categories that make up less than 1% of the total spend."
+        },
+        {
+          "label": "Group into Other",
+          "adds": "Merge those small categories into one Other line instead of dropping them."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "How should small categories be cut off?": "Fixed euro amount"
+  },
+  "recommended": [
+    "Fixed euro amount"
+  ],
+  "rewriteBeforeAnswers": "Hide the categories with only a few euros of spending from the report, so the large categories are what remain visible. Change nothing else in the report, and don't add tests, docs, or files. Done when the report no longer shows those small categories.",
+  "outcome": "rewritten",
+  "final": "Hide the categories with only a few euros of spending from the report, so the large categories are what remain visible. Change nothing else in the report, and don't add tests, docs, or files. Done when the report no longer shows those small categories. Hide categories whose total is below 5 EUR."
+}

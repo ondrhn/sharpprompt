@@ -1,0 +1,31 @@
+{
+  "questions": [
+    {
+      "question": "Which date format does finance use?",
+      "header": "Date format",
+      "options": [
+        {
+          "label": "DD/MM/YYYY",
+          "adds": "Format dates as DD/MM/YYYY."
+        },
+        {
+          "label": "YYYY-MM-DD",
+          "adds": "Format dates as YYYY-MM-DD."
+        },
+        {
+          "label": "Other",
+          "adds": "Format dates the way the example I give you shows."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which date format does finance use?": "Finance writes dates as DD.MM.YYYY, with dots (e.g. 02.09.2026)."
+  },
+  "recommended": [
+    "DD/MM/YYYY"
+  ],
+  "rewriteBeforeAnswers": "Change the dates in the CSV export so they match the format our finance team writes them in. Finance reads the export by hand before importing it, so the dates have to look the way they expect. Change only the date formatting and leave the other columns as they are. Don't add tests or docs. Done when a sample export shows dates in that format.",
+  "outcome": "rewritten",
+  "final": "Change the dates in the CSV export so they match the format our finance team writes them in. Finance reads the export by hand before importing it, so the dates have to look the way they expect. Change only the date formatting and leave the other columns as they are. Don't add tests or docs. Done when a sample export shows dates in that format. Date format: Finance writes dates as DD.MM.YYYY, with dots (e.g. 02.09.2026).."
+}

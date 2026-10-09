@@ -1,0 +1,1 @@
+In budget.py, change near_budget so spending exactly 90% of the limit counts as near: use >= 0.9 * limit instead of >. Make no other changes and add no tests. Done when python3 run_tests.py passes. Leave over_budget unchanged.

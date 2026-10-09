@@ -1,0 +1,27 @@
+{
+  "questions": [
+    {
+      "question": "Which CLI output should show the currency?",
+      "header": "Which output",
+      "options": [
+        {
+          "label": "All commands",
+          "adds": "Apply it to every command that prints amounts, not just one."
+        },
+        {
+          "label": "One command",
+          "adds": "Apply it only to the one command I name in my next message."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which CLI output should show the currency?": "All commands"
+  },
+  "recommended": [
+    "All commands"
+  ],
+  "rewriteBeforeAnswers": "Show the currency in the CLI output. Change only how the output is formatted, and do not add tests, docs or files that were not asked for.",
+  "outcome": "rewritten",
+  "final": "Show the currency in the CLI output. Change only how the output is formatted, and do not add tests, docs or files that were not asked for. Apply it to every command that prints amounts, not just one."
+}

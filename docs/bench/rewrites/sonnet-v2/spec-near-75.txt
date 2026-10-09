@@ -1,0 +1,1 @@
+Budget warnings currently come too late. Make them warn earlier, changing only when the warning fires and leaving the budget limits themselves as they are. Don't add tests, docs or files that weren't asked for. Budget type: I haven't specified which one; the request doesn't say.. Warn when 75% of the budget is used.

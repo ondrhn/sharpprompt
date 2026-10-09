@@ -1,0 +1,1 @@
+Fix the failing test `test_regressions.test_empty_month`, which raises ZeroDivisionError when run with `python3 run_tests.py`. Done when that command reports no failures. Don't add new tests or files.

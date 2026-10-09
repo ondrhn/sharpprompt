@@ -1,0 +1,8 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Fix the failing test test_regressions.test_at_limit, which `python3 run_tests.py` reports as an AssertionError. Find whether the bug is in the code or the test, and fix it. Done when `python3 run_tests.py` reports no failures.",
+  "outcome": "rewritten",
+  "final": "Fix the failing test test_regressions.test_at_limit, which `python3 run_tests.py` reports as an AssertionError. Find whether the bug is in the code or the test, and fix it. Done when `python3 run_tests.py` reports no failures."
+}

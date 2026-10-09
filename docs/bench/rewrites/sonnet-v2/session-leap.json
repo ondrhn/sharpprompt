@@ -1,0 +1,8 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Fix the failing test test_regressions.test_leap_february so that `python3 run_tests.py` reports no failures. Change only the code needed for that fix, and don't add new tests.",
+  "outcome": "rewritten",
+  "final": "Fix the failing test test_regressions.test_leap_february so that `python3 run_tests.py` reports no failures. Change only the code needed for that fix, and don't add new tests."
+}

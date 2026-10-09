@@ -1,0 +1,8 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "In calc.py, make `average` return 0 for an empty list instead of raising ZeroDivisionError. Change only `average`, and don't add tests or other files. Done when `python3 run_tests.py` passes.",
+  "outcome": "rewritten",
+  "final": "In calc.py, make `average` return 0 for an empty list instead of raising ZeroDivisionError. Change only `average`, and don't add tests or other files. Done when `python3 run_tests.py` passes."
+}

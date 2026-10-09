@@ -1,0 +1,1 @@
+Round the report totals so finance stops seeing the odd cents they keep asking about. Change only how the totals are calculated and rounded, and leave other output as it is. Don't add tests or files. Done when the existing tests pass. Precision: Neither; round to the nearest 0.05..

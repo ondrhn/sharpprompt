@@ -1,0 +1,31 @@
+{
+  "questions": [
+    {
+      "question": "What goes wrong when finance imports the current export?",
+      "header": "Failure",
+      "options": [
+        {
+          "label": "Import rejects file",
+          "adds": "Finance's import rejects the current export file."
+        },
+        {
+          "label": "Columns mismatch",
+          "adds": "The export's columns or their order do not match what the import expects."
+        },
+        {
+          "label": "I'll paste the spec",
+          "adds": "I will paste the import tool's expected format below."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What goes wrong when finance imports the current export?": "Import rejects file"
+  },
+  "recommended": [
+    "Import rejects file"
+  ],
+  "rewriteBeforeAnswers": "Make the CSV export work with the import tool finance uses each month to load our exports into their accounting software. Match the format that tool expects, and change only the export. Done when the existing tests still pass. Don't add tests or docs that weren't asked for.",
+  "outcome": "rewritten",
+  "final": "Make the CSV export work with the import tool finance uses each month to load our exports into their accounting software. Match the format that tool expects, and change only the export. Done when the existing tests still pass. Don't add tests or docs that weren't asked for. Finance's import rejects the current export file."
+}

@@ -1,0 +1,1 @@
+Sort the categories in the CLI output so they read in a better order. Change only the order they are displayed in, not their contents or anything else in the output. Done when the CLI output shows the categories in the new order. Sort order: By amount, largest first..

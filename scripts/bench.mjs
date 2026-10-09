@@ -17,6 +17,9 @@
 //          --only <id,id,...>   --repeat <n> (run: default 1)
 //          --cases tr   use the Turkish corpus (cases-tr.jsonl); rewrites go to
 //            rewrites/<family>-tr/ and are written in English
+//          --cases v2   the v2 corpus (fixture-v2, checks-v2): rewrites may ask
+//            questions, answered by an oracle model that knows what the user
+//            meant (--oracle, default claude-sonnet-5-5), and get the session facts
 //
 //   summary <runs.jsonl>   paired differences (rewritten minus raw) over the
 //              cases whose rewrite is not KEEP, medians and a bootstrap 95%
@@ -38,6 +41,8 @@ const root = new URL('..', import.meta.url).pathname
 const bench = join(root, 'docs/bench')
 const { completePrompt, clean, familyOf } = await import(join(root, 'hooks/rewrite.ts'))
 const { endsWithQuestion } = await import(join(root, 'hooks/gate.ts'))
+const { sessionFacts } = await import(join(root, 'hooks/facts.ts'))
+const { applyAnswers, splitReply } = await import(join(root, 'hooks/questions.ts'))
 
 const args = process.argv.slice(2)
 const command = args[0]
@@ -50,6 +55,8 @@ const opt = (name, fallback) => {
 const corpus = opt('cases', '')
 const suffix = corpus ? `-${corpus}` : ''
 const rewritesDir = family => join(bench, 'rewrites', `${family}${suffix}`)
+const fixtureDir = corpus === 'v2' ? join(bench, 'fixture-v2') : join(bench, 'fixture')
+const checksDir = corpus === 'v2' ? join(bench, 'checks-v2') : join(bench, 'checks')
 
 function loadCases(name = corpus) {
   const all = readFileSync(join(bench, name ? `cases-${name}.jsonl` : 'cases.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l))
@@ -57,12 +64,22 @@ function loadCases(name = corpus) {
   return only ? all.filter(c => only.split(',').includes(c.id)) : all
 }
 
+// Claude Code replaces its own binary when it updates, and a spawn in that
+// moment fails with ENOENT; wait and try again rather than lose the run.
+function spawnClaude(args, options) {
+  for (let i = 0; ; i++) {
+    const r = spawnSync('claude', args, options)
+    if (r.error?.code !== 'ENOENT' || i === 9) return r
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 3000)
+  }
+}
+
 // One headless completion, no tools, in an empty folder so no project
 // instructions are picked up.
 function complete(model, prompt) {
   const dir = mkdtempSync(join(tmpdir(), 'sharpprompt-rw-'))
   try {
-    const r = spawnSync('claude', ['-p', '--model', model, '--tools', '', '--setting-sources', '', '--no-session-persistence', '--output-format', 'json'], {
+    const r = spawnClaude(['-p', '--model', model, '--tools', '', '--setting-sources', '', '--no-session-persistence', '--output-format', 'json'], {
       cwd: dir,
       env: childEnv(),
       input: prompt,
@@ -77,6 +94,33 @@ function complete(model, prompt) {
   }
 }
 
+// What the simulated user knows and did not write: the hidden constraint, or
+// which of two functions they meant, or which failing test.
+function intentOf(c) {
+  if (c.hidden) return c.hidden.spec
+  if (c.target) return `You meant only ${c.target.replace('.', '.py, function ')}, the one discussed most recently; ${c.decoy.replace('.', '.py, function ')} should stay exactly as it is.`
+  if (c.setup) return `You meant the test that just failed in ${c.check.args[0]}: make it pass as written, by changing ${c.check.args[1]}.py only.`
+  return 'Nothing beyond what you wrote.'
+}
+
+// A closed oracle: answers only the question asked, from what the user knows.
+function askOracle(model, c, q) {
+  const labels = q.options.map(o => o.label)
+  const prompt = `You are the user of a coding assistant. You asked it: "${c.raw}"
+
+One thing you know and did not write down: ${intentOf(c)}
+
+The assistant asks you: ${q.question}
+Options: ${labels.map(l => `"${l}"`).join(', ')}
+
+Answer only this question, using only the part of what you know that it asks about; say nothing about anything else, even if you know it. Reply with exactly one of the option labels when one of them states your answer. When none does, or when the options are ways of giving the information rather than the information itself (like "paste a sample"), reply with "Other: " and one short sentence that answers only this question. Reply with the answer alone.`
+  const r = complete(model, prompt)
+  if ('error' in r) return ''
+  const a = r.text.trim().replace(/^["']|["']$/g, '')
+  const hit = labels.find(l => a.toLowerCase() === l.toLowerCase())
+  return hit ?? a.replace(/^Other:\s*/i, '')
+}
+
 function rewrites() {
   const helper = opt('helper', 'haiku')
   const family = opt('family', 'fable')
@@ -86,13 +130,31 @@ function rewrites() {
   const language = corpus ? 'en' : 'same'
   const index = []
   for (const c of loadCases()) {
-    const prompt = completePrompt(c.raw, family, c.context, [], { language })
+    const v2 = corpus === 'v2'
+    const opts = v2 ? { language, ask: true, facts: sessionFacts(c.context), window: 100 } : { language }
+    const prompt = completePrompt(c.raw, family, c.context, [], opts)
     const r = complete(helper, prompt)
+    let record = null
+    if (v2 && !r.error) {
+      const { body, questions } = splitReply(r.text)
+      const oracleAnswers = {}
+      for (const q of questions) oracleAnswers[q.question] = askOracle(opt('oracle', 'claude-sonnet-5-5'), c, q)
+      // As in the plugin: clean the rewrite, then add the answers; a
+      // rejected rewrite (KEEP, too long) means the prompt goes as typed.
+      const cl0 = clean(body, c.raw)
+      const ok = 'rewritten' in cl0
+      const before = ok ? cl0.rewritten : c.raw
+      const after = ok && questions.length ? applyAnswers(before, questions, oracleAnswers) : before
+      record = { questions, oracleAnswers, recommended: questions.map(q => q.options[0]?.label), rewriteBeforeAnswers: before, outcome: ok ? 'rewritten' : cl0.rejected, final: after }
+    }
     let outcome
     let text
     if (r.error) {
       outcome = 'error'
       text = c.raw
+    } else if (record) {
+      outcome = record.outcome
+      text = record.final
     } else {
       const cl = clean(r.text, c.raw)
       outcome = 'rewritten' in cl ? 'rewritten' : cl.rejected
@@ -100,6 +162,7 @@ function rewrites() {
       text = 'rewritten' in cl ? cl.rewritten : c.raw
     }
     writeFileSync(join(dir, `${c.id}.txt`), text + '\n')
+    if (record) writeFileSync(join(dir, `${c.id}.json`), JSON.stringify(record, null, 2) + '\n')
     index.push({ id: c.id, outcome, helper, family, language, ...(r.error ? { error: r.error.slice(0, 200) } : {}), ms: r.ms ?? null, words: [c.raw.split(/\s+/).length, text.split(/\s+/).length] })
     console.log(`${c.id}: ${outcome}${r.ms ? ` in ${r.ms} ms` : ''}`)
   }
@@ -132,11 +195,18 @@ const CLAUDE_ARGS = model => [
   '--allowedTools', 'Bash(python3 *)',
 ]
 
+// Tool calls in the context are written out as text, the same for both arms.
 function contextMessage(context) {
-  const lines = context.map(m => `${m.role === 'user' ? 'Me' : 'You'}: ${m.text}`)
+  const lines = context.map(m => {
+    const uses = (m.toolUses ?? []).map(u =>
+      u.tool === 'Bash' ? `[You ran \`${u.input.command}\`. Output:\n${u.text}]` : `[You used ${u.tool} on ${u.input.file_path ?? JSON.stringify(u.input)}]`,
+    )
+    return `${m.role === 'user' ? 'Me' : 'You'}: ${[m.text, ...uses].filter(Boolean).join('\n')}`
+  })
   return `For context, this is what we said earlier in this conversation. No action needed; just reply "ok".\n\n${lines.join('\n\n')}`
 }
 
+const OFFER = /\b(want me to|should i|do you want me|shall i|would you like me|do you want that|want that)\b/i
 const ASKS = /\b(which|do you mean|did you mean|could you clarify|can you clarify|clarify|would you like|do you want|should i|want me to)\b/i
 
 function parseStream(stdout) {
@@ -164,14 +234,15 @@ function runOne(c, arm, model, order, repeat) {
   const text = arm === 'raw' ? c.raw : readFileSync(join(rewritesDir(familyOf(model)), `${c.id}.txt`), 'utf8').trim()
   const base = mkdtempSync(join(tmpdir(), 'sharpprompt-bench-'))
   const dir = join(base, 'expenses')
-  cpSync(join(bench, 'fixture'), dir, { recursive: true })
+  cpSync(fixtureDir, dir, { recursive: true })
+  for (const [path, content] of Object.entries(c.setup ?? {})) writeFileSync(join(dir, path), content)
   const session = randomUUID()
   const env = childEnv()
-  const out = { id: c.id, shape: c.shape, arm, order, repeat, session, model, corpus: corpus || 'en' }
+  const out = { id: c.id, shape: c.shape, family: c.family, arm, order, repeat, session, model, corpus: corpus || 'en' }
 
   try {
     if (c.context.length > 0) {
-      const r = spawnSync('claude', [...CLAUDE_ARGS(model), '--session-id', session, '--output-format', 'json'], {
+      const r = spawnClaude([...CLAUDE_ARGS(model), '--session-id', session, '--output-format', 'json'], {
         cwd: dir, env, input: contextMessage(c.context), encoding: 'utf8', timeout: 300_000,
       })
       const j = r.status === 0 ? JSON.parse(r.stdout) : null
@@ -197,14 +268,18 @@ function runOne(c, arm, model, order, repeat) {
       cost: result?.total_cost_usd ?? null,
       asked: endsWithQuestion(answer),
       asksPattern: ASKS.test(answer.split('\n').slice(-4).join(' ')),
+      // Ended on a question that wants input, not an offer to go on.
+      inputQuestion: endsWithQuestion(answer) && !OFFER.test(answer.split('\n').filter(Boolean).slice(-1)[0] ?? ''),
       answer: answer.slice(0, 4000),
     })
     if (!out.ok) out.error = (r.stderr || '').slice(0, 500)
     if (c.check) {
-      const k = spawnSync('python3', [join(bench, 'checks', c.check)], {
-        cwd: dir, env: { ...process.env, PYTHONPATH: join(bench, 'checks') }, encoding: 'utf8', timeout: 60_000,
+      const script = typeof c.check === 'string' ? c.check : c.check.script
+      const checkArgs = typeof c.check === 'string' ? [] : c.check.args
+      const k = spawnSync('python3', [join(checksDir, script), ...checkArgs], {
+        cwd: dir, env: { ...process.env, PYTHONPATH: checksDir }, encoding: 'utf8', timeout: 60_000,
       })
-      out.check = { name: c.check, pass: k.status === 0, out: (k.stdout + k.stderr).trim().slice(-200) }
+      out.check = { name: [script, ...checkArgs].join(' '), pass: k.status === 0, out: (k.stdout + k.stderr).trim().slice(-200) }
     }
   } finally {
     rmSync(base, { recursive: true, force: true })
@@ -224,7 +299,7 @@ function run() {
     console.error(`no rewrites for ${family}${suffix} yet: run "rewrites --family ${family}${corpus ? ` --cases ${corpus}` : ''}" first`)
     process.exit(1)
   }
-  const version = spawnSync('claude', ['--version'], { encoding: 'utf8' }).stdout.trim()
+  const version = spawnClaude(['--version'], { encoding: 'utf8' }).stdout.trim()
   const date = new Date().toISOString().slice(0, 10)
   const runs = join(bench, 'runs')
   mkdirSync(runs, { recursive: true })
@@ -352,6 +427,13 @@ export function summarize(file) {
       }
       return [arm, count]
     })),
+    inputQuestions: { raw: count('raw', r => r.inputQuestion), rewritten: count('rewritten', r => r.inputQuestion) },
+    byFamily: Object.fromEntries(
+      [...new Set(pairs.map(([, p]) => p.raw.family).filter(Boolean))].map(f => {
+        const ps = pairs.filter(([, p]) => p.raw.family === f && p.raw.check)
+        return [f, { n: ps.length, raw: ps.filter(([, p]) => p.raw.check?.pass).length, rewritten: ps.filter(([, p]) => p.rewritten.check?.pass).length }]
+      }),
+    ),
     checks: {
       n: checked.length,
       raw: checked.filter(([, p]) => p.raw.check?.pass).length,
@@ -377,6 +459,8 @@ function summary() {
   console.log(`ended on a question: raw ${s.asked.raw}/${s.paired}, rewritten ${s.asked.rewritten}/${s.paired}; question words in the last lines: raw ${s.asksPattern.raw}, rewritten ${s.asksPattern.rewritten}`)
   console.log(`checks passed: raw ${s.checks.raw}/${s.checks.n}, rewritten ${s.checks.rewritten}/${s.checks.n}`)
   console.log(`answer language: raw ${JSON.stringify(s.languages.raw)}, rewritten ${JSON.stringify(s.languages.rewritten)}`)
+  console.log(`questions wanting input (not offers): raw ${s.inputQuestions.raw}, rewritten ${s.inputQuestions.rewritten}`)
+  for (const [f, v] of Object.entries(s.byFamily)) console.log(`  ${f}: checks raw ${v.raw}/${v.n}, rewritten ${v.rewritten}/${v.n}`)
   console.log(`cost (API equivalent) ${s.cost.toFixed(2)} USD, ${s.wallSeconds} s`)
 }
 

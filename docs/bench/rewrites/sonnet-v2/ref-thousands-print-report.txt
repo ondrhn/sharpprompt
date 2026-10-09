@@ -1,0 +1,1 @@
+In print_report in cli.py, format the amounts with thousands separators (:,.2f) so 1500 prints as 1,500.00, since finance wants that format. Change only that output formatting, and don't add tests or docs. Done when the printed report shows 1,500.00 for an amount of 1500. Leave the alert lines in budget.py as they are.

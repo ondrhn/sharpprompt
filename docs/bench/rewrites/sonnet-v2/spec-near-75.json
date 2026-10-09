@@ -1,0 +1,47 @@
+{
+  "questions": [
+    {
+      "question": "Which budget do the warnings belong to?",
+      "header": "Budget type",
+      "options": [
+        {
+          "label": "Token budget",
+          "adds": "The budget is the token budget."
+        },
+        {
+          "label": "Spend budget",
+          "adds": "The budget is the cost or spend budget."
+        }
+      ]
+    },
+    {
+      "question": "How early should the warning fire?",
+      "header": "Warn when",
+      "options": [
+        {
+          "label": "At 75% used",
+          "adds": "Warn when 75% of the budget is used."
+        },
+        {
+          "label": "At 50% used",
+          "adds": "Warn when 50% of the budget is used."
+        },
+        {
+          "label": "At 80% used",
+          "adds": "Warn when 80% of the budget is used."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which budget do the warnings belong to?": "I haven't specified which one; the request doesn't say.",
+    "How early should the warning fire?": "At 75% used"
+  },
+  "recommended": [
+    "Token budget",
+    "At 75% used"
+  ],
+  "rewriteBeforeAnswers": "Budget warnings currently come too late. Make them warn earlier, changing only when the warning fires and leaving the budget limits themselves as they are. Don't add tests, docs or files that weren't asked for.",
+  "outcome": "rewritten",
+  "final": "Budget warnings currently come too late. Make them warn earlier, changing only when the warning fires and leaving the budget limits themselves as they are. Don't add tests, docs or files that weren't asked for. Budget type: I haven't specified which one; the request doesn't say.. Warn when 75% of the budget is used."
+}

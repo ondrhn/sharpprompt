@@ -1,0 +1,8 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Fix the failing test `test_regressions.test_category_case` so `python3 run_tests.py` passes with no failures. Don't add new tests or files. Done when every test reports ok.",
+  "outcome": "rewritten",
+  "final": "Fix the failing test `test_regressions.test_category_case` so `python3 run_tests.py` passes with no failures. Don't add new tests or files. Done when every test reports ok."
+}
