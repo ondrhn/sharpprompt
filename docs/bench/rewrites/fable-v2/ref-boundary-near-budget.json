@@ -23,5 +23,6 @@
   ],
   "rewriteBeforeAnswers": "Fix near_budget in budget.py so spending of exactly 90% of the limit triggers the warning, using >= instead of >. Done when python3 run_tests.py passes.",
   "outcome": "rewritten",
-  "final": "Fix near_budget in budget.py so spending of exactly 90% of the limit triggers the warning, using >= instead of >. Done when python3 run_tests.py passes. Change only near_budget and leave over_budget as it is."
+  "final": "Fix near_budget in budget.py so spending of exactly 90% of the limit triggers the warning, using >= instead of >. Done when python3 run_tests.py passes. Change only near_budget and leave over_budget as it is.",
+  "leak": []
 }

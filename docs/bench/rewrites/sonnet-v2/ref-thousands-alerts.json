@@ -23,5 +23,6 @@
   ],
   "rewriteBeforeAnswers": "In `budget.py`, change the alert lines so `spent` and `limit` use thousands separators (`:.2f` becomes `:,.2f`, so 1500.00 shows as 1,500.00 for finance). Change only that formatting, don't add tests, then run `python3 run_tests.py` and confirm it still passes.",
   "outcome": "rewritten",
-  "final": "In `budget.py`, change the alert lines so `spent` and `limit` use thousands separators (`:.2f` becomes `:,.2f`, so 1500.00 shows as 1,500.00 for finance). Change only that formatting, don't add tests, then run `python3 run_tests.py` and confirm it still passes. Leave print_report in cli.py unchanged."
+  "final": "In `budget.py`, change the alert lines so `spent` and `limit` use thousands separators (`:.2f` becomes `:,.2f`, so 1500.00 shows as 1,500.00 for finance). Change only that formatting, don't add tests, then run `python3 run_tests.py` and confirm it still passes. Leave print_report in cli.py unchanged.",
+  "leak": []
 }

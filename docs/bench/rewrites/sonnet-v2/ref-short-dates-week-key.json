@@ -23,5 +23,6 @@
   ],
   "rewriteBeforeAnswers": "Make week_key in dates.py accept unpadded dates like 2026-1-5 from the old bank export. Its date.fromisoformat call currently raises ValueError on them. Change only that parsing, and don't add tests or files. Done when 2026-1-5 is accepted and python3 run_tests.py passes.",
   "outcome": "rewritten",
-  "final": "Make week_key in dates.py accept unpadded dates like 2026-1-5 from the old bank export. Its date.fromisoformat call currently raises ValueError on them. Change only that parsing, and don't add tests or files. Done when 2026-1-5 is accepted and python3 run_tests.py passes. Leave month_key in dates.py unchanged."
+  "final": "Make week_key in dates.py accept unpadded dates like 2026-1-5 from the old bank export. Its date.fromisoformat call currently raises ValueError on them. Change only that parsing, and don't add tests or files. Done when 2026-1-5 is accepted and python3 run_tests.py passes. Leave month_key in dates.py unchanged.",
+  "leak": []
 }

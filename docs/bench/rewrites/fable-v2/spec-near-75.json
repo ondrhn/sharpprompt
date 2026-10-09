@@ -39,5 +39,15 @@
   ],
   "rewriteBeforeAnswers": "Budget warnings currently fire too late. Find the code that triggers them and move the warning earlier. Done when the existing tests pass.",
   "outcome": "rewritten",
-  "final": "Budget warnings currently fire too late. Find the code that triggers them and move the warning earlier. Done when the existing tests pass. Which warn: I only know that near_budget should warn from 75% of the limit; I don't know whether that's the token or spend budget.. Fire the warning when 75% of the budget is used."
+  "final": "Budget warnings currently fire too late. Find the code that triggers them and move the warning earlier. Done when the existing tests pass. Which warn: I only know that near_budget should warn from 75% of the limit; I don't know whether that's the token or spend budget.. Fire the warning when 75% of the budget is used.",
+  "leak": [
+    {
+      "question": "Which budget warning should fire earlier?",
+      "value": "75"
+    },
+    {
+      "question": "Which budget warning should fire earlier?",
+      "value": "near_budget"
+    }
+  ]
 }

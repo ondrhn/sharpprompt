@@ -4,5 +4,6 @@
   "recommended": [],
   "rewriteBeforeAnswers": "Finance's import tool reads the CSV export's columns by position, so reorder the export columns to the order that import expects. If that order isn't documented in the repo, stop and tell me rather than guessing. Done when the existing export tests pass.",
   "outcome": "rewritten",
-  "final": "Finance's import tool reads the CSV export's columns by position, so reorder the export columns to the order that import expects. If that order isn't documented in the repo, stop and tell me rather than guessing. Done when the existing export tests pass."
+  "final": "Finance's import tool reads the CSV export's columns by position, so reorder the export columns to the order that import expects. If that order isn't documented in the repo, stop and tell me rather than guessing. Done when the existing export tests pass.",
+  "leak": []
 }

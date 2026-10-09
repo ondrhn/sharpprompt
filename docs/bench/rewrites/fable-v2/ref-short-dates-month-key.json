@@ -23,5 +23,6 @@
   ],
   "rewriteBeforeAnswers": "Make month_key in dates.py accept unpadded dates like 2026-1-5 from the old bank export instead of raising ValueError. Done when month_key(\"2026-1-5\") returns a month and python3 run_tests.py still passes.",
   "outcome": "rewritten",
-  "final": "Make month_key in dates.py accept unpadded dates like 2026-1-5 from the old bank export instead of raising ValueError. Done when month_key(\"2026-1-5\") returns a month and python3 run_tests.py still passes. Leave week_key unchanged."
+  "final": "Make month_key in dates.py accept unpadded dates like 2026-1-5 from the old bank export instead of raising ValueError. Done when month_key(\"2026-1-5\") returns a month and python3 run_tests.py still passes. Leave week_key unchanged.",
+  "leak": []
 }

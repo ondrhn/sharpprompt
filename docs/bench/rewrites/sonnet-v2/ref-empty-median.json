@@ -23,5 +23,6 @@
   ],
   "rewriteBeforeAnswers": "Make `median` in calc.py return 0 when given an empty list instead of raising IndexError. Leave its behaviour for non-empty lists unchanged, and don't add tests or other changes. Done when `python3 run_tests.py` passes.",
   "outcome": "rewritten",
-  "final": "Make `median` in calc.py return 0 when given an empty list instead of raising IndexError. Leave its behaviour for non-empty lists unchanged, and don't add tests or other changes. Done when `python3 run_tests.py` passes. Leave average in calc.py unchanged."
+  "final": "Make `median` in calc.py return 0 when given an empty list instead of raising IndexError. Leave its behaviour for non-empty lists unchanged, and don't add tests or other changes. Done when `python3 run_tests.py` passes. Leave average in calc.py unchanged.",
+  "leak": []
 }

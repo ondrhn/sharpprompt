@@ -4,5 +4,6 @@
   "recommended": [],
   "rewriteBeforeAnswers": "Fix the CSV quoting in `category_csv` in `export.py`. It builds each line with an f-string, so a category like 'Food, drinks' splits into two columns. Use proper CSV quoting so each category stays in one column, and leave the other functions alone. Don't add tests. Done when `python3 run_tests.py` passes.",
   "outcome": "rewritten",
-  "final": "Fix the CSV quoting in `category_csv` in `export.py`. It builds each line with an f-string, so a category like 'Food, drinks' splits into two columns. Use proper CSV quoting so each category stays in one column, and leave the other functions alone. Don't add tests. Done when `python3 run_tests.py` passes."
+  "final": "Fix the CSV quoting in `category_csv` in `export.py`. It builds each line with an f-string, so a category like 'Food, drinks' splits into two columns. Use proper CSV quoting so each category stays in one column, and leave the other functions alone. Don't add tests. Done when `python3 run_tests.py` passes.",
+  "leak": []
 }

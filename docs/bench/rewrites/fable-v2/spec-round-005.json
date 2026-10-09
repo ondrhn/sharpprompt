@@ -23,5 +23,11 @@
   ],
   "rewriteBeforeAnswers": "Round the report totals so they no longer show odd cents, since finance keeps asking about them. When done, the existing tests pass.",
   "outcome": "rewritten",
-  "final": "Round the report totals so they no longer show odd cents, since finance keeps asking about them. When done, the existing tests pass. Rounding: Round the total to the nearest 0.05 (cash rounding).."
+  "final": "Round the report totals so they no longer show odd cents, since finance keeps asking about them. When done, the existing tests pass. Rounding: Round the total to the nearest 0.05 (cash rounding)..",
+  "leak": [
+    {
+      "question": "How should the totals be rounded?",
+      "value": "0.05"
+    }
+  ]
 }

@@ -20,6 +20,14 @@
 //          --cases v2   the v2 corpus (fixture-v2, checks-v2): rewrites may ask
 //            questions, answered by an oracle model that knows what the user
 //            meant (--oracle, default claude-sonnet-5-5), and get the session facts
+//          --label <x>  a separate set: rewrites/<family>-<corpus>-<x>/ and runs
+//            <date>-<corpus>-<x>-<model>; the sets without a label stay as they are
+//          --arm raw|rewritten (run: only that arm)
+//          --pair <runs.jsonl> (summary, judge: take the arm a one-armed run
+//            lacks from this earlier run of the same model and corpus)
+//
+//   audit      check the oracle answers already in rewrites/<family>-<corpus>[-<x>]
+//              for leaks (see leaksOf) and write them into the json and index files
 //
 //   summary <runs.jsonl>   paired differences (rewritten minus raw) over the
 //              cases whose rewrite is not KEEP, medians and a bootstrap 95%
@@ -54,7 +62,8 @@ const opt = (name, fallback) => {
 // The corpus: cases.jsonl, or cases-<x>.jsonl with --cases <x>.
 const corpus = opt('cases', '')
 const suffix = corpus ? `-${corpus}` : ''
-const rewritesDir = family => join(bench, 'rewrites', `${family}${suffix}`)
+const label = opt('label', '')
+const rewritesDir = (family, l = label) => join(bench, 'rewrites', `${family}${suffix}${l ? `-${l}` : ''}`)
 const fixtureDir = corpus === 'v2' ? join(bench, 'fixture-v2') : join(bench, 'fixture')
 const checksDir = corpus === 'v2' ? join(bench, 'checks-v2') : join(bench, 'checks')
 
@@ -113,12 +122,70 @@ One thing you know and did not write down: ${intentOf(c)}
 The assistant asks you: ${q.question}
 Options: ${labels.map(l => `"${l}"`).join(', ')}
 
-Answer only this question, using only the part of what you know that it asks about; say nothing about anything else, even if you know it. Reply with exactly one of the option labels when one of them states your answer. When none does, or when the options are ways of giving the information rather than the information itself (like "paste a sample"), reply with "Other: " and one short sentence that answers only this question. Reply with the answer alone.`
+Answer only this question, using only the part of what you know that it asks about; say nothing about anything else, even if you know it. Never name a function, file, number, threshold or value that the question did not ask about, even if you know it. Reply with exactly one of the option labels when one of them states your answer. When none does, or when the options are ways of giving the information rather than the information itself (like "paste a sample"), reply with "Other: " and one short sentence that answers only this question. Reply with the answer alone.`
   const r = complete(model, prompt)
   if ('error' in r) return ''
   const a = r.text.trim().replace(/^["']|["']$/g, '')
   const hit = labels.find(l => a.toLowerCase() === l.toLowerCase())
   return hit ?? a.replace(/^Other:\s*/i, '')
+}
+
+// An oracle answer leaks when it names something the user knows (a number, a
+// quoted text, a module.function or snake_case name) that neither the
+// question nor its option labels mention: the rewrite then carries what the
+// user was never asked for.
+export function leaksOf(intent, q, answer) {
+  const labels = q.options.map(o => o.label)
+  if (labels.some(l => l.toLowerCase() === answer.trim().toLowerCase())) return []
+  const asked = [q.question, ...labels].join(' ').toLowerCase()
+  const known = intent.toLowerCase()
+  const tokens = new Set([
+    ...(answer.match(/\d+(?:[.,]\d+)?%?/g) ?? []).map(t => t.replace(/%$/, '')),
+    ...[...answer.matchAll(/["'`]([^"'`]{2,40})["'`]/g)].map(m => m[1]),
+    ...(answer.match(/\b[a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*\b|\b[a-z][a-z0-9]*_[a-z0-9_]+\b/gi) ?? []),
+  ])
+  return [...tokens].filter(t => known.includes(t.toLowerCase()) && !asked.includes(t.toLowerCase()))
+}
+
+function leaksOfRecord(c, record) {
+  const leak = []
+  for (const q of record.questions ?? []) {
+    for (const t of leaksOf(intentOf(c), q, record.oracleAnswers?.[q.question] ?? '')) leak.push({ question: q.question, value: t })
+  }
+  return leak
+}
+
+function writeIndex(dir, index) {
+  const file = join(dir, 'index.jsonl')
+  const kept = (() => {
+    try {
+      return readFileSync(file, 'utf8').trim().split('\n').filter(Boolean).map(l => JSON.parse(l))
+    } catch {
+      return []
+    }
+  })().filter(x => !index.some(y => y.id === x.id))
+  writeFileSync(file, [...kept, ...index].map(x => JSON.stringify(x)).join('\n') + '\n')
+}
+
+function audit() {
+  const dir = rewritesDir(opt('family', 'fable'))
+  const cases = Object.fromEntries(loadCases().map(c => [c.id, c]))
+  const index = readFileSync(join(dir, 'index.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l))
+  let n = 0
+  for (const x of index) {
+    const f = join(dir, `${x.id}.json`)
+    if (!existsSync(f) || !cases[x.id]) continue
+    const record = JSON.parse(readFileSync(f, 'utf8'))
+    record.leak = leaksOfRecord(cases[x.id], record)
+    writeFileSync(f, JSON.stringify(record, null, 2) + '\n')
+    x.leaks = record.leak.length
+    if (x.leaks) {
+      n++
+      console.log(`${x.id}: ${record.leak.map(l => l.value).join(', ')}`)
+    }
+  }
+  writeIndex(dir, index)
+  console.log(`oracle leaks: ${n} cases`)
 }
 
 function rewrites() {
@@ -146,6 +213,7 @@ function rewrites() {
       const before = ok ? cl0.rewritten : c.raw
       const after = ok && questions.length ? applyAnswers(before, questions, oracleAnswers) : before
       record = { questions, oracleAnswers, recommended: questions.map(q => q.options[0]?.label), rewriteBeforeAnswers: before, outcome: ok ? 'rewritten' : cl0.rejected, final: after }
+      record.leak = leaksOfRecord(c, record)
     }
     let outcome
     let text
@@ -163,18 +231,10 @@ function rewrites() {
     }
     writeFileSync(join(dir, `${c.id}.txt`), text + '\n')
     if (record) writeFileSync(join(dir, `${c.id}.json`), JSON.stringify(record, null, 2) + '\n')
-    index.push({ id: c.id, outcome, helper, family, language, ...(r.error ? { error: r.error.slice(0, 200) } : {}), ms: r.ms ?? null, words: [c.raw.split(/\s+/).length, text.split(/\s+/).length] })
+    index.push({ id: c.id, outcome, helper, family, language, ...(record ? { questions: record.questions.length, leaks: record.leak.length } : {}), ...(r.error ? { error: r.error.slice(0, 200) } : {}), ms: r.ms ?? null, words: [c.raw.split(/\s+/).length, text.split(/\s+/).length] })
     console.log(`${c.id}: ${outcome}${r.ms ? ` in ${r.ms} ms` : ''}`)
   }
-  const file = join(dir, 'index.jsonl')
-  const kept = (() => {
-    try {
-      return readFileSync(file, 'utf8').trim().split('\n').filter(Boolean).map(l => JSON.parse(l))
-    } catch {
-      return []
-    }
-  })().filter(x => !index.some(y => y.id === x.id))
-  writeFileSync(file, [...kept, ...index].map(x => JSON.stringify(x)).join('\n') + '\n')
+  writeIndex(dir, index)
 }
 
 // The child runs must save their transcripts (--resume needs them), which a
@@ -238,7 +298,7 @@ function runOne(c, arm, model, order, repeat) {
   for (const [path, content] of Object.entries(c.setup ?? {})) writeFileSync(join(dir, path), content)
   const session = randomUUID()
   const env = childEnv()
-  const out = { id: c.id, shape: c.shape, family: c.family, arm, order, repeat, session, model, corpus: corpus || 'en' }
+  const out = { id: c.id, shape: c.shape, family: c.family, arm, order, repeat, session, model, corpus: corpus || 'en', ...(label ? { label } : {}) }
 
   try {
     if (c.context.length > 0) {
@@ -303,7 +363,8 @@ function run() {
   const date = new Date().toISOString().slice(0, 10)
   const runs = join(bench, 'runs')
   mkdirSync(runs, { recursive: true })
-  const stem = join(runs, `${date}${suffix}-${model}${opt('only', '') ? '-partial' : ''}`)
+  const stem = join(runs, `${date}${suffix}${label ? `-${label}` : ''}-${model}${opt('only', '') && !label ? '-partial' : ''}`)
+  const armOnly = opt('arm', '')
   const file = `${stem}.jsonl`
   const manifest = `${stem}.manifest.jsonl`
   // A second start picks up where the first stopped: an id + arm + repeat in
@@ -318,7 +379,7 @@ function run() {
   )
   for (let rep = 1; rep <= repeat; rep++) {
     for (const c of loadCases()) {
-      const arms = Math.random() < 0.5 ? ['raw', 'rewritten'] : ['rewritten', 'raw']
+      const arms = armOnly ? [armOnly] : Math.random() < 0.5 ? ['raw', 'rewritten'] : ['rewritten', 'raw']
       arms.forEach((arm, i) => {
         if (done.has(`${c.id}|${arm}|${rep}`)) return
         const r = runOne(c, arm, model, i + 1, rep)
@@ -353,8 +414,36 @@ function rng(seed) {
 // Cases whose rewrite came back KEEP send the same text in both arms.
 function keepSet(runs) {
   const c = runs[0]?.corpus && runs[0].corpus !== 'en' ? `-${runs[0].corpus}` : ''
-  const file = join(bench, 'rewrites', `${familyOf(runs[0].model)}${c}`, 'index.jsonl')
-  return new Set(readFileSync(file, 'utf8').trim().split('\n').map(l => JSON.parse(l)).filter(x => x.outcome !== 'rewritten').map(x => x.id))
+  const l = runs.find(r => r.arm === 'rewritten')?.label
+  return new Set(rewriteIndex(join(bench, 'rewrites', `${familyOf(runs[0].model)}${c}${l ? `-${l}` : ''}`)).filter(x => x.outcome !== 'rewritten').map(x => x.id))
+}
+
+function rewriteIndex(dir) {
+  return readFileSync(join(dir, 'index.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l))
+}
+
+// A run file, plus, with --pair, the arm it lacks taken from an earlier run
+// of the same cases (a one-armed run made with --arm).
+function loadRuns(file, pair = opt('pair', '')) {
+  const read = f => readFileSync(f, 'utf8').trim().split('\n').map(l => JSON.parse(l)).filter(r => (r.repeat ?? 1) === 1)
+  const runs = read(file)
+  if (!pair) return runs
+  const have = new Set(runs.map(r => `${r.id}|${r.arm}`))
+  const ids = new Set(runs.map(r => r.id))
+  return [...runs, ...read(pair).filter(r => ids.has(r.id) && !have.has(`${r.id}|${r.arm}`))]
+}
+
+// Two parts of a remote-ref check: did the target change as asked, and was
+// the decoy left alone. Older runs stopped at the first failure, so a failed
+// target there says nothing about the decoy (null).
+export function remoteParts(out) {
+  const t = out.match(/^target (ok|FAIL)/m)
+  const d = out.match(/^decoy (ok|FAIL)/m)
+  if (t || d) return { target: t ? t[1] === 'ok' : null, decoy: d ? d[1] === 'ok' : null }
+  if (/does not do what was asked/.test(out)) return { target: false, decoy: null }
+  if (/was changed/.test(out)) return { target: true, decoy: false }
+  if (/(^|\n)ok$/.test(out.trim())) return { target: true, decoy: true }
+  return { target: null, decoy: null }
 }
 
 // Rough language of an answer: Turkish letters and common Turkish words
@@ -389,7 +478,8 @@ function bootstrap(diffs, n = 1000, seed = 20261009) {
 }
 
 export function summarize(file) {
-  const runs = readFileSync(file, 'utf8').trim().split('\n').map(l => JSON.parse(l)).filter(r => r.repeat === 1 || r.repeat === undefined)
+  const runs = loadRuns(file)
+  const own = loadRuns(file, '')
   const keep = keepSet(runs)
   const by = {}
   for (const r of runs) (by[r.id] ??= {})[r.arm] = r
@@ -431,7 +521,16 @@ export function summarize(file) {
     byFamily: Object.fromEntries(
       [...new Set(pairs.map(([, p]) => p.raw.family).filter(Boolean))].map(f => {
         const ps = pairs.filter(([, p]) => p.raw.family === f && p.raw.check)
-        return [f, { n: ps.length, raw: ps.filter(([, p]) => p.raw.check?.pass).length, rewritten: ps.filter(([, p]) => p.rewritten.check?.pass).length }]
+        const v = { n: ps.length, raw: ps.filter(([, p]) => p.raw.check?.pass).length, rewritten: ps.filter(([, p]) => p.rewritten.check?.pass).length }
+        if (f === 'remote-ref') {
+          for (const arm of ['raw', 'rewritten']) {
+            const parts = ps.map(([, p]) => remoteParts(p[arm].check?.out ?? ''))
+            v[`${arm}Target`] = parts.filter(x => x.target === true).length
+            v[`${arm}Decoy`] = parts.filter(x => x.decoy === true).length
+            v[`${arm}DecoyUnknown`] = parts.filter(x => x.decoy === null).length
+          }
+        }
+        return [f, v]
       }),
     ),
     checks: {
@@ -439,8 +538,18 @@ export function summarize(file) {
       raw: checked.filter(([, p]) => p.raw.check?.pass).length,
       rewritten: checked.filter(([, p]) => p.rewritten.check?.pass).length,
     },
-    cost: runs.reduce((a, r) => a + (r.cost ?? 0) + (r.context?.cost ?? 0), 0),
-    wallSeconds: Math.round(runs.reduce((a, r) => a + (r.wallMs ?? 0) + (r.context?.ms ?? 0), 0) / 1000),
+    leaks: (() => {
+      const l = runs.find(r => r.arm === 'rewritten')?.label
+      const c = runs[0]?.corpus && runs[0].corpus !== 'en' ? `-${runs[0].corpus}` : ''
+      try {
+        return rewriteIndex(join(bench, 'rewrites', `${familyOf(runs[0].model)}${c}${l ? `-${l}` : ''}`)).filter(x => by[x.id] && x.leaks).length
+      } catch {
+        return 0
+      }
+    })(),
+    // Cost and time of this file's own runs, not of the arm taken from --pair.
+    cost: own.reduce((a, r) => a + (r.cost ?? 0) + (r.context?.cost ?? 0), 0),
+    wallSeconds: Math.round(own.reduce((a, r) => a + (r.wallMs ?? 0) + (r.context?.ms ?? 0), 0) / 1000),
   }
 }
 
@@ -460,7 +569,14 @@ function summary() {
   console.log(`checks passed: raw ${s.checks.raw}/${s.checks.n}, rewritten ${s.checks.rewritten}/${s.checks.n}`)
   console.log(`answer language: raw ${JSON.stringify(s.languages.raw)}, rewritten ${JSON.stringify(s.languages.rewritten)}`)
   console.log(`questions wanting input (not offers): raw ${s.inputQuestions.raw}, rewritten ${s.inputQuestions.rewritten}`)
-  for (const [f, v] of Object.entries(s.byFamily)) console.log(`  ${f}: checks raw ${v.raw}/${v.n}, rewritten ${v.rewritten}/${v.n}`)
+  for (const [f, v] of Object.entries(s.byFamily)) {
+    console.log(`  ${f}: checks raw ${v.raw}/${v.n}, rewritten ${v.rewritten}/${v.n}`)
+    if (f === 'remote-ref') {
+      const u = arm => (v[`${arm}DecoyUnknown`] ? ` (${v[`${arm}DecoyUnknown`]} unknown)` : '')
+      console.log(`    target right: raw ${v.rawTarget}, rewritten ${v.rewrittenTarget}; decoy untouched: raw ${v.rawDecoy}${u('raw')}, rewritten ${v.rewrittenDecoy}${u('rewritten')}`)
+    }
+  }
+  console.log(`oracle leaks: ${s.leaks} cases`)
   console.log(`cost (API equivalent) ${s.cost.toFixed(2)} USD, ${s.wallSeconds} s`)
 }
 
@@ -529,7 +645,7 @@ function judge() {
     console.error('judge needs the runs file and --judge-model <id>')
     process.exit(1)
   }
-  const runs = readFileSync(file, 'utf8').trim().split('\n').map(l => JSON.parse(l)).filter(r => (r.repeat ?? 1) === 1)
+  const runs = loadRuns(file)
   const corpusOfRuns = runs[0]?.corpus && runs[0].corpus !== 'en' ? runs[0].corpus : ''
   const cases = Object.fromEntries(loadCases(corpusOfRuns).map(c => [c.id, c]))
   const keep = keepSet(runs)
@@ -566,6 +682,7 @@ if (command === 'rewrites') rewrites()
 else if (command === 'run') run()
 else if (command === 'summary') summary()
 else if (command === 'judge') judge()
+else if (command === 'audit') audit()
 else {
   const lines = readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1)
   const head = lines.slice(0, lines.findIndex(l => !l.startsWith('//')))

@@ -27,5 +27,6 @@
   ],
   "rewriteBeforeAnswers": "Hide the categories with only a few euros of spending from the report, so the large categories are what remain visible. Change nothing else in the report, and don't add tests, docs, or files. Done when the report no longer shows those small categories.",
   "outcome": "rewritten",
-  "final": "Hide the categories with only a few euros of spending from the report, so the large categories are what remain visible. Change nothing else in the report, and don't add tests, docs, or files. Done when the report no longer shows those small categories. Hide categories whose total is below 5 EUR."
+  "final": "Hide the categories with only a few euros of spending from the report, so the large categories are what remain visible. Change nothing else in the report, and don't add tests, docs, or files. Done when the report no longer shows those small categories. Hide categories whose total is below 5 EUR.",
+  "leak": []
 }

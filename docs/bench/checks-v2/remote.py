@@ -3,7 +3,7 @@ import csv
 import io
 import sys
 
-from _common import check, unchanged
+from _common import unchanged
 
 target, decoy = sys.argv[1], sys.argv[2]
 
@@ -84,11 +84,14 @@ TARGETS = {
     "budget.alerts": alerts, "cli.print_report": print_report,
 }
 
+# Both parts are reported, so a run shows whether the target was right even
+# when the decoy was changed too.
 try:
     ok = TARGETS[target]()
 except Exception as e:
     ok = False
     print(f"target raised {e!r}")
-check(ok, f"{target} does not do what was asked")
-check(unchanged(decoy), f"{decoy} was changed")
-print("ok")
+print(f"target ok {target}" if ok else f"target FAIL {target} does not do what was asked")
+kept = unchanged(decoy)
+print(f"decoy ok {decoy}" if kept else f"decoy FAIL {decoy} was changed")
+sys.exit(0 if ok and kept else 1)

@@ -27,5 +27,19 @@
   ],
   "rewriteBeforeAnswers": "Change the date format in the CSV export to match how the finance team writes dates, since they read the file by hand before importing it. Done when the export writes dates in that format and the existing tests still pass.",
   "outcome": "rewritten",
-  "final": "Change the date format in the CSV export to match how the finance team writes dates, since they read the file by hand before importing it. Done when the export writes dates in that format and the existing tests still pass. Date format: Use DD.MM.YYYY with dots as separators (e.g. 02.09.2026).."
+  "final": "Change the date format in the CSV export to match how the finance team writes dates, since they read the file by hand before importing it. Done when the export writes dates in that format and the existing tests still pass. Date format: Use DD.MM.YYYY with dots as separators (e.g. 02.09.2026)..",
+  "leak": [
+    {
+      "question": "Which date format should the CSV export use?",
+      "value": "02.09"
+    },
+    {
+      "question": "Which date format should the CSV export use?",
+      "value": "2026"
+    },
+    {
+      "question": "Which date format should the CSV export use?",
+      "value": "DD.MM"
+    }
+  ]
 }

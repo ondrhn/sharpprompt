@@ -23,5 +23,6 @@
   ],
   "rewriteBeforeAnswers": "Show the currency in the CLI output. Change only how the output is formatted, and do not add tests, docs or files that were not asked for.",
   "outcome": "rewritten",
-  "final": "Show the currency in the CLI output. Change only how the output is formatted, and do not add tests, docs or files that were not asked for. Apply it to every command that prints amounts, not just one."
+  "final": "Show the currency in the CLI output. Change only how the output is formatted, and do not add tests, docs or files that were not asked for. Apply it to every command that prints amounts, not just one.",
+  "leak": []
 }

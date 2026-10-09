@@ -27,6 +27,11 @@ Three families of ten, in [cases-v2.jsonl](../bench/cases-v2.jsonl), on a small 
 
 ## Remote reference: raw changed both
 
+| arm | check passed | target right | decoy untouched |
+|---|---|---|---|
+| raw | 2 | 10 | 2 |
+| rewritten | 10 | 10 | 10 |
+
 In all 8 remote-ref cases the raw arm failed, it changed the target correctly and the decoy as well. It never picked the wrong function alone. Its answers say so: "I fixed both `category_csv` and `report_csv` in `export.py`, since they had the same bug and you didn't say which one you meant." So the check counts as a failure something a user might be glad to get. We keep it a failure because the case says to leave the decoy alone, and because a change the user did not ask for is the thing this family measures. The rewritten arm changed the target only in all 10.
 
 ## Hidden spec: what raw guessed, what it asked
@@ -127,6 +132,8 @@ Same runner as v1: two arms per case on a fresh copy of the fixture, random arm 
 
 The oracle is Sonnet 5.5. A first pass with Haiku as oracle leaked: asked "which budget?", it volunteered the 75% threshold; asked which output should show the currency, it added the " EUR" suffix. Those answers handed the rewritten arm what the user had not been asked, so we threw that pass away and regenerated every rewrite with Sonnet. Sonnet still leaks a little (on Fable's near-75 rewrite it named `near_budget` and 75% in reply to "which budget?"), so a gain on hidden-spec is partly a measure of how well the oracle keeps quiet.
 
+An audit added after the run (`bench.mjs audit`) flags an oracle answer that names a number, a quoted text or a function name the user knows but the question and its option labels do not mention. On these rewrites it flags 3 cases. Read by hand: spec-refunds is a partial leak (asked what to do with negative rows, the oracle also named the `report()['refunds']` field and said the total stays net); spec-date-format and spec-round-005 answer the question asked with a value that none of the options had (DD.MM.YYYY, 0.05), which is not a leak. The oracle prompt now also says never to name a function, file, number, threshold or value the question did not ask about; these rewrites were made before that rule.
+
 Cost as the API would bill it (Max plan): 5.95 USD for the measured turns and 1.65 USD for the context turns, 7.60 USD in all; 910 seconds. The rewrites, the oracle and the judge are not included.
 
 ## Limits
@@ -135,5 +142,6 @@ Cost as the API would bill it (Max plan): 5.95 USD for the measured turns and 1.
 - One repeat.
 - The oracle is a model told what the user meant. A real user might answer worse (or better).
 - The rewrites come from the plugin's fallback template with the context pasted in, not from a fork of a live conversation.
+- The rewrites and their questions were written by the helper model, Haiku. In the plugin the rewrite is a fork of the session model (`$.model.fork`); Haiku writes it only as the fallback when there is no conversation to fork yet. So the questions measured here come from a different model than the plugin's usual ones.
 - The judge reads final messages only.
 - Both arms loaded the account's `~/.claude/CLAUDE.md`.

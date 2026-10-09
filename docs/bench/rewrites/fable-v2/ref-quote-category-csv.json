@@ -4,5 +4,6 @@
   "recommended": [],
   "rewriteBeforeAnswers": "Fix the CSV quoting in `category_csv` in `export.py` so a category like 'Food, drinks' stays in one column instead of splitting into two. Done when `python3 run_tests.py` passes and that row exports as one column.",
   "outcome": "rewritten",
-  "final": "Fix the CSV quoting in `category_csv` in `export.py` so a category like 'Food, drinks' stays in one column instead of splitting into two. Done when `python3 run_tests.py` passes and that row exports as one column."
+  "final": "Fix the CSV quoting in `category_csv` in `export.py` so a category like 'Food, drinks' stays in one column instead of splitting into two. Done when `python3 run_tests.py` passes and that row exports as one column.",
+  "leak": []
 }

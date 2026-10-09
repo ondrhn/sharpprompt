@@ -4,5 +4,6 @@
   "recommended": [],
   "rewriteBeforeAnswers": "Make month_key in dates.py accept unpadded dates like 2026-1-5 from the old bank export, returning the same result as 2026-01-05. Change only month_key. Done when month_key(\"2026-1-5\") works and python3 run_tests.py still passes all 8 tests.",
   "outcome": "rewritten",
-  "final": "Make month_key in dates.py accept unpadded dates like 2026-1-5 from the old bank export, returning the same result as 2026-01-05. Change only month_key. Done when month_key(\"2026-1-5\") works and python3 run_tests.py still passes all 8 tests."
+  "final": "Make month_key in dates.py accept unpadded dates like 2026-1-5 from the old bank export, returning the same result as 2026-01-05. Change only month_key. Done when month_key(\"2026-1-5\") works and python3 run_tests.py still passes all 8 tests.",
+  "leak": []
 }

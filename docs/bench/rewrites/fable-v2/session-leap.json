@@ -4,5 +4,6 @@
   "recommended": [],
   "rewriteBeforeAnswers": "Fix the failing test `test_regressions.test_leap_february` so it passes. Done when `python3 run_tests.py` reports no failures.",
   "outcome": "rewritten",
-  "final": "Fix the failing test `test_regressions.test_leap_february` so it passes. Done when `python3 run_tests.py` reports no failures."
+  "final": "Fix the failing test `test_regressions.test_leap_february` so it passes. Done when `python3 run_tests.py` reports no failures.",
+  "leak": []
 }

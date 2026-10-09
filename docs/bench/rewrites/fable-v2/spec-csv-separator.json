@@ -43,5 +43,6 @@
   ],
   "rewriteBeforeAnswers": "Make our CSV export work with the import tool finance uses for their monthly accounting imports. Finance loads our exports into that tool every month, so the output has to match what the tool accepts. Tell me what you changed and why it now matches.",
   "outcome": "rewritten",
-  "final": "Make our CSV export work with the import tool finance uses for their monthly accounting imports. Finance loads our exports into that tool every month, so the output has to match what the tool accepts. Tell me what you changed and why it now matches. The import tool needs a different column layout than the current export. Format spec: I don't know where it's written down.."
+  "final": "Make our CSV export work with the import tool finance uses for their monthly accounting imports. Finance loads our exports into that tool every month, so the output has to match what the tool accepts. Tell me what you changed and why it now matches. The import tool needs a different column layout than the current export. Format spec: I don't know where it's written down..",
+  "leak": []
 }
