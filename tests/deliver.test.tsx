@@ -207,7 +207,7 @@ test('a turn is recorded with how its prompt got there', async ($, on) => {
   await $.turn.complete(turn)
   expect(w.store.turns).toHaveLength(1)
   expect(w.store.counts).toMatchObject({ 'verdict:rough': 1, 'answer:as-is': 1 })
-  expect(w.store.rewrites).toEqual([{ outcome: 'rewritten', via: 'fork', ms: 0, classifyMs: 0, usage: { input: 10, output: 20, cacheRead: 0, cacheWrite: 0 }, words: [14, 20], model: 'claude-opus-5-5', at: w.clock.now() }])
+  expect(w.store.rewrites).toEqual([{ outcome: 'rewritten', via: 'fork', ms: 0, classifyMs: 0, usage: { input: 10, output: 20, cacheRead: 0, cacheWrite: 0 }, replyChars: REWRITTEN.length, words: [14, 20], model: 'claude-opus-5-5', at: w.clock.now() }])
   expect(w.store.decisions).toEqual([{ at: w.clock.now(), key: 'verdict:rough' }])
 })
 
@@ -318,7 +318,7 @@ test('log: a rewrite sent as is, with the turn it started', async ($, on) => {
   await $.prompt.submit({ text: REWRITTEN, ...typed })
   await $.turn.complete(TURN)
   expect(logOf(w)).toHaveLength(1)
-  expect(logOf(w)[0]).toMatchObject({ model: 'claude-opus-5-5', draft: ROUGH, verdict: 'rough', outcome: 'rewritten', via: 'fork', rewrite: REWRITTEN, delivered: 'fill', boxed: REWRITTEN, action: 'as-is', turn: { durationMs: 4200, tools: 0, asked: false, aborted: false } })
+  expect(logOf(w)[0]).toMatchObject({ model: 'claude-opus-5-5', draft: ROUGH, verdict: 'rough', outcome: 'rewritten', via: 'fork', rewrite: REWRITTEN, replyChars: REWRITTEN.length, delivered: 'fill', boxed: REWRITTEN, fillMs: 0, action: 'as-is', turn: { durationMs: 4200, tools: 0, asked: false, aborted: false } })
   expect(typeof logOf(w)[0]?.at).toBe('string')
 })
 

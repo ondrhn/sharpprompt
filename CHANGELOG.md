@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Rewrite records keep the reply's length before cleaning, and the usage log keeps how long filling the box took, to see where the wait and the output tokens go.
 - A status line under the prompt box while sharpprompt checks or rewrites a prompt, cleared when the wait ends on every path.
 - CI: a GitHub Actions workflow runs validate, the plugin tests, the bank check and the script tests on each push and pull request; `tsc` stays local.
 - README: a When it helps section, from the measurements: no difference on ordinary prompts, a gain when the prompt leaves out something only you know, and what it costs per prompt.

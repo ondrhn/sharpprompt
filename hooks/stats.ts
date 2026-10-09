@@ -30,6 +30,9 @@ export type RewriteRecord = {
   // rewrite was the fallback completion rather than a fork.
   at?: number
   helper?: string
+  // Characters in the reply before cleaning; output tokens far past a
+  // quarter of this went to thinking.
+  replyChars?: number
 }
 
 // Every classified prompt, so short-but-rough patterns show once n grows.

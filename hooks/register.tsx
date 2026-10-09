@@ -126,8 +126,10 @@ async function rewrite($: EngineInterface, draft: string, helper: string, opts: 
   const { body, questions } = opts.ask ? splitReply(reply.text) : { body: reply.text, questions: [] }
   const c = clean(body, draft)
   const ms = await took()
-  if ('rejected' in c) return { outcome: c.rejected, via, ms, usage: reply.usage }
-  return { outcome: 'rewritten', via, ms, usage: reply.usage, text: c.rewritten, ...(questions.length ? { questions } : {}) }
+  // The reply's own length: output tokens well past it went to thinking.
+  const replyChars = reply.text.length
+  if ('rejected' in c) return { outcome: c.rejected, via, ms, usage: reply.usage, replyChars }
+  return { outcome: 'rewritten', via, ms, usage: reply.usage, replyChars, text: c.rewritten, ...(questions.length ? { questions } : {}) }
 }
 
 async function lastReply($: EngineInterface): Promise<string> {
@@ -300,6 +302,7 @@ async function record($: EngineInterface, d: SharppromptDecision, helper: string
     ms: r.ms,
     classifyMs: d.classifyMs,
     usage: tokens(r.usage),
+    ...(r.replyChars === undefined ? {} : { replyChars: r.replyChars }),
     words: r.text ? [wordCount(d.text), wordCount(r.text)] : [wordCount(d.text)],
     model: await $.session.model(),
     at,
@@ -331,7 +334,9 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
     return next({ ...e, text: rewritten })
   }
 
+  const f0 = await $.clock.now()
   const filled = await $.prompt.fill({ text: rewritten, mode: 'replace' })
+  const fillMs = (await $.clock.now()) - f0
   if (!filled.isFilled) {
     await updateLog($, log, { delivered: 'typed' })
     turnLog = log
@@ -340,7 +345,7 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
   }
   await $.store.set('lastOriginal', e.text)
   await $.state.set(pending, { kind: 'filled', original: e.text, rewritten, ...(log ? { log } : {}) })
-  await updateLog($, log, { delivered: 'fill', boxed: clip(rewritten) })
+  await updateLog($, log, { delivered: 'fill', boxed: clip(rewritten), fillMs })
   // Since Claude Code 2.1.295 a dropped prompt is put back in the box after
   // our fill, so the box reads rewrite + original. The engine does that before
   // the next timer tick, so one tick later we set the rewrite again. On 2.1.293

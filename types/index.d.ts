@@ -30,6 +30,8 @@ export type SharppromptRewrite = {
   detail?: string
   // Gaps the rewriter wanted to ask about; their answers are added to text.
   questions?: SharppromptQuestion[]
+  // Characters in the model's reply before cleaning, to set against its output tokens.
+  replyChars?: number
   usage?: { input_tokens: number; output_tokens: number; cache_read_input_tokens: number; cache_creation_input_tokens: number }
 }
 
