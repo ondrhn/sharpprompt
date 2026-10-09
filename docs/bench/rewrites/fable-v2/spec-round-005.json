@@ -1,0 +1,27 @@
+{
+  "questions": [
+    {
+      "question": "How should the totals be rounded?",
+      "header": "Rounding",
+      "options": [
+        {
+          "label": "Whole units",
+          "adds": "Round each report total to whole units, with no cents."
+        },
+        {
+          "label": "Line items first",
+          "adds": "Round each line item to whole units before summing them into the totals."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "How should the totals be rounded?": "Round the total to the nearest 0.05 (cash rounding)."
+  },
+  "recommended": [
+    "Whole units"
+  ],
+  "rewriteBeforeAnswers": "Round the report totals so they no longer show odd cents, since finance keeps asking about them. When done, the existing tests pass.",
+  "outcome": "rewritten",
+  "final": "Round the report totals so they no longer show odd cents, since finance keeps asking about them. When done, the existing tests pass. Rounding: Round the total to the nearest 0.05 (cash rounding).."
+}

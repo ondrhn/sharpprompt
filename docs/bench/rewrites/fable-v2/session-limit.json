@@ -1,0 +1,8 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Fix the failing test test_regressions.test_at_limit, the only failure in `python3 run_tests.py`. Find out why it fails and fix it, keeping the other tests passing. Done when `python3 run_tests.py` reports no failures.",
+  "outcome": "rewritten",
+  "final": "Fix the failing test test_regressions.test_at_limit, the only failure in `python3 run_tests.py`. Find out why it fails and fix it, keeping the other tests passing. Done when `python3 run_tests.py` reports no failures."
+}

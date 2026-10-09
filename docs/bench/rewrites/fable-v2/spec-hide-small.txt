@@ -1,0 +1,1 @@
+Hide the tiny categories from the report, the ones showing only a few euros next to the big ones, so the big ones stand out. Done when the report no longer shows them and the existing tests still pass. Hide categories whose total is under 10 euros.

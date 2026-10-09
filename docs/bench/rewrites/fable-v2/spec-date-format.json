@@ -1,0 +1,31 @@
+{
+  "questions": [
+    {
+      "question": "Which date format should the CSV export use?",
+      "header": "Date format",
+      "options": [
+        {
+          "label": "DD/MM/YYYY",
+          "adds": "Write dates in the export as DD/MM/YYYY."
+        },
+        {
+          "label": "MM/DD/YYYY",
+          "adds": "Write dates in the export as MM/DD/YYYY."
+        },
+        {
+          "label": "YYYY-MM-DD",
+          "adds": "Write dates in the export as YYYY-MM-DD."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which date format should the CSV export use?": "Use DD.MM.YYYY with dots as separators (e.g. 02.09.2026)."
+  },
+  "recommended": [
+    "DD/MM/YYYY"
+  ],
+  "rewriteBeforeAnswers": "Change the date format in the CSV export to match how the finance team writes dates, since they read the file by hand before importing it. Done when the export writes dates in that format and the existing tests still pass.",
+  "outcome": "rewritten",
+  "final": "Change the date format in the CSV export to match how the finance team writes dates, since they read the file by hand before importing it. Done when the export writes dates in that format and the existing tests still pass. Date format: Use DD.MM.YYYY with dots as separators (e.g. 02.09.2026).."
+}

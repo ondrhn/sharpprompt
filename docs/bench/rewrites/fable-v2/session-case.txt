@@ -1,0 +1,1 @@
+Fix the failing test test_regressions.test_category_case from the last run of python3 run_tests.py. Done when python3 run_tests.py passes with no failures.

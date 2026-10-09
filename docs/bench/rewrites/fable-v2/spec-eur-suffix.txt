@@ -1,0 +1,1 @@
+Show the currency alongside each amount in the CLI output. Find where the CLI prints amounts and add the currency to that output. Done when the printed amounts include their currency and the existing tests still pass. Show the currency on every amount the CLI prints. Show the currency as an ISO code such as USD.

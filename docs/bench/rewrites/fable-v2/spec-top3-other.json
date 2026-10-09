@@ -1,0 +1,31 @@
+{
+  "questions": [
+    {
+      "question": "Which categories should the email keep?",
+      "header": "Which ones",
+      "options": [
+        {
+          "label": "Largest only",
+          "adds": "Keep only the categories with the largest amounts."
+        },
+        {
+          "label": "Changed since last month",
+          "adds": "Keep only the categories whose totals changed since last month."
+        },
+        {
+          "label": "Let me pick",
+          "adds": "Ask me to choose the categories to keep before editing anything."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which categories should the email keep?": "Largest only"
+  },
+  "recommended": [
+    "Largest only"
+  ],
+  "rewriteBeforeAnswers": "The monthly email lists every category, and people stop reading halfway. Cut the category list down to the few that matter most, with the important ones first. Leave the rest of the email as it is. Done when the monthly email shows only the categories kept.",
+  "outcome": "rewritten",
+  "final": "The monthly email lists every category, and people stop reading halfway. Cut the category list down to the few that matter most, with the important ones first. Leave the rest of the email as it is. Done when the monthly email shows only the categories kept. Keep only the categories with the largest amounts."
+}

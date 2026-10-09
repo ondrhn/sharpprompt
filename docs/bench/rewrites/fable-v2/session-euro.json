@@ -1,0 +1,8 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Fix the failing test `test_regressions.test_euro_amounts`, which `python3 run_tests.py` reports as an AssertionError. Find the cause in `parse_amount` or the code it calls, and fix that without changing the test's expectations. Done when `python3 run_tests.py` reports all tests passing.",
+  "outcome": "rewritten",
+  "final": "Fix the failing test `test_regressions.test_euro_amounts`, which `python3 run_tests.py` reports as an AssertionError. Find the cause in `parse_amount` or the code it calls, and fix that without changing the test's expectations. Done when `python3 run_tests.py` reports all tests passing."
+}

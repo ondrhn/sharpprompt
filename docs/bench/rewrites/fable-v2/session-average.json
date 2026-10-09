@@ -1,0 +1,8 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Fix the failing test test_regressions.test_empty_month, which raises ZeroDivisionError. Done when `python3 run_tests.py` reports every test as ok.",
+  "outcome": "rewritten",
+  "final": "Fix the failing test test_regressions.test_empty_month, which raises ZeroDivisionError. Done when `python3 run_tests.py` reports every test as ok."
+}

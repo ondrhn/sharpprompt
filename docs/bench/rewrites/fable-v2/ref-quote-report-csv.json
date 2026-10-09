@@ -1,0 +1,8 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Fix the quoting in `report_csv` in `export.py`. It joins fields with an f-string, so a payee like 'Smith, John' splits the row. Use proper CSV quoting so a comma inside a field stays in one column. Done when `python3 run_tests.py` passes and that payee comes out as a single column.",
+  "outcome": "rewritten",
+  "final": "Fix the quoting in `report_csv` in `export.py`. It joins fields with an f-string, so a payee like 'Smith, John' splits the row. Use proper CSV quoting so a comma inside a field stays in one column. Done when `python3 run_tests.py` passes and that payee comes out as a single column."
+}

@@ -1,0 +1,1 @@
+Change `average` in calc.py to return 0 for an empty list instead of raising ZeroDivisionError. Leave the rest of the function as it is. Done when `python3 run_tests.py` still passes. Leave median in calc.py unchanged.

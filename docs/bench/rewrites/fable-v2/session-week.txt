@@ -1,0 +1,1 @@
+Fix the failing test test_week_key_short. It raises ValueError: Invalid isoformat string '2026-1-5' when I run python3 run_tests.py. Done when python3 run_tests.py shows no failures.

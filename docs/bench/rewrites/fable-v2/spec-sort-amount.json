@@ -1,0 +1,31 @@
+{
+  "questions": [
+    {
+      "question": "Which order should the categories use?",
+      "header": "Sort order",
+      "options": [
+        {
+          "label": "Alphabetical",
+          "adds": "Sort the categories alphabetically."
+        },
+        {
+          "label": "By item count",
+          "adds": "Sort the categories by how many items each has, largest first."
+        },
+        {
+          "label": "Custom order",
+          "adds": "Use the custom order I describe in my next message."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which order should the categories use?": "Sort by amount, largest first."
+  },
+  "recommended": [
+    "Alphabetical"
+  ],
+  "rewriteBeforeAnswers": "Make the categories in the CLI output easier to scan by changing their sort order. Find where the CLI prints the categories and change only that order, keeping the text and the rest of the output the same. Tell me which order you chose and why. Done when the CLI output lists the categories in that order.",
+  "outcome": "rewritten",
+  "final": "Make the categories in the CLI output easier to scan by changing their sort order. Find where the CLI prints the categories and change only that order, keeping the text and the rest of the output the same. Tell me which order you chose and why. Done when the CLI output lists the categories in that order. Sort order: Sort by amount, largest first.."
+}

@@ -1,0 +1,27 @@
+{
+  "questions": [
+    {
+      "question": "Should over_budget also count spending exactly at the limit as over?",
+      "header": "Scope",
+      "options": [
+        {
+          "label": "Both checks",
+          "adds": "Also change over_budget so spending exactly at the limit counts as over."
+        },
+        {
+          "label": "Only near_budget",
+          "adds": "Change only near_budget and leave over_budget as it is."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Should over_budget also count spending exactly at the limit as over?": "Only near_budget"
+  },
+  "recommended": [
+    "Both checks"
+  ],
+  "rewriteBeforeAnswers": "Fix near_budget in budget.py so spending of exactly 90% of the limit triggers the warning, using >= instead of >. Done when python3 run_tests.py passes.",
+  "outcome": "rewritten",
+  "final": "Fix near_budget in budget.py so spending of exactly 90% of the limit triggers the warning, using >= instead of >. Done when python3 run_tests.py passes. Change only near_budget and leave over_budget as it is."
+}

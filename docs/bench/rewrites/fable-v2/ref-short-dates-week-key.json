@@ -1,0 +1,27 @@
+{
+  "questions": [
+    {
+      "question": "month_key in dates.py has the same bug. Should it get the same fix?",
+      "header": "month_key",
+      "options": [
+        {
+          "label": "Fix both",
+          "adds": "Make month_key in dates.py accept unpadded dates the same way."
+        },
+        {
+          "label": "Only week_key",
+          "adds": "Leave month_key unchanged."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "month_key in dates.py has the same bug. Should it get the same fix?": "Only week_key"
+  },
+  "recommended": [
+    "Fix both"
+  ],
+  "rewriteBeforeAnswers": "Make week_key in dates.py accept unpadded dates like 2026-1-5 from the old bank export. It currently raises ValueError because it calls date.fromisoformat, which needs zero-padded parts. Done when week_key accepts 2026-1-5 and python3 run_tests.py passes.",
+  "outcome": "rewritten",
+  "final": "Make week_key in dates.py accept unpadded dates like 2026-1-5 from the old bank export. It currently raises ValueError because it calls date.fromisoformat, which needs zero-padded parts. Done when week_key accepts 2026-1-5 and python3 run_tests.py passes. Leave month_key unchanged."
+}

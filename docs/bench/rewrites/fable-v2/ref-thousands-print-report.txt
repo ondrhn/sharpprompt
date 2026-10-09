@@ -1,0 +1,1 @@
+In `cli.py`, change `print_report` to format amounts with thousands separators (`:,.2f`), so 1500 prints as 1,500.00 as finance asked. Change only `print_report`. Done when the report shows 1,500.00 and the existing tests still pass.

@@ -1,0 +1,8 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Make median in calc.py return 0 for an empty list instead of raising IndexError. Done when python3 run_tests.py passes.",
+  "outcome": "rewritten",
+  "final": "Make median in calc.py return 0 for an empty list instead of raising IndexError. Done when python3 run_tests.py passes."
+}

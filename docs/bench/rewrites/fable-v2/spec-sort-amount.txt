@@ -1,0 +1,1 @@
+Make the categories in the CLI output easier to scan by changing their sort order. Find where the CLI prints the categories and change only that order, keeping the text and the rest of the output the same. Tell me which order you chose and why. Done when the CLI output lists the categories in that order. Sort order: Sort by amount, largest first..

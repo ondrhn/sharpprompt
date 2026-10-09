@@ -1,0 +1,1 @@
+Change the alert lines in `alerts()` in budget.py so `spent` and `limit` use thousands separators (`:,.2f`, so 1,500.00 instead of 1500.00), since finance asked for that format. Done when `python3 run_tests.py` still passes.

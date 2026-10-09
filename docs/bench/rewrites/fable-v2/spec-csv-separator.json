@@ -1,0 +1,47 @@
+{
+  "questions": [
+    {
+      "question": "Is the current export failing to import, or does the tool need a different layout?",
+      "header": "Failure",
+      "options": [
+        {
+          "label": "Import fails now",
+          "adds": "The current export fails to import with an error, so fix that."
+        },
+        {
+          "label": "Different layout needed",
+          "adds": "The import tool needs a different column layout than the current export."
+        },
+        {
+          "label": "Not sure yet",
+          "adds": "Start by comparing the current export with what the import tool expects and report the differences."
+        }
+      ]
+    },
+    {
+      "question": "Where is the import tool's required format written down?",
+      "header": "Format spec",
+      "options": [
+        {
+          "label": "Sample import file",
+          "adds": "Match the column layout of the sample import file finance provides."
+        },
+        {
+          "label": "Tool documentation",
+          "adds": "Match the format described in the import tool's documentation, which I will paste here."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Is the current export failing to import, or does the tool need a different layout?": "Different layout needed",
+    "Where is the import tool's required format written down?": "I don't know where it's written down."
+  },
+  "recommended": [
+    "Import fails now",
+    "Sample import file"
+  ],
+  "rewriteBeforeAnswers": "Make our CSV export work with the import tool finance uses for their monthly accounting imports. Finance loads our exports into that tool every month, so the output has to match what the tool accepts. Tell me what you changed and why it now matches.",
+  "outcome": "rewritten",
+  "final": "Make our CSV export work with the import tool finance uses for their monthly accounting imports. Finance loads our exports into that tool every month, so the output has to match what the tool accepts. Tell me what you changed and why it now matches. The import tool needs a different column layout than the current export. Format spec: I don't know where it's written down.."
+}

@@ -1,0 +1,8 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Fix the failing test `test_regressions.test_category_csv_commas`, which fails when I run `python3 run_tests.py`. Find out why it fails and fix it. Done when `python3 run_tests.py` reports every test as ok.",
+  "outcome": "rewritten",
+  "final": "Fix the failing test `test_regressions.test_category_csv_commas`, which fails when I run `python3 run_tests.py`. Find out why it fails and fix it. Done when `python3 run_tests.py` reports every test as ok."
+}

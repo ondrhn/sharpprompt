@@ -1,0 +1,43 @@
+{
+  "questions": [
+    {
+      "question": "Which budget warning should fire earlier?",
+      "header": "Which warn",
+      "options": [
+        {
+          "label": "Token budget",
+          "adds": "The warning to change is the token budget warning."
+        },
+        {
+          "label": "Spend budget",
+          "adds": "The warning to change is the spend budget warning."
+        }
+      ]
+    },
+    {
+      "question": "How early should the warning fire?",
+      "header": "Threshold",
+      "options": [
+        {
+          "label": "At 75% used",
+          "adds": "Fire the warning when 75% of the budget is used."
+        },
+        {
+          "label": "At 50% used",
+          "adds": "Fire the warning when 50% of the budget is used."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which budget warning should fire earlier?": "I only know that near_budget should warn from 75% of the limit; I don't know whether that's the token or spend budget.",
+    "How early should the warning fire?": "At 75% used"
+  },
+  "recommended": [
+    "Token budget",
+    "At 75% used"
+  ],
+  "rewriteBeforeAnswers": "Budget warnings currently fire too late. Find the code that triggers them and move the warning earlier. Done when the existing tests pass.",
+  "outcome": "rewritten",
+  "final": "Budget warnings currently fire too late. Find the code that triggers them and move the warning earlier. Done when the existing tests pass. Which warn: I only know that near_budget should warn from 75% of the limit; I don't know whether that's the token or spend budget.. Fire the warning when 75% of the budget is used."
+}

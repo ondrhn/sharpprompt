@@ -1,0 +1,1 @@
+Fix the failing test `test_regressions.test_median_empty`, which raises an IndexError in `python3 run_tests.py`. Done when `python3 run_tests.py` reports no failures.

@@ -1,0 +1,27 @@
+{
+  "questions": [
+    {
+      "question": "What should a negative amount become after import?",
+      "header": "Sign rule",
+      "options": [
+        {
+          "label": "Keep the sign",
+          "adds": "Keep negative amounts as negative values."
+        },
+        {
+          "label": "Store as debit",
+          "adds": "Store negative amounts as positive debit values."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "What should a negative amount become after import?": "Neither; negative amounts are refunds, so they should be kept out of the category totals and tracked separately."
+  },
+  "recommended": [
+    "Keep the sign"
+  ],
+  "rewriteBeforeAnswers": "Some rows in the bank export have negative amounts, and they keep showing up. Find the code that reads the export and make it handle negative amounts properly. Done when a row with a negative amount is read correctly.",
+  "outcome": "rewritten",
+  "final": "Some rows in the bank export have negative amounts, and they keep showing up. Find the code that reads the export and make it handle negative amounts properly. Done when a row with a negative amount is read correctly. Sign rule: Neither; negative amounts are refunds, so they should be kept out of the category totals and tracked separately.."
+}

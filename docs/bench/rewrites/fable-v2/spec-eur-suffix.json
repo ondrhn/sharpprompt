@@ -1,0 +1,43 @@
+{
+  "questions": [
+    {
+      "question": "Which CLI output should show the currency?",
+      "header": "Which output",
+      "options": [
+        {
+          "label": "Every amount printed",
+          "adds": "Show the currency on every amount the CLI prints."
+        },
+        {
+          "label": "One command only",
+          "adds": "Limit the change to the output of one specific command, which I will name."
+        }
+      ]
+    },
+    {
+      "question": "How should the currency appear?",
+      "header": "Currency for",
+      "options": [
+        {
+          "label": "ISO code",
+          "adds": "Show the currency as an ISO code such as USD."
+        },
+        {
+          "label": "Symbol",
+          "adds": "Show the currency as a symbol such as $."
+        }
+      ]
+    }
+  ],
+  "oracleAnswers": {
+    "Which CLI output should show the currency?": "Every amount printed",
+    "How should the currency appear?": "ISO code"
+  },
+  "recommended": [
+    "Every amount printed",
+    "ISO code"
+  ],
+  "rewriteBeforeAnswers": "Show the currency alongside each amount in the CLI output. Find where the CLI prints amounts and add the currency to that output. Done when the printed amounts include their currency and the existing tests still pass.",
+  "outcome": "rewritten",
+  "final": "Show the currency alongside each amount in the CLI output. Find where the CLI prints amounts and add the currency to that output. Done when the printed amounts include their currency and the existing tests still pass. Show the currency on every amount the CLI prints. Show the currency as an ISO code such as USD."
+}

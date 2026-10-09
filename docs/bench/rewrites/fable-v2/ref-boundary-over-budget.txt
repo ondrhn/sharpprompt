@@ -1,0 +1,1 @@
+In budget.py, change over_budget so spending exactly equal to the limit counts as over, using >= instead of >. Done when `python3 run_tests.py` still passes.

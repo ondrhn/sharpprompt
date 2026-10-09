@@ -1,0 +1,1 @@
+Change the date format in the CSV export to match how the finance team writes dates, since they read the file by hand before importing it. Done when the export writes dates in that format and the existing tests still pass. Date format: Use DD.MM.YYYY with dots as separators (e.g. 02.09.2026)..

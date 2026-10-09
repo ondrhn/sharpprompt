@@ -1,0 +1,8 @@
+{
+  "questions": [],
+  "oracleAnswers": {},
+  "recommended": [],
+  "rewriteBeforeAnswers": "Fix the failing test `test_regressions.test_csv_commas`, which raises an AssertionError in `python3 run_tests.py`. Don't break the other tests. Done when `python3 run_tests.py` reports every test as ok.",
+  "outcome": "rewritten",
+  "final": "Fix the failing test `test_regressions.test_csv_commas`, which raises an AssertionError in `python3 run_tests.py`. Don't break the other tests. Done when `python3 run_tests.py` reports every test as ok."
+}
