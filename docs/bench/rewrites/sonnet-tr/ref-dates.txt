@@ -1,0 +1,1 @@
+Consolidate the date calculations that are scattered across this codebase into one shared helper, and point the existing call sites at it. Keep behaviour the same, and don't add new tests or files. Done when the existing tests pass.

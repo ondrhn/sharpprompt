@@ -1,0 +1,1 @@
+Fix parse_amount() in calc.py so European-formatted amounts parse correctly. It currently strips commas, so 1.000,50 becomes 1.0005 instead of 1000.5. Our bank exports now come in European format. Done when 1.000,50 parses to 1000.5 and the existing tests pass.

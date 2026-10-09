@@ -1,0 +1,1 @@
+Investigate why the grocery figures look wrong. A budget alert came for "Groceries" but not for "groceries", and the totals look split between them. Tell me the likely cause and the evidence for it. Don't change anything yet.

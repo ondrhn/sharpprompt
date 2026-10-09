@@ -1,0 +1,1 @@
+Is it a problem that `report()` returns a float? The values are money, so precision matters. Don't change anything yet. Give me a short assessment with the main reason.

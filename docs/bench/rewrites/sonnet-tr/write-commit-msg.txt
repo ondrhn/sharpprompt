@@ -1,0 +1,1 @@
+Write a short commit message for the report_csv change, which now uses Python's csv module so fields with quotes and commas are escaped correctly. Reply with only the message text. Don't run git commit or edit any files.

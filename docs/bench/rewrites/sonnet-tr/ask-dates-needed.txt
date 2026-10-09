@@ -1,0 +1,1 @@
+Look at what dates.py does and tell me whether it adds anything beyond the standard library datetime module, or whether I should use datetime directly. Give a short answer with the main trade-off. Don't change anything yet.

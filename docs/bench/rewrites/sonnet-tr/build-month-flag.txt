@@ -1,0 +1,1 @@
+Add a `--month` flag to the CLI so I can select a single month. When the flag is given, only that month's results should be included. Without it, behaviour stays the same, and nothing else should change. Done when the CLI accepts `--month` and returns only that month's results.

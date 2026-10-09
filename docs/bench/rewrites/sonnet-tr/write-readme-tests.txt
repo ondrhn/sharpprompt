@@ -1,0 +1,1 @@
+Add a section to the README explaining how to run the tests, for newcomers to the project. Use the test commands already in the repo and confirm they work. Change only the README, not any code or test files. Done when the new section is in the README and the commands it lists run successfully.

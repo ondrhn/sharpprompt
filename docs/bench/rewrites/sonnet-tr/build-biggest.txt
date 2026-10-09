@@ -1,0 +1,1 @@
+Along with my last question, for each month, also report the largest single expense. Give one line per month with the expense and its amount. This is an answer only, so don't change any files.

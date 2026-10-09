@@ -1,0 +1,1 @@
+Fix `days_in_month()` in `dates.py` so February has 29 days in leap years. It always returns 28 now, which makes the February 2028 daily average look too low. Change only that function, and don't add tests or docs. Done when it returns 29 for February 2028 and 28 for February 2027.

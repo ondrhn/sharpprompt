@@ -1,0 +1,1 @@
+I'm curious what something like `month_key 2026-1-5` would return. Just answer the question and don't change anything.

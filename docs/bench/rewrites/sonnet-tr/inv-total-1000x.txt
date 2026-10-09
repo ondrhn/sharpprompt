@@ -1,0 +1,1 @@
+Last week's report shows 1,051 spent on transport (ulaşım), but it is normally around 50. Find out why the total sometimes goes off by about 1000 times. Don't change anything yet. Tell me the likely cause and the evidence for it.

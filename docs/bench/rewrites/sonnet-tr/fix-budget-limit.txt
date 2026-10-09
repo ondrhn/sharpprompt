@@ -1,0 +1,1 @@
+Fix the budget alert so it fires when spending is exactly equal to the limit. Right now it stays silent at that point, but it should trigger. Change only what this fix needs, and confirm the existing tests still pass.

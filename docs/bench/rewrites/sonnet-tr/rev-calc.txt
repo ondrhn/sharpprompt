@@ -1,0 +1,1 @@
+Before I send calc.py, review it and tell me if anything is wrong. List each problem with its line number, most serious first. Don't change the file yet.

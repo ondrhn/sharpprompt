@@ -1,0 +1,1 @@
+The report still lists 'Food' and 'food' as two separate categories, and this has come back again. Make category matching case-insensitive so they count as one category. Change only the category grouping. Done when the report shows a single food category.

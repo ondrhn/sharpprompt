@@ -1,0 +1,1 @@
+Add a validation that rejects negative amounts so they can't slip through. Find where the amounts are accepted and add the check there, changing nothing else and adding no new tests. Done when the existing tests still pass.

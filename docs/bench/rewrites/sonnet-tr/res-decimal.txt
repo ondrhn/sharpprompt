@@ -1,0 +1,1 @@
+In Python, should money values use decimal or float? Tell me which one to use and why, in a short answer. Don't change any code.

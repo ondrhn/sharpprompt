@@ -1,0 +1,1 @@
+Write a short note for the emails about the number format change. Last week we moved the bank export to European number format (1.000,50), and parse_amount() still needs to read that as 1000.5. Until it does, totals from the new exports are wrong. Keep the note brief, and only write it without changing any code.

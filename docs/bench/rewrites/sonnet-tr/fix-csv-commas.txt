@@ -1,0 +1,1 @@
+The CSV export in export.py still breaks when a name contains a comma, such as 'Smith, John', and the table opens misaligned. Fix it so names with commas export correctly, and confirm that 'Smith, John' lands in a single cell.

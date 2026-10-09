@@ -1,0 +1,1 @@
+Look at export.py and tell me whether it has any edge case that could make it crash or fail. For each one, give the line and why it would break. Don't change any code yet.

@@ -1,0 +1,1 @@
+The people who write the monthly email want a category breakdown in their own formats. I guess I need category-based totals added for them. Add per-category totals to each of their formats, and treat it as done when each format's monthly output includes those totals.

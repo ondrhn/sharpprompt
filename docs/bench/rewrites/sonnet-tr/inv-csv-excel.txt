@@ -1,0 +1,1 @@
+Look at the CSV export I made and find out why some rows open strangely in Excel. Don't change anything yet. Tell me the likely cause and what in the output shows it.

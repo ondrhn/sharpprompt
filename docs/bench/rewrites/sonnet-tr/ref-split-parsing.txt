@@ -1,0 +1,1 @@
+calc.py has become messy. Move its parsing code into a separate module and keep the behaviour the same. Don't add tests, docs, or other files beyond that move. Done when calc.py no longer contains the parsing code and any existing tests still pass.

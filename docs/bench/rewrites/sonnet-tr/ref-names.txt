@@ -1,0 +1,1 @@
+Rename the cryptic short variable names in budget.py to descriptive ones, changing only names and not logic. Update every use of each renamed variable in that file. Don't add tests, docs, or new files. Done when budget.py reads clearly and any existing tests still pass.

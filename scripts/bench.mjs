@@ -15,6 +15,8 @@
 //          --family <fable|opus|sonnet|haiku|common> (rewrites: the rule family
 //            of the benchmark model; default fable)
 //          --only <id,id,...>   --repeat <n> (run: default 1)
+//          --cases tr   use the Turkish corpus (cases-tr.jsonl); rewrites go to
+//            rewrites/<family>-tr/ and are written in English
 //
 //   summary <runs.jsonl>   paired differences (rewritten minus raw) over the
 //              cases whose rewrite is not KEEP, medians and a bootstrap 95%
@@ -44,8 +46,13 @@ const opt = (name, fallback) => {
   return i > 0 && args[i + 1] ? args[i + 1] : fallback
 }
 
-function loadCases() {
-  const all = readFileSync(join(bench, 'cases.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l))
+// The corpus: cases.jsonl, or cases-<x>.jsonl with --cases <x>.
+const corpus = opt('cases', '')
+const suffix = corpus ? `-${corpus}` : ''
+const rewritesDir = family => join(bench, 'rewrites', `${family}${suffix}`)
+
+function loadCases(name = corpus) {
+  const all = readFileSync(join(bench, name ? `cases-${name}.jsonl` : 'cases.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l))
   const only = opt('only', '')
   return only ? all.filter(c => only.split(',').includes(c.id)) : all
 }
@@ -73,11 +80,13 @@ function complete(model, prompt) {
 function rewrites() {
   const helper = opt('helper', 'haiku')
   const family = opt('family', 'fable')
-  const dir = join(bench, 'rewrites', family)
+  const dir = rewritesDir(family)
   mkdirSync(dir, { recursive: true })
+  // The Turkish corpus measures rewriting into English (rewriteLanguage: en).
+  const language = corpus ? 'en' : 'same'
   const index = []
   for (const c of loadCases()) {
-    const prompt = completePrompt(c.raw, family, c.context)
+    const prompt = completePrompt(c.raw, family, c.context, [], { language })
     const r = complete(helper, prompt)
     let outcome
     let text
@@ -91,7 +100,7 @@ function rewrites() {
       text = 'rewritten' in cl ? cl.rewritten : c.raw
     }
     writeFileSync(join(dir, `${c.id}.txt`), text + '\n')
-    index.push({ id: c.id, outcome, helper, family, ms: r.ms ?? null, words: [c.raw.split(/\s+/).length, text.split(/\s+/).length] })
+    index.push({ id: c.id, outcome, helper, family, language, ...(r.error ? { error: r.error.slice(0, 200) } : {}), ms: r.ms ?? null, words: [c.raw.split(/\s+/).length, text.split(/\s+/).length] })
     console.log(`${c.id}: ${outcome}${r.ms ? ` in ${r.ms} ms` : ''}`)
   }
   const file = join(dir, 'index.jsonl')
@@ -152,13 +161,13 @@ function parseStream(stdout) {
 function runOne(c, arm, model, order, repeat) {
   // sharpprompt picks its rules by the session model's family, so the
   // rewritten arm reads the rewrites made for that family.
-  const text = arm === 'raw' ? c.raw : readFileSync(join(bench, 'rewrites', familyOf(model), `${c.id}.txt`), 'utf8').trim()
+  const text = arm === 'raw' ? c.raw : readFileSync(join(rewritesDir(familyOf(model)), `${c.id}.txt`), 'utf8').trim()
   const base = mkdtempSync(join(tmpdir(), 'sharpprompt-bench-'))
   const dir = join(base, 'expenses')
   cpSync(join(bench, 'fixture'), dir, { recursive: true })
   const session = randomUUID()
   const env = childEnv()
-  const out = { id: c.id, shape: c.shape, arm, order, repeat, session, model }
+  const out = { id: c.id, shape: c.shape, arm, order, repeat, session, model, corpus: corpus || 'en' }
 
   try {
     if (c.context.length > 0) {
@@ -211,15 +220,15 @@ function run() {
   }
   const repeat = Number(opt('repeat', '1'))
   const family = familyOf(model)
-  if (!existsSync(join(bench, 'rewrites', family, 'index.jsonl'))) {
-    console.error(`no rewrites for the ${family} family yet: run "rewrites --family ${family}" first`)
+  if (!existsSync(join(rewritesDir(family), 'index.jsonl'))) {
+    console.error(`no rewrites for ${family}${suffix} yet: run "rewrites --family ${family}${corpus ? ` --cases ${corpus}` : ''}" first`)
     process.exit(1)
   }
   const version = spawnSync('claude', ['--version'], { encoding: 'utf8' }).stdout.trim()
   const date = new Date().toISOString().slice(0, 10)
   const runs = join(bench, 'runs')
   mkdirSync(runs, { recursive: true })
-  const stem = join(runs, `${date}-${model}${opt('only', '') ? '-partial' : ''}`)
+  const stem = join(runs, `${date}${suffix}-${model}${opt('only', '') ? '-partial' : ''}`)
   const file = `${stem}.jsonl`
   const manifest = `${stem}.manifest.jsonl`
   // A second start picks up where the first stopped: an id + arm + repeat in
@@ -266,6 +275,26 @@ function rng(seed) {
   }
 }
 
+// Cases whose rewrite came back KEEP send the same text in both arms.
+function keepSet(runs) {
+  const c = runs[0]?.corpus && runs[0].corpus !== 'en' ? `-${runs[0].corpus}` : ''
+  const file = join(bench, 'rewrites', `${familyOf(runs[0].model)}${c}`, 'index.jsonl')
+  return new Set(readFileSync(file, 'utf8').trim().split('\n').map(l => JSON.parse(l)).filter(x => x.outcome !== 'rewritten').map(x => x.id))
+}
+
+// Rough language of an answer: Turkish letters and common Turkish words
+// against common English ones.
+export function languageOf(text) {
+  const words = text.toLowerCase().match(/[a-zçğıöşü]+/g) ?? []
+  const tr = new Set(['ve', 'bir', 'bu', 'için', 'icin', 'değil', 'degil', 'ama', 'çok', 'cok', 'şu', 'su', 'ile', 'da', 'de', 'mi', 'var', 'yok', 'olarak', 'gibi', 'daha', 'şimdi', 'simdi', 'eğer', 'yani'])
+  const en = new Set(['the', 'and', 'is', 'to', 'of', 'it', 'in', 'that', 'for', 'with', 'this', 'not', 'are', 'was', 'you', 'be'])
+  const t = words.filter(w => tr.has(w) || /[çğışöü]/.test(w)).length
+  const e = words.filter(w => en.has(w)).length
+  if (t + e === 0) return 'unknown'
+  const share = t / (t + e)
+  return share > 0.7 ? 'tr' : share < 0.3 ? 'en' : 'mixed'
+}
+
 const median = xs => {
   const s = [...xs].sort((a, b) => a - b)
   const n = s.length
@@ -286,9 +315,7 @@ function bootstrap(diffs, n = 1000, seed = 20261009) {
 
 export function summarize(file) {
   const runs = readFileSync(file, 'utf8').trim().split('\n').map(l => JSON.parse(l)).filter(r => r.repeat === 1 || r.repeat === undefined)
-  const keep = new Set(
-    readFileSync(join(bench, 'rewrites', familyOf(runs[0].model), 'index.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l)).filter(x => x.outcome !== 'rewritten').map(x => x.id),
-  )
+  const keep = keepSet(runs)
   const by = {}
   for (const r of runs) (by[r.id] ??= {})[r.arm] = r
   const pairs = Object.entries(by).filter(([id, p]) => p.raw && p.rewritten && !keep.has(id))
@@ -317,6 +344,14 @@ export function summarize(file) {
     rows,
     asked: { raw: count('raw', r => r.asked), rewritten: count('rewritten', r => r.asked) },
     asksPattern: { raw: count('raw', r => r.asksPattern), rewritten: count('rewritten', r => r.asksPattern) },
+    languages: Object.fromEntries(['raw', 'rewritten'].map(arm => {
+      const count = {}
+      for (const [, p] of pairs) {
+        const l = languageOf(p[arm].answer ?? '')
+        count[l] = (count[l] ?? 0) + 1
+      }
+      return [arm, count]
+    })),
     checks: {
       n: checked.length,
       raw: checked.filter(([, p]) => p.raw.check?.pass).length,
@@ -341,6 +376,7 @@ function summary() {
   for (const r of s.rows) console.log(`${r.name.padEnd(13)} ${String(f(r.raw)).padStart(7)}  ${String(f(r.rewritten)).padStart(13)}  ${String(f(r.diff)).padStart(15)}  [${f(r.lo)}, ${f(r.hi)}]${r.lo <= 0 && r.hi >= 0 ? '  covers 0' : ''}`)
   console.log(`ended on a question: raw ${s.asked.raw}/${s.paired}, rewritten ${s.asked.rewritten}/${s.paired}; question words in the last lines: raw ${s.asksPattern.raw}, rewritten ${s.asksPattern.rewritten}`)
   console.log(`checks passed: raw ${s.checks.raw}/${s.checks.n}, rewritten ${s.checks.rewritten}/${s.checks.n}`)
+  console.log(`answer language: raw ${JSON.stringify(s.languages.raw)}, rewritten ${JSON.stringify(s.languages.rewritten)}`)
   console.log(`cost (API equivalent) ${s.cost.toFixed(2)} USD, ${s.wallSeconds} s`)
 }
 
@@ -365,7 +401,7 @@ const PAIR = (c, a, b) => `You are judging two answers from a coding assistant w
 ${request(c)}
 
 What a good answer does: ${c.expect}
-
+${c.language === 'tr' ? '\nThe user wrote in Turkish. An answer may be in Turkish or English; do not prefer either language for its own sake.\n' : ''}
 <answer_a>
 ${a}
 </answer_a>
@@ -381,7 +417,7 @@ const SINGLE = (c, a) => `You are judging one answer from a coding assistant wor
 ${request(c)}
 
 What a good answer does: ${c.expect}
-
+${c.language === 'tr' ? '\nThe user wrote in Turkish. The answer may be in Turkish or English; do not score the language itself.\n' : ''}
 <answer>
 ${a}
 </answer>
@@ -410,10 +446,9 @@ function judge() {
     process.exit(1)
   }
   const runs = readFileSync(file, 'utf8').trim().split('\n').map(l => JSON.parse(l)).filter(r => (r.repeat ?? 1) === 1)
-  const cases = Object.fromEntries(loadCases().map(c => [c.id, c]))
-  const keep = new Set(
-    readFileSync(join(bench, 'rewrites', familyOf(runs[0].model), 'index.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l)).filter(x => x.outcome !== 'rewritten').map(x => x.id),
-  )
+  const corpusOfRuns = runs[0]?.corpus && runs[0].corpus !== 'en' ? runs[0].corpus : ''
+  const cases = Object.fromEntries(loadCases(corpusOfRuns).map(c => [c.id, c]))
+  const keep = keepSet(runs)
   const by = {}
   for (const r of runs) (by[r.id] ??= {})[r.arm] = r
   const out = file.replace(/\.jsonl$/, '.judge.jsonl')
