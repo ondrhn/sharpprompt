@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- Longer prompts get longer to be rewritten: 5 seconds plus 50 ms a word past 20, at most 15. In two days of use 15 of 40 rough prompts timed out, most of them long. A draft longer than 180 words may keep its length in the rewrite. Late fork records keep how long each fork took.
+- Long prompts (60 words or more) skip the classifier and are tidied instead of rewritten: repeats merged, requests in order, nothing added, no longer than the draft ([report](docs/measurements/tidy-2026-10-11.md)).
+- A rewrite that drops a number, file name, path, URL, or quoted or code text from the draft is thrown away (outcome `lost`).
+- Longer prompts get longer to be rewritten: 5 seconds plus 100 ms a word past 20, at most 25. In two days of use 15 of 40 rough prompts timed out, most of them long. Late fork records keep how long each fork took.
 - The status line no longer repeats the plugin's name, and says that Esc puts your draft back.
 - `scripts/clear_rules.mjs`: candidate rules for letting plainly clear prompts skip the classifier, with a labelling and evaluation step. None was added: on 300 real prompts all of them together would have skipped 11.3% of classifier calls, under the 15% bar ([report](docs/measurements/latency-2026-10-10.md)).
 - Rewrite records keep the reply's length before cleaning, and the usage log keeps how long filling the box took, to see where the wait and the output tokens go.

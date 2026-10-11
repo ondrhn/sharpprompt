@@ -101,8 +101,8 @@ export function summary(counts: Counts, rewrites: readonly RewriteRecord[], turn
 
   return [
     `Prompts seen: ${seen}. Passed by the gate: ${skips.join(', ') || 'none'}.`,
-    `Classified: clear ${c('verdict:clear')}, rough ${rough}, timeout ${c('verdict:timeout')}, error ${c('verdict:error')}.`,
-    `Rewrites: ${ok.length} made, ${rewrites.length - ok.length} not (${['keep', 'same', 'too-long', 'empty', 'timeout', 'error'].map(o => `${o} ${rewrites.filter(r => r.outcome === o).length}`).join(', ')}).`,
+    `Classified: clear ${c('verdict:clear')}, rough ${rough}, long ${c('verdict:long')}, timeout ${c('verdict:timeout')}, error ${c('verdict:error')}.`,
+    `Rewrites: ${ok.length} made, ${rewrites.length - ok.length} not (${['keep', 'same', 'too-long', 'lost', 'empty', 'timeout', 'error'].map(o => `${o} ${rewrites.filter(r => r.outcome === o).length}`).join(', ')}).`,
     `What you did with them: sent as is ${c('answer:as-is')}, edited ${c('answer:edited')}, took yours back ${c('answer:original')}.`,
     `Wait (p50 / p95): classify ${spread(classified.map(x => x.ms))}, fork ${spread(forks.map(r => r.ms))}, fallback completion ${spread(rewrites.filter(r => r.via === 'complete').map(r => r.ms))}.`,
     `Cost per rough prompt: ${fmt(avg(spent.map(u => u.input)))} in, ${fmt(avg(spent.map(u => u.cacheRead)))} from cache, ${fmt(avg(spent.map(u => u.output)))} out. Forks that lost the race and finished anyway: ${c('late:forks')}, ${c('late:output')} output tokens, ${c('late:input')} input.`,
