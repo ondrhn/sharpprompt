@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 import { RULES, SHAPES } from '../hooks/bank'
-import { clean, completePrompt, familyOf, forkPrompt, KEEP, wordLimit } from '../hooks/rewrite'
+import { anchors, clean, completePrompt, familyOf, forkPrompt, KEEP, lost, wordLimit } from '../hooks/rewrite'
 
 const DRAFT = 'login broken again after your change, fix'
 
@@ -86,7 +86,10 @@ describe('wordLimit', () => {
   test('twice the draft or 60, whichever is more, capped at 180', () => {
     expect(wordLimit('a b c')).toBe(60)
     expect(wordLimit('w '.repeat(50))).toBe(100)
-    expect(wordLimit('w '.repeat(120))).toBe(180)
+    expect(wordLimit('w '.repeat(59))).toBe(118)
+  })
+  test('a long draft is tidied into no more than its own length', () => {
+    expect(wordLimit('w '.repeat(60))).toBe(60)
     expect(wordLimit('w '.repeat(250))).toBe(250)
   })
 })
@@ -109,5 +112,40 @@ describe('clean', () => {
     expect(clean(DRAFT, DRAFT)).toEqual({ rejected: 'same' })
     expect(clean('word '.repeat(76), DRAFT)).toEqual({ rejected: 'too-long' })
     expect(clean('word '.repeat(75), DRAFT)).toHaveProperty('rewritten')
+  })
+})
+
+const LONG = `tamam şimdi calc.py'ye bir şeyler ekleyelim ama önce şunu söyleyeyim ben aslında bir hesap makinesi istiyorum yani toplama çıkarma çarpma bölme olsun, bölmede sıfıra bölme hatası olursa düzgün bir mesaj versin, bir de komut satırından çalıştırabileyim yani \`python calc.py 3 + 4\` gibi, testler de olsun pytest ile, ama önce bana planı söyle sonra yaparsın, yani önce plan sonra kod, komut satırı kısmı önemli bu arada onu unutma, testler de önemli`
+
+describe('long drafts', () => {
+  test('get the tidy instruction instead of the rules', () => {
+    const p = forkPrompt(LONG, 'opus')
+    expect(p).toContain('Tidy it, keeping their intent and voice.')
+    expect(p).toContain('Say each thing once')
+    expect(p).not.toContain('Rules:')
+    expect(p).toContain(`at most ${LONG.split(/\s+/).length} words`)
+  })
+  test('short drafts keep the rules', () => {
+    expect(forkPrompt(DRAFT, 'opus')).toContain('Rules:')
+    expect(completePrompt(LONG, 'opus', [])).toContain('Tidy it')
+  })
+})
+
+describe('anchors and lost', () => {
+  test('finds code spans, quotes, paths, file names, URLs and numbers', () => {
+    const a = anchors('see `npm test` and "In production" in src/app.ts, auth.png, https://x.dev/a and 41 or 2.5')
+    for (const x of ['npm test', 'In production', 'src/app.ts', 'auth.png', 'https://x.dev/a', '41', '2.5']) expect(a).toContain(x)
+  })
+  test('trims quotes and takes no closing tag for a path', () => {
+    expect(anchors('say " fail safe" here </pasted_content>')).toEqual(['fail safe'])
+  })
+  test('leaves list markers out', () => {
+    expect(anchors('1- do this\n2) then that')).toEqual([])
+  })
+  test('names what a rewrite dropped', () => {
+    expect(lost('upload 31 and 32 from out/31.mp4', 'Upload video 31 from out/31.mp4.')).toEqual(['32'])
+  })
+  test('clean turns down a rewrite that drops one', () => {
+    expect(clean('Fix the login test.', 'login broken again, see auth.ts')).toEqual({ rejected: 'lost', lost: ['auth.ts'] })
   })
 })

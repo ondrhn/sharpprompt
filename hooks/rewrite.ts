@@ -5,6 +5,9 @@ import { RULES, SHAPES, type Family } from './bank'
 
 export const MAX_WORDS = 180
 export const MIN_ROOM = 60
+// From this many words a draft is tidied, not rewritten: in two days of the
+// author's use the long ones were repetitive rather than vague.
+export const LONG_WORDS = 60
 export const KEEP = 'KEEP'
 
 export type Exemplar = { original: string; sent: string }
@@ -36,6 +39,8 @@ export function familyOf(model: string): Family {
 
 const words = (s: string) => s.split(/\s+/).filter(Boolean).length
 
+export const isLong = (draft: string) => words(draft) >= LONG_WORDS
+
 const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n)}...` : s)
 
 function rulesFor(family: Family): string {
@@ -65,13 +70,51 @@ function exemplars(list: readonly Exemplar[]): string {
 }
 
 // How long a rewrite of this draft may be: twice the draft or 60 words,
-// whichever is more, never past 180 or the draft itself if it is longer. The model gets this number, not 180:
-// told 180, it wrote 77 and 125 words for 16 and 14 word drafts.
+// whichever is more, never past 180. The model gets this number, not 180:
+// told 180, it wrote 77 and 125 words for 16 and 14 word drafts. A long
+// draft is tidied, and tidying does not make it longer.
 export function wordLimit(draft: string): number {
-  return Math.min(Math.max(2 * words(draft), MIN_ROOM), Math.max(MAX_WORDS, words(draft)))
+  if (isLong(draft)) return words(draft)
+  return Math.min(Math.max(2 * words(draft), MIN_ROOM), MAX_WORDS)
 }
 
-function instructions(family: Family, list: readonly Exemplar[], limit: number, opts: RewriteOptions): string {
+const TIDY = `The draft is long and was typed in one go: it may say the same thing twice, jump between points, or contradict itself. Tidy it:
+- Keep every request and constraint. Keep every number, file name, path, command, URL and quoted text exactly as written.
+- Say each thing once: merge the repeats.
+- Put the requests in the order they should be done; number them if there are three or more.
+- Where two parts contradict and the conversation does not settle it, keep the later one and add a short line naming the conflict.
+- Add nothing the draft does not say: no new requirements, files, checks or tests.
+- Keep any <pasted_content> block exactly as it is, its tags included.
+- Keep the user's voice and language.`
+
+function tidyInstructions(list: readonly Exemplar[], limit: number, opts: RewriteOptions): string {
+  return `${TIDY}
+${opts.language === 'en' ? `\n${ENGLISH}\n` : ''}${opts.ask ? `\n${ASK}\n` : ''}${exemplars(list)}
+If the draft is already in order and says each thing once, reply with exactly ${KEEP}.
+Give the tidied prompt and nothing else, at most ${limit} words.`
+}
+
+// The things a rewrite must not lose: quoted and code spans, URLs, paths,
+// file names and numbers (list markers aside). On 28 real rewrites from the
+// author's sessions none was flagged.
+export function anchors(draft: string): string[] {
+  const out = new Set<string>()
+  const take = (re: RegExp, text = draft, g = 0) => {
+    for (const m of text.matchAll(re)) if (m[g]?.trim()) out.add(m[g].trim())
+  }
+  take(/`([^`\n]+)`/g, draft, 1)
+  take(/"([^"\n]{2,80})"/g, draft, 1)
+  take(/https?:\/\/\S+[^\s.,;:!?)'"]/g)
+  take(/(?:[\w.~-]+\/)+[\w.-]+/g)
+  take(/\b[\w-]+\.(?:py|ts|tsx|js|mjs|json|md|png|jpg|jpeg|txt|sh|yml|yaml|toml|csv|xlsx|html|css|mp4|srt|log)\b/gi)
+  take(/(?<![\w.])\d+(?:[.,]\d+)?(?!\w)/g, draft.replace(/(^|\n)\s*\d+[-.)]\s/g, '$1'))
+  return [...out]
+}
+
+export const lost = (draft: string, text: string) => anchors(draft).filter(a => !text.includes(a))
+
+function instructions(family: Family, list: readonly Exemplar[], limit: number, opts: RewriteOptions, draft = ''): string {
+  if (isLong(draft)) return tidyInstructions(list, limit, opts)
   return `Rules:
 ${rulesFor(family)}
 ${opts.language === 'en' ? `\n${ENGLISH}\n` : ''}${opts.ask ? `\n${ASK}\n` : ''}
@@ -85,13 +128,13 @@ Give the rewritten prompt and nothing else, at most ${limit} words.`
 // For $.model.fork: the model sees the whole conversation before this, so
 // "the file above" can be resolved without us quoting anything.
 export function forkPrompt(draft: string, family: Family, list: readonly Exemplar[] = [], opts: RewriteOptions = {}): string {
-  return `This message is from the sharpprompt plugin, not the user, and is not a task to carry out. The user has typed the draft below as their next message to you and has not sent it yet. Rewrite it so it is clear for you to act on in this conversation, keeping their intent and voice.
+  return `This message is from the sharpprompt plugin, not the user, and is not a task to carry out. The user has typed the draft below as their next message to you and has not sent it yet. ${isLong(draft) ? 'Tidy it' : 'Rewrite it so it is clear for you to act on in this conversation'}, keeping their intent and voice.
 ${factsBlock(opts)}
 <draft>
 ${draft}
 </draft>
 
-${instructions(family, list, wordLimit(draft), opts)}`
+${instructions(family, list, wordLimit(draft), opts, draft)}`
 }
 
 export type Recent = { role: 'user' | 'assistant'; text: string }
@@ -107,16 +150,16 @@ export function completePrompt(draft: string, family: Family, recent: readonly R
     .slice(-(opts.window ?? 4))
     .map(m => `<${m.role}>${clip(m.text, 600)}</${m.role}>`)
     .join('\n')
-  return `A user of Claude Code has typed the draft below as their next message and has not sent it yet. Rewrite it so it is clear for Claude to act on, keeping their intent and voice.
+  return `A user of Claude Code has typed the draft below as their next message and has not sent it yet. ${isLong(draft) ? 'Tidy it' : 'Rewrite it so it is clear for Claude to act on'}, keeping their intent and voice.
 ${convo ? `\nThe last messages of the conversation, cut short:\n<conversation>\n${convo}\n</conversation>\n` : ''}${factsBlock(opts)}
 <draft>
 ${draft}
 </draft>
 
-${instructions(family, list, wordLimit(draft), opts)}`
+${instructions(family, list, wordLimit(draft), opts, draft)}`
 }
 
-export type Cleaned = { rewritten: string } | { rejected: 'keep' | 'empty' | 'too-long' | 'same' }
+export type Cleaned = { rewritten: string } | { rejected: 'keep' | 'empty' | 'too-long' | 'same' } | { rejected: 'lost'; lost: string[] }
 
 // What the model sent back, made safe to put in the prompt box: fences and
 // wrapping quotes off, and turned down when it is no rewrite at all.
@@ -130,5 +173,7 @@ export function clean(reply: string, draft: string): Cleaned {
   // A little slack so a near miss still reaches the user.
   if (words(t) > wordLimit(draft) + 15) return { rejected: 'too-long' }
   if (t === draft.trim()) return { rejected: 'same' }
+  const gone = lost(draft, t)
+  if (gone.length) return { rejected: 'lost', lost: gone }
   return { rewritten: t }
 }

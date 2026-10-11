@@ -82,12 +82,12 @@ test('a fork that hangs past 5 s gives up and the prompt goes out as typed', asy
   expect(calls.decisions.at(-1)?.rewrite).toMatchObject({ outcome: 'timeout', via: 'fork' })
 })
 
-test('a long draft gets more time: 50 ms a word over 20, at most 15 s', async ($, on) => {
-  const long = (ROUGH + ' ').repeat(10).trim() // 140 words: 5 s + 120 * 50 ms
+test('a long draft gets more time: 100 ms a word over 20, at most 25 s', async ($, on) => {
+  const long = (ROUGH + ' ').repeat(10).trim() // 140 words: 5 s + 120 * 100 ms
   const calls = world(on, { fork: 'hang' })
   const pending = $.prompt.submit({ text: long, ...typed })
   await calls.clock.settle()
-  await calls.clock.advance(10_999)
+  await calls.clock.advance(16_999)
   expect(calls.decisions).toHaveLength(0)
   await calls.clock.advance(1)
   await pending
@@ -101,6 +101,23 @@ test('a completion cut off by its own time limit counts as a timeout', async ($,
   })
   await $.prompt.submit({ text: ROUGH, ...typed })
   expect(calls.decisions.at(-1)?.rewrite).toMatchObject({ outcome: 'timeout', via: 'complete' })
+})
+
+test('a long draft skips the classifier and goes to tidying', async ($, on) => {
+  const long = (ROUGH + ' ').repeat(5).trim()
+  const calls = world(on)
+  await $.prompt.submit({ text: long, ...typed })
+  expect(calls.classify).toBe(0)
+  expect(calls.prompts[0]).toContain('Tidy it')
+  expect(calls.decisions.at(-1)).toMatchObject({ verdict: 'long', rewrite: { outcome: 'rewritten', via: 'fork' } })
+})
+
+test('a rewrite that drops a file name goes out as typed', async ($, on) => {
+  const draft = 'the login thing in auth.ts is kinda broken when you do the thing, look'
+  const calls = world(on, { fork: answer('Fix the login flow.') })
+  const r = await $.prompt.submit({ text: draft, ...typed })
+  expect(r.text).toBe(draft)
+  expect(calls.decisions.at(-1)?.rewrite).toMatchObject({ outcome: 'lost', detail: 'auth.ts' })
 })
 
 test('KEEP from the model means no rewrite and the prompt goes out as typed', async ($, on) => {

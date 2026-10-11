@@ -16,14 +16,15 @@ export type SharppromptSkip =
   | 'back-to-mine'
 
 // What the classifier said; 'timeout' and 'error' send the prompt as typed.
-export type SharppromptVerdict = 'clear' | 'rough' | 'timeout' | 'error'
+// 'long': past LONG_WORDS, not classified, tidied.
+export type SharppromptVerdict = 'clear' | 'rough' | 'long' | 'timeout' | 'error'
 
 // How a rewrite went. Only 'rewritten' carries text; every other outcome
 // sends the prompt as typed.
 export type SharppromptQuestion = { question: string; header: string; options: { label: string; adds: string }[] }
 
 export type SharppromptRewrite = {
-  outcome: 'rewritten' | 'keep' | 'same' | 'empty' | 'too-long' | 'timeout' | 'error'
+  outcome: 'rewritten' | 'keep' | 'same' | 'empty' | 'too-long' | 'lost' | 'timeout' | 'error'
   via: 'fork' | 'complete'
   ms: number
   text?: string

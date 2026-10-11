@@ -6,7 +6,7 @@ import { endsWithQuestion, gate } from './gate'
 import { clip, logLine, MAX_LOG, newRecord, patchLog, type LogRecord } from './log'
 import { applyAnswers, askInput, recommended, splitReply, type Question } from './questions'
 import { countKey, lastRewriteLine, MAX_RECORDS, summary, tokens, wordCount, type ClassifyRecord, type Counts, type DecisionRecord, type LateRecord, type RewriteRecord, type TurnRecord } from './stats'
-import { clean, completePrompt, familyOf, forkPrompt, type Exemplar, type Recent, type RewriteOptions } from './rewrite'
+import { clean, completePrompt, familyOf, forkPrompt, isLong, type Exemplar, type Recent, type RewriteOptions } from './rewrite'
 
 // The engine checks that $ never leaves this file, so everything that calls
 // it lives here and gate.ts stays pure.
@@ -32,12 +32,14 @@ const CLEAR = 'clear and specific'
 const ROUGH = 'rough: vague or missing what to deliver'
 export const REWRITE_MS = 5_000
 
-// Long drafts get longer: over 20 words, 50 ms more per word, up to 15 s.
+// Long drafts get longer: over 20 words, 100 ms more per word, up to 25 s.
 // 15 of 40 rough prompts timed out in two days of use (9 to 11 Oct 2026),
 // median 32 words, while the rewrites that came back were 3 to 31 words.
-export const REWRITE_MAX_MS = 15_000
+// Tidying six of those long drafts on Opus 5.5 took 2.5 s (60 words) to
+// 10.9 s (90) and 21.2 s (253).
+export const REWRITE_MAX_MS = 25_000
 export function rewriteMs(draft: string): number {
-  return Math.min(REWRITE_MS + 50 * Math.max(0, wordCount(draft) - 20), REWRITE_MAX_MS)
+  return Math.min(REWRITE_MS + 100 * Math.max(0, wordCount(draft) - 20), REWRITE_MAX_MS)
 }
 
 // The engine heads the line with the plugin's name, so no prefix here. Esc
@@ -141,7 +143,7 @@ async function rewrite($: EngineInterface, draft: string, helper: string, opts: 
   const ms = await took()
   // The reply's own length: output tokens well past it went to thinking.
   const replyChars = reply.text.length
-  if ('rejected' in c) return { outcome: c.rejected, via, ms, usage: reply.usage, replyChars }
+  if ('rejected' in c) return { outcome: c.rejected, via, ms, usage: reply.usage, replyChars, ...('lost' in c ? { detail: c.lost.join(' ') } : {}) }
   return { outcome: 'rewritten', via, ms, usage: reply.usage, replyChars, text: c.rewritten, ...(questions.length ? { questions } : {}) }
 }
 
@@ -205,6 +207,12 @@ async function decide($: EngineInterface, e: PromptSubmitInput, options: Options
   // The prompt is held while we wait, and nothing else on screen says why:
   // a status line under the box does, and goes as soon as the wait ends.
   try {
+    // A long draft goes straight to tidying: the classifier asks whether a
+    // prompt is vague, and a long one's trouble is repetition.
+    if (isLong(e.text)) {
+      $.ui.status(STATUS_REWRITING)
+      return { verdict: 'long', text: e.text, rewrite: await rewrite($, e.text, helperModel(options), await rewriteOptions($, options)) }
+    }
     $.ui.status(STATUS_CHECKING)
     const t0 = await $.clock.now()
     const verdict = await classify($, e.text, helperModel(options))
