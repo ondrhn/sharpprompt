@@ -21,6 +21,8 @@ export type LogRecord = {
   outcome: string
   via: 'fork' | 'complete'
   ms: number
+  // Characters in the model's reply before cleaning.
+  replyChars?: number
   rewrite?: string
   questions?: { question: string; options: string[] }[]
   // The labels picked, or 'dismissed' when a dialog was closed.
@@ -30,6 +32,8 @@ export type LogRecord = {
   delivered?: 'fill' | 'replace' | 'context' | 'typed'
   // The text put in the box or sent, after the answers were added.
   boxed?: string
+  // How long putting it in the box took.
+  fillMs?: number
   action?: LogAction
   // What the user sent instead, when they edited it.
   sent?: string
@@ -57,6 +61,7 @@ export function newRecord(id: string, at: string, model: string | undefined, d: 
     outcome: r.outcome,
     via: r.via,
     ms: r.ms,
+    ...(r.replyChars === undefined ? {} : { replyChars: r.replyChars }),
     ...(r.text ? { rewrite: clip(r.text) } : {}),
     ...(r.questions?.length ? { questions: r.questions.map((q: SharppromptQuestion) => ({ question: q.question, options: q.options.map(o => o.label) })) } : {}),
   }

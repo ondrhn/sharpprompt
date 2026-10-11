@@ -32,12 +32,27 @@ const CLEAR = 'clear and specific'
 const ROUGH = 'rough: vague or missing what to deliver'
 export const REWRITE_MS = 5_000
 
+// Long drafts get longer: over 20 words, 50 ms more per word, up to 15 s.
+// 15 of 40 rough prompts timed out in two days of use (9 to 11 Oct 2026),
+// median 32 words, while the rewrites that came back were 3 to 31 words.
+export const REWRITE_MAX_MS = 15_000
+export function rewriteMs(draft: string): number {
+  return Math.min(REWRITE_MS + 50 * Math.max(0, wordCount(draft) - 20), REWRITE_MAX_MS)
+}
+
+// The engine heads the line with the plugin's name, so no prefix here. Esc
+// while it shows ends the wait and puts the draft back in the box, unsent
+// (tmux, 2.1.296).
+export const STATUS_CHECKING = 'checking (Esc: yours back in the box)'
+export const STATUS_REWRITING = 'rewriting (Esc: yours back in the box)'
+
 // Tokens a fork spent after it lost its race: it finished in the background
 // and was billed anyway. Read out by the stats in a later step.
-export const late = { forks: 0, usage: { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } }
+export const late = { forks: 0, ms: [] as number[], usage: { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } }
 
-function addLate(u: ModelUsage) {
+function addLate(u: ModelUsage, ms: number) {
   late.forks++
+  late.ms.push(ms)
   late.usage.input_tokens += u.input_tokens
   late.usage.output_tokens += u.output_tokens
   late.usage.cache_read_input_tokens += u.cache_read_input_tokens
@@ -99,9 +114,10 @@ async function rewrite($: EngineInterface, draft: string, helper: string, opts: 
   const took = async () => (await $.clock.now()) - started
 
   const forking = $.model.fork({ prompt: forkPrompt(draft, family, examples, opts) })
-  const forked = await race($, forking, REWRITE_MS)
+  const limit = rewriteMs(draft)
+  const forked = await race($, forking, limit)
   if (forked === TIMEOUT) {
-    void forking.then(r => ('usage' in r ? addLate(r.usage) : undefined), () => {})
+    void forking.then(async r => ('usage' in r ? addLate(r.usage, await took()) : undefined), () => {})
     return { outcome: 'timeout', via: 'fork', ms: await took() }
   }
 
@@ -114,7 +130,7 @@ async function rewrite($: EngineInterface, draft: string, helper: string, opts: 
       prompt: completePrompt(draft, family, await recent($), examples, opts),
       maxTokens: 600,
       effort: 'low',
-      timeoutMs: REWRITE_MS,
+      timeoutMs: limit,
     })
     if (!reply.isAnswered && reply.reason === 'aborted') return { outcome: 'timeout', via, ms: await took() }
   }
@@ -123,8 +139,10 @@ async function rewrite($: EngineInterface, draft: string, helper: string, opts: 
   const { body, questions } = opts.ask ? splitReply(reply.text) : { body: reply.text, questions: [] }
   const c = clean(body, draft)
   const ms = await took()
-  if ('rejected' in c) return { outcome: c.rejected, via, ms, usage: reply.usage }
-  return { outcome: 'rewritten', via, ms, usage: reply.usage, text: c.rewritten, ...(questions.length ? { questions } : {}) }
+  // The reply's own length: output tokens well past it went to thinking.
+  const replyChars = reply.text.length
+  if ('rejected' in c) return { outcome: c.rejected, via, ms, usage: reply.usage, replyChars }
+  return { outcome: 'rewritten', via, ms, usage: reply.usage, replyChars, text: c.rewritten, ...(questions.length ? { questions } : {}) }
 }
 
 async function lastReply($: EngineInterface): Promise<string> {
@@ -184,11 +202,19 @@ async function decide($: EngineInterface, e: PromptSubmitInput, options: Options
 
   if (endsWithQuestion(await lastReply($))) return { verdict: 'skip', reason: 'answer', text: e.text }
 
-  const t0 = await $.clock.now()
-  const verdict = await classify($, e.text, helperModel(options))
-  const classifyMs = (await $.clock.now()) - t0
-  if (verdict !== 'rough') return { verdict, text: e.text, classifyMs }
-  return { verdict, text: e.text, classifyMs, rewrite: await rewrite($, e.text, helperModel(options), await rewriteOptions($, options)) }
+  // The prompt is held while we wait, and nothing else on screen says why:
+  // a status line under the box does, and goes as soon as the wait ends.
+  try {
+    $.ui.status(STATUS_CHECKING)
+    const t0 = await $.clock.now()
+    const verdict = await classify($, e.text, helperModel(options))
+    const classifyMs = (await $.clock.now()) - t0
+    if (verdict !== 'rough') return { verdict, text: e.text, classifyMs }
+    $.ui.status(STATUS_REWRITING)
+    return { verdict, text: e.text, classifyMs, rewrite: await rewrite($, e.text, helperModel(options), await rewriteOptions($, options)) }
+  } finally {
+    $.ui.status(undefined)
+  }
 }
 
 // The usage log (hooks/log.ts). A failed write never stops the prompt.
@@ -289,6 +315,7 @@ async function record($: EngineInterface, d: SharppromptDecision, helper: string
     ms: r.ms,
     classifyMs: d.classifyMs,
     usage: tokens(r.usage),
+    ...(r.replyChars === undefined ? {} : { replyChars: r.replyChars }),
     words: r.text ? [wordCount(d.text), wordCount(r.text)] : [wordCount(d.text)],
     model: await $.session.model(),
     at,
@@ -320,7 +347,9 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
     return next({ ...e, text: rewritten })
   }
 
+  const f0 = await $.clock.now()
   const filled = await $.prompt.fill({ text: rewritten, mode: 'replace' })
+  const fillMs = (await $.clock.now()) - f0
   if (!filled.isFilled) {
     await updateLog($, log, { delivered: 'typed' })
     turnLog = log
@@ -329,7 +358,7 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
   }
   await $.store.set('lastOriginal', e.text)
   await $.state.set(pending, { kind: 'filled', original: e.text, rewritten, ...(log ? { log } : {}) })
-  await updateLog($, log, { delivered: 'fill', boxed: clip(rewritten) })
+  await updateLog($, log, { delivered: 'fill', boxed: clip(rewritten), fillMs })
   // Since Claude Code 2.1.295 a dropped prompt is put back in the box after
   // our fill, so the box reads rewrite + original. The engine does that before
   // the next timer tick, so one tick later we set the rewrite again. On 2.1.293
@@ -495,8 +524,9 @@ export const register: Register = (on, options) => {
     }
     if (late.forks > 0) {
       const add = { 'late:forks': late.forks, 'late:input': late.usage.input_tokens + late.usage.cache_read_input_tokens + late.usage.cache_creation_input_tokens, 'late:output': late.usage.output_tokens }
-      const item: LateRecord = { at: await $.clock.now(), forks: late.forks, model: await $.session.model(), usage: tokens(late.usage) }
+      const item: LateRecord = { at: await $.clock.now(), forks: late.forks, ms: late.ms, model: await $.session.model(), usage: tokens(late.usage) }
       late.forks = 0
+      late.ms = []
       late.usage = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 }
       await bump($, add)
       await push($, 'late', item)

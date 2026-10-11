@@ -15,7 +15,11 @@ function world(
   on: On,
   opts: { rows?: SessionMessage[]; label?: string | 'hang' | 'throw'; fork?: Reply; complete?: ModelCompleteResult | 'hang' } = {},
 ) {
-  const calls = { classify: 0, fork: 0, complete: 0, prompts: [] as string[], decisions: [] as any[], clock: mock.clock(on) }
+  const calls = { classify: 0, fork: 0, complete: 0, prompts: [] as string[], decisions: [] as any[], statuses: [] as (string | undefined)[], clock: mock.clock(on) }
+  on('ui.status', (_$, e) => {
+    calls.statuses.push(e.text)
+    return { value: undefined }
+  })
   mock.store(on)
   on('session.model', () => ({ value: 'claude-opus-5-5' }))
   on('session.surface', () => ({ value: 'terminal' }))
@@ -75,6 +79,18 @@ test('a fork that hangs past 5 s gives up and the prompt goes out as typed', asy
   await calls.clock.advance(1)
   const r = await pending
   expect(r.text).toBe(ROUGH)
+  expect(calls.decisions.at(-1)?.rewrite).toMatchObject({ outcome: 'timeout', via: 'fork' })
+})
+
+test('a long draft gets more time: 50 ms a word over 20, at most 15 s', async ($, on) => {
+  const long = (ROUGH + ' ').repeat(10).trim() // 140 words: 5 s + 120 * 50 ms
+  const calls = world(on, { fork: 'hang' })
+  const pending = $.prompt.submit({ text: long, ...typed })
+  await calls.clock.settle()
+  await calls.clock.advance(10_999)
+  expect(calls.decisions).toHaveLength(0)
+  await calls.clock.advance(1)
+  await pending
   expect(calls.decisions.at(-1)?.rewrite).toMatchObject({ outcome: 'timeout', via: 'fork' })
 })
 
@@ -170,4 +186,51 @@ test('a peer message is left alone', async ($, on) => {
   const r = await $.prompt.submit({ text: ROUGH, wait: false, origin: { kind: 'peer' } })
   expect(r.text).toBe(ROUGH)
   expect(calls.classify).toBe(0)
+})
+
+// The status line under the box while the prompt is held.
+const CHECKING = 'checking (Esc: yours back in the box)'
+const REWRITING = 'rewriting (Esc: yours back in the box)'
+
+test('status: checking, then rewriting, then cleared for a rough prompt', async ($, on) => {
+  const calls = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(calls.statuses).toEqual([CHECKING, REWRITING, undefined])
+})
+
+test('status: a clear prompt clears it after the check', async ($, on) => {
+  const calls = world(on, { label: 'clear' })
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(calls.statuses).toEqual([CHECKING, undefined])
+})
+
+test('status: shown while the fork runs and cleared when it times out', async ($, on) => {
+  const calls = world(on, { fork: 'hang' })
+  const pending = $.prompt.submit({ text: ROUGH, ...typed })
+  await calls.clock.settle()
+  expect(calls.statuses).toEqual([CHECKING, REWRITING])
+  await calls.clock.advance(5_000)
+  await pending
+  expect(calls.statuses).toEqual([CHECKING, REWRITING, undefined])
+})
+
+test('status: cleared after a classifier error', async ($, on) => {
+  const calls = world(on, { label: 'throw' })
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(calls.statuses).toEqual([CHECKING, undefined])
+})
+
+test('status: cleared after a classifier that hangs', async ($, on) => {
+  const calls = world(on, { label: 'hang' })
+  const pending = $.prompt.submit({ text: ROUGH, ...typed })
+  await calls.clock.advance(2_500)
+  await pending
+  expect(calls.statuses).toEqual([CHECKING, undefined])
+})
+
+test('status: never shown when the gate or mode off lets the prompt through', { options: { mode: 'off' } }, async ($, on) => {
+  const calls = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  await $.prompt.submit({ text: 'raw: ' + ROUGH, ...typed })
+  expect(calls.statuses).toEqual([])
 })

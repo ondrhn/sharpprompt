@@ -87,6 +87,7 @@ describe('wordLimit', () => {
     expect(wordLimit('a b c')).toBe(60)
     expect(wordLimit('w '.repeat(50))).toBe(100)
     expect(wordLimit('w '.repeat(120))).toBe(180)
+    expect(wordLimit('w '.repeat(250))).toBe(250)
   })
 })
 
