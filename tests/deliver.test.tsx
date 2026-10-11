@@ -155,6 +155,14 @@ test('band: Enter, edit in the box, or r for the original', async ($, on) => {
   }
 })
 
+test('band: what the rewrite added that the draft did not have is named', async ($, on) => {
+  world(on, { fork: 'Push 032f1ad and check the login test in tests/auth.test.ts.' })
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  const ui = await $.ui.mount({ plugin: 'sharpprompt', surface: 'terminal', ...BAND })
+  expect(await ui.find({ type: 'Text', text: /not in your draft: tests\/auth\.test\.ts, 032f1ad/ })).toBeDefined()
+  await ui.unmount()
+})
+
 test('band: r puts the original back as typed, and sent unchanged it goes out untouched', async ($, on) => {
   const w = world(on)
   await $.prompt.submit({ text: ROUGH, ...typed })

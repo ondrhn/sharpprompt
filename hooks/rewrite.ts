@@ -95,23 +95,42 @@ Give the tidied prompt and nothing else, at most ${limit} words.`
 }
 
 // The things a rewrite must not lose: quoted and code spans, URLs, paths,
-// file names and numbers (list markers aside). On 28 real rewrites from the
+// file names, commit hashes and numbers (list markers aside). On 28 real rewrites from the
 // author's sessions none was flagged.
-export function anchors(draft: string): string[] {
+// facts: only what goes stale or gets mixed up (URLs, paths, file names,
+// hashes, numbers of two digits or more), for the band's added line; quoted
+// labels and small numbers there were mostly echoes of the conversation.
+export function anchors(draft: string, kind: 'all' | 'facts' = 'all'): string[] {
   const out = new Set<string>()
   const take = (re: RegExp, text = draft, g = 0) => {
     for (const m of text.matchAll(re)) if (m[g]?.trim()) out.add(m[g].trim())
   }
-  take(/`([^`\n]+)`/g, draft, 1)
-  take(/"([^"\n]{2,80})"/g, draft, 1)
+  if (kind === 'all') {
+    take(/`([^`\n]+)`/g, draft, 1)
+    take(/"([^"\n]{2,80})"/g, draft, 1)
+  }
   take(/https?:\/\/\S+[^\s.,;:!?)'"]/g)
-  take(/(?:[\w.~-]+\/)+[\w.-]+/g)
+  take(/\/?(?:[\w.~-]+\/)+[\w.-]*[\w-]/g)
   take(/\b[\w-]+\.(?:py|ts|tsx|js|mjs|json|md|png|jpg|jpeg|txt|sh|yml|yaml|toml|csv|xlsx|html|css|mp4|srt|log)\b/gi)
-  take(/(?<![\w.])\d+(?:[.,]\d+)?(?!\w)/g, draft.replace(/(^|\n)\s*\d+[-.)]\s/g, '$1'))
-  return [...out]
+  take(/\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b/g)
+  take(kind === 'all' ? /(?<![\w.])\d+(?:[.,]\d+)?(?!\w)/g : /(?<![\w.])\d{2,}(?:[.,]\d+)?(?!\w)/g, draft.replace(/(^|\n)\s*\d+[-.)]\s/g, '$1'))
+  // A piece of a longer one (test.ts in tests/auth.test.ts) adds nothing.
+  return [...out].filter(a => ![...out].some(b => b !== a && b.includes(a)))
 }
 
 export const lost = (draft: string, text: string) => anchors(draft).filter(a => !text.includes(a))
+
+// The same kinds of thing the rewrite brought in from elsewhere: a path, a
+// hash or a number the user did not type, shown on the band so a stale one
+// is caught before it goes out under their name.
+export const added = (draft: string, text: string) => anchors(text, 'facts').filter(a => !draft.includes(a))
+
+export function addedLine(draft: string, text: string): string | null {
+  const list = added(draft, text)
+  if (list.length === 0) return null
+  const shown = list.slice(0, 5).map(a => (a.length > 40 ? `...${a.slice(-37)}` : a))
+  return `not in your draft: ${shown.join(', ')}${list.length > 5 ? ` and ${list.length - 5} more` : ''}`
+}
 
 function instructions(family: Family, list: readonly Exemplar[], limit: number, opts: RewriteOptions, draft = ''): string {
   if (isLong(draft)) return tidyInstructions(list, limit, opts)

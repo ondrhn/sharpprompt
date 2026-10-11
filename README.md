@@ -59,7 +59,7 @@ Recorded with [vhs](docs/demo.tape) on Claude Code 2.1.295.
 3. A rough prompt is rewritten by your session's own model, forked from the conversation so it can resolve references, and put in your box. If the model thinks the draft is fine, nothing changes. A rewrite that drops a number, file name, path, URL, or quoted or code text from your draft is thrown away and your prompt goes out as typed.
 4. Since 0.2: when the draft leaves out something the conversation does not answer and that would change the work (which file, which of two behaviours, a format), the rewriter may ask, at most two questions, each in its own dialog with its recommended answer first. Your answers are added to the rewrite. Close a dialog and your prompt goes out as typed. It also reads, from the transcript only, which files this session read or changed and the last command that failed, so "that file" and "fix that" can be named.
 
-While the prompt is held, a line under the box says `sharpprompt: checking` or `sharpprompt: rewriting`, and goes when the wait ends. Esc ends the wait and puts your draft back in the box, unsent.
+While the prompt is held, a line under the box says `sharpprompt: checking` or `sharpprompt: rewriting`, and goes when the wait ends. Esc ends the wait and puts your draft back in the box, unsent. When the rewrite carries a path, file name, URL, commit hash or number of two digits or more that you did not type, the band names it (`not in your draft: ...`), so a stale one taken from earlier in the conversation is caught before it goes out.
 
 Anything that fails sends your prompt as typed.
 
@@ -162,7 +162,7 @@ Token overhead over two days of the author's own use (9 to 11 Oct 2026, 63 promp
 
 Each version gets a file in [docs/measurements](docs/measurements) with the method and the raw table, and a row here. The rewrites in the benchmark were written by Haiku; the plugin forks the session model. `/sharp stats` keeps the same numbers for your own sessions, on your machine only, and compares turns that started from your text with turns that started from a rewrite.
 
-Tests: 102 in [tests/](tests), run with `claude plugin test .`, and 4 for the scripts, run with `node --test scripts/usage.node-test.mjs`. Both run on every push and pull request ([test workflow](.github/workflows/test.yml)).
+Tests: 106 in [tests/](tests), run with `claude plugin test .`, and 4 for the scripts, run with `node --test scripts/usage.node-test.mjs`. Both run on every push and pull request ([test workflow](.github/workflows/test.yml)).
 
 ## FAQ
 
