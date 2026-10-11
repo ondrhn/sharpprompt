@@ -32,15 +32,27 @@ const CLEAR = 'clear and specific'
 const ROUGH = 'rough: vague or missing what to deliver'
 export const REWRITE_MS = 5_000
 
-export const STATUS_CHECKING = 'sharpprompt: checking'
-export const STATUS_REWRITING = 'sharpprompt: rewriting'
+// Long drafts get longer: over 20 words, 50 ms more per word, up to 15 s.
+// 15 of 40 rough prompts timed out in two days of use (9 to 11 Oct 2026),
+// median 32 words, while the rewrites that came back were 3 to 31 words.
+export const REWRITE_MAX_MS = 15_000
+export function rewriteMs(draft: string): number {
+  return Math.min(REWRITE_MS + 50 * Math.max(0, wordCount(draft) - 20), REWRITE_MAX_MS)
+}
+
+// The engine heads the line with the plugin's name, so no prefix here. Esc
+// while it shows ends the wait and puts the draft back in the box, unsent
+// (tmux, 2.1.296).
+export const STATUS_CHECKING = 'checking (Esc: yours back in the box)'
+export const STATUS_REWRITING = 'rewriting (Esc: yours back in the box)'
 
 // Tokens a fork spent after it lost its race: it finished in the background
 // and was billed anyway. Read out by the stats in a later step.
-export const late = { forks: 0, usage: { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } }
+export const late = { forks: 0, ms: [] as number[], usage: { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } }
 
-function addLate(u: ModelUsage) {
+function addLate(u: ModelUsage, ms: number) {
   late.forks++
+  late.ms.push(ms)
   late.usage.input_tokens += u.input_tokens
   late.usage.output_tokens += u.output_tokens
   late.usage.cache_read_input_tokens += u.cache_read_input_tokens
@@ -102,9 +114,10 @@ async function rewrite($: EngineInterface, draft: string, helper: string, opts: 
   const took = async () => (await $.clock.now()) - started
 
   const forking = $.model.fork({ prompt: forkPrompt(draft, family, examples, opts) })
-  const forked = await race($, forking, REWRITE_MS)
+  const limit = rewriteMs(draft)
+  const forked = await race($, forking, limit)
   if (forked === TIMEOUT) {
-    void forking.then(r => ('usage' in r ? addLate(r.usage) : undefined), () => {})
+    void forking.then(async r => ('usage' in r ? addLate(r.usage, await took()) : undefined), () => {})
     return { outcome: 'timeout', via: 'fork', ms: await took() }
   }
 
@@ -117,7 +130,7 @@ async function rewrite($: EngineInterface, draft: string, helper: string, opts: 
       prompt: completePrompt(draft, family, await recent($), examples, opts),
       maxTokens: 600,
       effort: 'low',
-      timeoutMs: REWRITE_MS,
+      timeoutMs: limit,
     })
     if (!reply.isAnswered && reply.reason === 'aborted') return { outcome: 'timeout', via, ms: await took() }
   }
@@ -511,8 +524,9 @@ export const register: Register = (on, options) => {
     }
     if (late.forks > 0) {
       const add = { 'late:forks': late.forks, 'late:input': late.usage.input_tokens + late.usage.cache_read_input_tokens + late.usage.cache_creation_input_tokens, 'late:output': late.usage.output_tokens }
-      const item: LateRecord = { at: await $.clock.now(), forks: late.forks, model: await $.session.model(), usage: tokens(late.usage) }
+      const item: LateRecord = { at: await $.clock.now(), forks: late.forks, ms: late.ms, model: await $.session.model(), usage: tokens(late.usage) }
       late.forks = 0
+      late.ms = []
       late.usage = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 }
       await bump($, add)
       await push($, 'late', item)

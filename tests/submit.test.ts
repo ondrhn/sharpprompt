@@ -82,6 +82,18 @@ test('a fork that hangs past 5 s gives up and the prompt goes out as typed', asy
   expect(calls.decisions.at(-1)?.rewrite).toMatchObject({ outcome: 'timeout', via: 'fork' })
 })
 
+test('a long draft gets more time: 50 ms a word over 20, at most 15 s', async ($, on) => {
+  const long = (ROUGH + ' ').repeat(10).trim() // 140 words: 5 s + 120 * 50 ms
+  const calls = world(on, { fork: 'hang' })
+  const pending = $.prompt.submit({ text: long, ...typed })
+  await calls.clock.settle()
+  await calls.clock.advance(10_999)
+  expect(calls.decisions).toHaveLength(0)
+  await calls.clock.advance(1)
+  await pending
+  expect(calls.decisions.at(-1)?.rewrite).toMatchObject({ outcome: 'timeout', via: 'fork' })
+})
+
 test('a completion cut off by its own time limit counts as a timeout', async ($, on) => {
   const calls = world(on, {
     fork: { isAnswered: false, reason: 'nothing-to-fork' },
@@ -177,8 +189,8 @@ test('a peer message is left alone', async ($, on) => {
 })
 
 // The status line under the box while the prompt is held.
-const CHECKING = 'sharpprompt: checking'
-const REWRITING = 'sharpprompt: rewriting'
+const CHECKING = 'checking (Esc: yours back in the box)'
+const REWRITING = 'rewriting (Esc: yours back in the box)'
 
 test('status: checking, then rewriting, then cleared for a rough prompt', async ($, on) => {
   const calls = world(on)

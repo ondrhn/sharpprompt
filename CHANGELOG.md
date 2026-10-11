@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Longer prompts get longer to be rewritten: 5 seconds plus 50 ms a word past 20, at most 15. In two days of use 15 of 40 rough prompts timed out, most of them long. A draft longer than 180 words may keep its length in the rewrite. Late fork records keep how long each fork took.
+- The status line no longer repeats the plugin's name, and says that Esc puts your draft back.
 - `scripts/clear_rules.mjs`: candidate rules for letting plainly clear prompts skip the classifier, with a labelling and evaluation step. None was added: on 300 real prompts all of them together would have skipped 11.3% of classifier calls, under the 15% bar ([report](docs/measurements/latency-2026-10-10.md)).
 - Rewrite records keep the reply's length before cleaning, and the usage log keeps how long filling the box took, to see where the wait and the output tokens go.
 - A status line under the prompt box while sharpprompt checks or rewrites a prompt, cleared when the wait ends on every path.

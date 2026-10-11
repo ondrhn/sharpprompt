@@ -59,7 +59,7 @@ Recorded with [vhs](docs/demo.tape) on Claude Code 2.1.295.
 3. A rough prompt is rewritten by your session's own model, forked from the conversation so it can resolve references, and put in your box. If the model thinks the draft is fine, nothing changes.
 4. Since 0.2: when the draft leaves out something the conversation does not answer and that would change the work (which file, which of two behaviours, a format), the rewriter may ask, at most two questions, each in its own dialog with its recommended answer first. Your answers are added to the rewrite. Close a dialog and your prompt goes out as typed. It also reads, from the transcript only, which files this session read or changed and the last command that failed, so "that file" and "fix that" can be named.
 
-While the prompt is held, a line under the box says `sharpprompt: checking` or `sharpprompt: rewriting`, and goes when the wait ends.
+While the prompt is held, a line under the box says `sharpprompt: checking` or `sharpprompt: rewriting`, and goes when the wait ends. Esc ends the wait and puts your draft back in the box, unsent.
 
 Anything that fails sends your prompt as typed.
 
@@ -145,7 +145,7 @@ Each rule is in [docs/rules](docs/rules) with a link to the Anthropic page it co
 ## Limits
 
 - The rewrite runs on your session's model, so it costs what a short question to that model costs; the conversation part comes from the prompt cache while it is warm. `/sharp stats` shows the tokens per rough prompt. The `Helper model` setting picks only the classifier and the fallback used before the conversation has a first reply.
-- Claude Code's fork has no time limit, so sharpprompt stops waiting after 5 seconds and sends your prompt as typed. The fork still finishes in the background and is billed, with no cap on its output. `/sharp stats` counts these.
+- Claude Code's fork has no time limit, so sharpprompt stops waiting after 5 seconds, plus 50 ms for each word past 20 (at most 15 seconds), and sends your prompt as typed. The fork still finishes in the background and is billed, with no cap on its output. `/sharp stats` counts these.
 - VS Code and headless runs (`claude -p`, the SDK) have no box to fill, so `fill` acts as `context` there. Mods do not run in a Desktop session that uses WSL.
 - Taking your own text back is two keys: `r` puts it in the box, Enter sends it. sharpprompt does not send it for you because a prompt a plugin sends shows under the plugin's name in the transcript and skips `@file` expansion. The band's buttons answer to their keys once the band has focus: ctrl+x tab, or a click.
 - A rough prompt waits for the classifier and the rewrite before anything happens. In the sessions measured so far the box filled 3.6 to 6.2 seconds after Enter.
@@ -160,7 +160,7 @@ Benchmark, 30 cases, the prompt as typed against the rewrite: no measurable diff
 
 Each version gets a file in [docs/measurements](docs/measurements) with the method and the raw table, and a row here. The rewrites in the benchmark were written by Haiku; the plugin forks the session model. `/sharp stats` keeps the same numbers for your own sessions, on your machine only, and compares turns that started from your text with turns that started from a rewrite.
 
-Tests: 91 in [tests/](tests), run with `claude plugin test .`, and 4 for the scripts, run with `node --test scripts/usage.node-test.mjs`. Both run on every push and pull request ([test workflow](.github/workflows/test.yml)).
+Tests: 92 in [tests/](tests), run with `claude plugin test .`, and 4 for the scripts, run with `node --test scripts/usage.node-test.mjs`. Both run on every push and pull request ([test workflow](.github/workflows/test.yml)).
 
 ## FAQ
 

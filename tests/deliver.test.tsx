@@ -231,7 +231,7 @@ test('a fork that loses the race is still counted once it finishes', async ($, o
   await $.turn.complete({ turnId: 't1', durationMs: 1000, isAborted: false, reason: 'answer', answer: 'ok.' })
   expect(w.store.counts).toMatchObject({ 'late:forks': 1, 'late:output': 20, 'late:input': 10 })
   expect(w.store.rewrites).toEqual([expect.objectContaining({ outcome: 'timeout', via: 'fork' })])
-  expect(w.store.late).toEqual([{ at: w.clock.now(), forks: 1, model: 'claude-opus-5-5', usage: { input: 10, output: 20, cacheRead: 0, cacheWrite: 0 } }])
+  expect(w.store.late).toEqual([{ at: w.clock.now(), forks: 1, ms: [6_000], model: 'claude-opus-5-5', usage: { input: 10, output: 20, cacheRead: 0, cacheWrite: 0 } }])
 })
 
 test('classify time is kept for clear prompts too', async ($, on) => {

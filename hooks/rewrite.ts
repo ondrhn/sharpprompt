@@ -65,10 +65,10 @@ function exemplars(list: readonly Exemplar[]): string {
 }
 
 // How long a rewrite of this draft may be: twice the draft or 60 words,
-// whichever is more, never past 180. The model gets this number, not 180:
+// whichever is more, never past 180 or the draft itself if it is longer. The model gets this number, not 180:
 // told 180, it wrote 77 and 125 words for 16 and 14 word drafts.
 export function wordLimit(draft: string): number {
-  return Math.min(Math.max(2 * words(draft), MIN_ROOM), MAX_WORDS)
+  return Math.min(Math.max(2 * words(draft), MIN_ROOM), Math.max(MAX_WORDS, words(draft)))
 }
 
 function instructions(family: Family, list: readonly Exemplar[], limit: number, opts: RewriteOptions): string {

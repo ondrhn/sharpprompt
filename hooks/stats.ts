@@ -44,7 +44,8 @@ export type ClassifyRecord = { verdict: string; ms: number; words: number; at?: 
 export type DecisionRecord = { at: number; key: string }
 
 // Forks that lost the race and finished anyway, flushed at the end of a turn.
-export type LateRecord = { at: number; forks: number; model?: string; usage?: Tokens }
+// ms: how long each late fork took from the start of its rewrite.
+export type LateRecord = { at: number; forks: number; ms?: number[]; model?: string; usage?: Tokens }
 
 export type Counts = Record<string, number>
 
