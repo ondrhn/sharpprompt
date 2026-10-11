@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 import { RULES, SHAPES } from '../hooks/bank'
-import { anchors, clean, completePrompt, familyOf, forkPrompt, KEEP, lost, wordLimit } from '../hooks/rewrite'
+import { addedLine, anchors, clean, completePrompt, familyOf, forkPrompt, KEEP, lost, wordLimit } from '../hooks/rewrite'
 
 const DRAFT = 'login broken again after your change, fix'
 
@@ -147,5 +147,17 @@ describe('anchors and lost', () => {
   })
   test('clean turns down a rewrite that drops one', () => {
     expect(clean('Fix the login test.', 'login broken again, see auth.ts')).toEqual({ rejected: 'lost', lost: ['auth.ts'] })
+  })
+})
+
+describe('added', () => {
+  test('names what the rewrite brought in, hashes included', () => {
+    expect(addedLine('push it after the readme', 'Push 032f1ad after the README change in docs/README.md.')).toBe('not in your draft: docs/README.md, 032f1ad')
+  })
+  test('a long path shows its end; quoted labels and one digit numbers are left out', () => {
+    expect(addedLine('look at the shot', 'Press "Enable", step 2, then see /mnt/c/Users/onder/Downloads/dm_yt_edit_ss/shot.png')).toBe('not in your draft: ...nder/Downloads/dm_yt_edit_ss/shot.png')
+  })
+  test('nothing new, no line', () => {
+    expect(addedLine('fix auth.ts line 12', 'Fix line 12 of auth.ts.')).toBeNull()
   })
 })

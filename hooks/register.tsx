@@ -6,7 +6,7 @@ import { endsWithQuestion, gate } from './gate'
 import { clip, logLine, MAX_LOG, newRecord, patchLog, type LogRecord } from './log'
 import { applyAnswers, askInput, recommended, splitReply, type Question } from './questions'
 import { countKey, lastRewriteLine, MAX_RECORDS, summary, tokens, wordCount, type ClassifyRecord, type Counts, type DecisionRecord, type LateRecord, type RewriteRecord, type TurnRecord } from './stats'
-import { clean, completePrompt, familyOf, forkPrompt, isLong, type Exemplar, type Recent, type RewriteOptions } from './rewrite'
+import { addedLine, clean, completePrompt, familyOf, forkPrompt, isLong, type Exemplar, type Recent, type RewriteOptions } from './rewrite'
 
 // The engine checks that $ never leaves this file, so everything that calls
 // it lives here and gate.ts stays pure.
@@ -547,10 +547,13 @@ export const register: Register = (on, options) => {
     if (!p || p.kind === 'restored' || e.props.hasSurvey) return next(e)
     const { Box, Button, Text } = $.ui.resolve(e)
     const was = p.original.length > 70 ? `${p.original.slice(0, 70)}...` : p.original
+    const extra = addedLine(p.original, p.rewritten)
+    const note = extra ? <Text color="warning">{extra}</Text> : null
     if (p.kind === 'replaced') {
       return (
         <Box flexDirection="column">
           <Text dimColor>sharpprompt sent a rewrite of: {was}</Text>
+          {note}
           <Box>
             <Button key="undo" hotkey="u" label="put my original in the box" onPress={() => restoreOriginal($, p)} />
             <Button key="dismiss" hotkey="x" label="ok" role="dismiss" onPress={() => $.state.set(pending, null)} />
@@ -561,6 +564,7 @@ export const register: Register = (on, options) => {
     return (
       <Box flexDirection="column">
         <Text dimColor>sharpprompt rewrote: {was}</Text>
+        {note}
         <Box>
           <Text dimColor>Enter sends it, or edit it in the box. </Text>
           <Button key="raw" hotkey="r" label="back to mine" onPress={() => restoreOriginal($, p)} />
