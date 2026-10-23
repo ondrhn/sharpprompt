@@ -2,13 +2,21 @@
 
 ## Unreleased
 
-- A number inside a longer one no longer hides it: with "2 failing tests, line 120" a rewrite that drops the 2 is turned down. Anchors match whole tokens.
+- A number inside a longer one no longer hides it: with "2 failing tests, line 120" a rewrite that drops the 2 is turned down. Anchors match whole tokens; numbers keep all their groups (2.1.296, 1,000,000), file names and paths take any script's letters (çalışma.py), "500 ms" may become "500ms".
+- Anchors no longer take and/or, w/o or login/logout for paths, inline list markers like 1) and 2) for numbers, the words between two one-character quotes, or the backtick after a URL.
+- A rewrite that asks about a value from the draft (retry 3 or 5 times) is no longer turned down for leaving the value to the question. A question that cannot be shown (malformed, a third one, an option over 200 characters) turns the rewrite down, since its point is missing from the body.
+- Esc while sharpprompt waits is recorded as `aborted`, and the draft put back goes out untouched when sent, with no second wait.
+- Text typed into the box during the wait is no longer wiped by the rewrite: the prompt then goes as typed.
+- KEEP in bold, in backticks or with a reason after it is no rewrite.
+- The fallback completion (first prompt, or after /clear) gets room for a long draft's tidy instead of 600 tokens.
+- A prompt typed over a running turn or a task notification no longer erases that turn's record.
+- Edits are told from new prompts by words of any script; two texts with no words are not an edit.
+- `/sharp on` after `/sharp mode off` brings back the configured mode.
 - A full or failing plugin store no longer costs a rewrite: the stats are best effort, the suggestion still reaches the box.
 - With nobody to ask (VS Code, headless), a rewrite that came with questions goes as context even in replace mode, so guessed answers never replace what was typed.
 - In replace mode the band of a sent rewrite goes away with the next prompt.
 - `/sharp on` after `/sharp mode off` (or mode off in the settings) turns rewriting back on.
 - `raw:` typed in front of a suggestion is taken off; the suggestion goes out as is and is not kept as an edit.
-- An answer option whose sentence runs past 200 characters is dropped.
 - Scripts find the project folder with `fileURLToPath`, so paths with spaces or non-ASCII letters work.
 - A rewrite gets 10 seconds, not 5, before the prompt goes out as typed (still plus 100 ms a word past 20, at most 25). From 12 to 23 October 32 of 79 rewrites of short drafts timed out at 5 seconds; the forks that lost took 7.5 seconds at the median.
 - The band names what the rewrite brought in that the draft did not have: paths, file names, URLs, commit hashes and numbers of two digits or more. On the 29 rewrites in the author's usage log it would have shown on 10, one of them a stale commit hash.

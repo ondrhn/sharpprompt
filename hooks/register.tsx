@@ -6,7 +6,7 @@ import { endsWithQuestion, gate, RAW_PREFIX } from './gate'
 import { clip, logLine, MAX_LOG, newRecord, patchLog, type LogRecord } from './log'
 import { applyAnswers, askInput, recommended, splitReply, type Question } from './questions'
 import { countKey, lastRewriteLine, MAX_RECORDS, summary, tokens, wordCount, type ClassifyRecord, type Counts, type DecisionRecord, type LateRecord, type RewriteRecord, type TurnRecord } from './stats'
-import { addedLine, clean, completePrompt, familyOf, forkPrompt, isLong, type Exemplar, type Recent, type RewriteOptions } from './rewrite'
+import { addedLine, clean, completePrompt, familyOf, forkPrompt, isLong, wordLimit, type Exemplar, type Recent, type RewriteOptions } from './rewrite'
 
 // The engine checks that $ never leaves this file, so everything that calls
 // it lives here and gate.ts stays pure.
@@ -128,21 +128,29 @@ async function rewrite($: EngineInterface, draft: string, helper: string, opts: 
 
   let reply = forked
   let via: 'fork' | 'complete' = 'fork'
+  // Esc while we wait cuts the fork: the person took the draft back.
+  if (!reply.isAnswered && reply.reason === 'aborted') return { outcome: 'aborted', via, ms: await took(), usage: reply.usage }
   if (!reply.isAnswered && reply.reason === 'nothing-to-fork') {
     via = 'complete'
     reply = await $.model.complete({
       model: helper,
       prompt: completePrompt(draft, family, await recent($), examples, opts),
-      maxTokens: 600,
+      // A cut reply comes back answered, with no sign it was cut, so the cap
+      // leaves room for the whole word limit (a tidy is as long as its
+      // draft) plus questions: about 2 tokens a word, 600 at least.
+      maxTokens: Math.max(600, 2 * wordLimit(draft) + 400),
       effort: 'low',
       timeoutMs: limit,
     })
     if (!reply.isAnswered && reply.reason === 'aborted') return { outcome: 'timeout', via, ms: await took() }
   }
-  if (!reply.isAnswered) return { outcome: 'error', via, ms: await took(), detail: reply.reason }
+  if (!reply.isAnswered) return { outcome: 'error', via, ms: await took(), detail: reply.reason, usage: reply.usage }
 
-  const { body, questions } = opts.ask ? splitReply(reply.text) : { body: reply.text, questions: [] }
-  const c = clean(body, draft)
+  const { body, questions, dropped } = opts.ask ? splitReply(reply.text) : { body: reply.text, questions: [], dropped: false }
+  // A question we cannot ask leaves its point out of the body.
+  if (dropped) return { outcome: 'error', via, ms: await took(), detail: 'questions', usage: reply.usage, replyChars: reply.text.length }
+  // The asked points and their candidate values live in the options.
+  const c = clean(body, draft, questions.flatMap(q => q.options.map(o => `${o.label} ${o.adds}`)).join('\n'))
   const ms = await took()
   // The reply's own length: output tokens well past it went to thinking.
   const replyChars = reply.text.length
@@ -366,6 +374,16 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
     return next({ ...e, text: rewritten })
   }
 
+  // The box empties on Enter and stays editable while we wait: whatever the
+  // person typed there since is theirs, and a fill would wipe it. Their
+  // prompt then goes as typed and the new text stays in the box.
+  const typedAhead = ((await $.prompt.read().catch(() => null))?.text ?? '').trim() !== ''
+  if (typedAhead) {
+    await updateLog($, log, { delivered: 'typed' })
+    turnLog = log
+    outgoing = 'typed'
+    return next(e)
+  }
   const f0 = await $.clock.now()
   const filled = await $.prompt.fill({ text: rewritten, mode: 'replace' })
   const fillMs = (await $.clock.now()) - f0
@@ -385,7 +403,10 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
   $.clock.after(0, async () => {
     const p = (await $.state.get(pending)).value
     if (!p || p.kind !== 'filled' || p.rewritten !== rewritten) return
-    if ((await $.prompt.read()).text !== rewritten) await $.prompt.fill({ text: rewritten, mode: 'replace' })
+    // Only the engine's own put-back (rewrite, then the original) is undone;
+    // anything else in the box was typed by the person.
+    const box = (await $.prompt.read()).text
+    if (box !== rewritten && box.startsWith(rewritten) && box.includes(e.text.trim())) await $.prompt.fill({ text: rewritten, mode: 'replace' })
   })
   return { drop: DROP_NOTE }
 }
@@ -426,7 +447,9 @@ async function runCommand($: EngineInterface, args: string, options: Options): P
     case 'on':
       await $.state.set(isOff, false)
       // Mode off (from /sharp mode off or the settings) would keep it off.
-      if ((await modeOf($, options)) === 'off') await $.state.set(modeOverride, 'fill')
+      // Mode off from the settings needs an override; one from /sharp mode off
+      // is lifted, so a configured replace or context mode comes back.
+      if ((await modeOf($, options)) === 'off') await $.state.set(modeOverride, options.mode === 'off' ? 'fill' : null)
       return 'On for this session.'
     case 'off':
       await $.state.set(isOff, true)
@@ -456,6 +479,69 @@ async function runCommand($: EngineInterface, args: string, options: Options): P
   }
 }
 
+async function submit($: EngineInterface, e: PromptSubmitInput, next: (e: PromptSubmitInput) => Promise<PromptSubmitResult>, options: Options): Promise<PromptSubmitResult> {
+  const typedByUser = e.origin.kind === 'composer' || e.origin.kind === 'bridge'
+  if (typedByUser) {
+    if (await isRestored($, e.text)) {
+      const d: SharppromptDecision = { verdict: 'skip', reason: 'back-to-mine', text: e.text }
+      await $.state.set(lastDecision, d)
+      await record($, d, helperModel(options))
+      outgoing = 'typed'
+      return next(e)
+    }
+    // raw: in front of our suggestion changes nothing about it; it is
+    // taken off before the comparison and before the prompt goes out.
+    const sent = e.text.replace(RAW_PREFIX, '')
+    const answered = await settlePending($, sent)
+    if (answered) {
+      await $.state.set(lastDecision, { verdict: 'skip', reason: 'suggested', text: sent })
+      await bump($, { [`answer:${answered}`]: 1 })
+      outgoing = answered === 'as-is' ? 'rewritten' : 'edited'
+      return next(sent === e.text ? e : { ...e, text: sent })
+    }
+  }
+  const mode = await modeOf($, options)
+  const d = await decide($, e, options, mode)
+  await $.state.set(lastDecision, d)
+  if (typedByUser) await record($, d, helperModel(options))
+  const log = typedByUser ? await startLog($, options, d) : null
+  // Esc put the draft back in the box: sent as it stands, it is the
+  // person's own and goes out untouched, with no second wait.
+  if ('rewrite' in d && d.rewrite?.outcome === 'aborted') {
+    if (typedByUser) await $.state.set(pending, { kind: 'restored', original: e.text, rewritten: '', ...(log ? { log } : {}) })
+    return next(e)
+  }
+  let rewritten = 'rewrite' in d ? d.rewrite?.text : undefined
+  let how = mode
+  const questions = ('rewrite' in d ? d.rewrite?.questions : undefined) ?? []
+  if (rewritten && questions.length) {
+    const surface = await $.session.surface()
+    if (surface === 'terminal' || surface === 'desktop') {
+      const answers = await askUser($, questions)
+      if (!answers) {
+        await bump($, { 'ask:dismissed': 1 })
+        await updateLog($, log, { answers: 'dismissed', delivered: 'typed' })
+        turnLog = log
+        if (typedByUser) outgoing = 'typed'
+        return next(e)
+      }
+      await bump($, { 'ask:answered': 1 })
+      await updateLog($, log, { answers })
+      rewritten = applyAnswers(rewritten, questions, answers)
+    } else {
+      // Nobody to ask: the recommended answers are guesses, so they ride
+      // along as context and never replace what the user typed.
+      rewritten = recommended(rewritten, questions)
+      how = 'context'
+    }
+  }
+  if (rewritten) return deliver($, e, rewritten, how, next, log)
+  await updateLog($, log, { delivered: 'typed' })
+  turnLog = log
+  if (typedByUser) outgoing = 'typed'
+  return next(d.text !== e.text ? { ...e, text: d.text } : e)
+}
+
 // Whatever happens in here, the prompt goes out. A thrown error lands in
 // .catch, which sends it untouched.
 export const register: Register = (on, options) => {
@@ -468,64 +554,23 @@ export const register: Register = (on, options) => {
   on('command.run', { command: 'sharpprompt' }, async ($, e) => ({ text: await runCommand($, e.args, options) }))
   on('command.run', { command: 'sharp' }, async ($, e) => ({ text: await runCommand($, e.args, options) }))
 
+  // A prompt typed over a running turn, or delivered into it (a task
+  // notification), carries its turnId: that turn's tool count and record
+  // are left as they are, and it is not counted as a turn of its own.
   on('prompt.submit', async ($, e, next) => {
-    const typedByUser = e.origin.kind === 'composer' || e.origin.kind === 'bridge'
-    outgoing = null
-    toolCalls = 0
-    turnLog = null
-    if (typedByUser) {
-      if (await isRestored($, e.text)) {
-        const d: SharppromptDecision = { verdict: 'skip', reason: 'back-to-mine', text: e.text }
-        await $.state.set(lastDecision, d)
-        await record($, d, helperModel(options))
-        outgoing = 'typed'
-        return next(e)
-      }
-      // raw: in front of our suggestion changes nothing about it; it is
-      // taken off before the comparison and before the prompt goes out.
-      const sent = e.text.replace(RAW_PREFIX, '')
-      const answered = await settlePending($, sent)
-      if (answered) {
-        await $.state.set(lastDecision, { verdict: 'skip', reason: 'suggested', text: sent })
-        await bump($, { [`answer:${answered}`]: 1 })
-        outgoing = answered === 'as-is' ? 'rewritten' : 'edited'
-        return next(sent === e.text ? e : { ...e, text: sent })
-      }
+    if (e.turnId === undefined) {
+      outgoing = null
+      toolCalls = 0
+      turnLog = null
+      return submit($, e, next, options)
     }
-    const mode = await modeOf($, options)
-    const d = await decide($, e, options, mode)
-    await $.state.set(lastDecision, d)
-    if (typedByUser) await record($, d, helperModel(options))
-    const log = typedByUser ? await startLog($, options, d) : null
-    let rewritten = 'rewrite' in d ? d.rewrite?.text : undefined
-    let how = mode
-    const questions = ('rewrite' in d ? d.rewrite?.questions : undefined) ?? []
-    if (rewritten && questions.length) {
-      const surface = await $.session.surface()
-      if (surface === 'terminal' || surface === 'desktop') {
-        const answers = await askUser($, questions)
-        if (!answers) {
-          await bump($, { 'ask:dismissed': 1 })
-          await updateLog($, log, { answers: 'dismissed', delivered: 'typed' })
-          turnLog = log
-          if (typedByUser) outgoing = 'typed'
-          return next(e)
-        }
-        await bump($, { 'ask:answered': 1 })
-        await updateLog($, log, { answers })
-        rewritten = applyAnswers(rewritten, questions, answers)
-      } else {
-        // Nobody to ask: the recommended answers are guesses, so they ride
-        // along as context and never replace what the user typed.
-        rewritten = recommended(rewritten, questions)
-        how = 'context'
-      }
+    const kept = { outgoing, turnLog }
+    try {
+      return await submit($, e, next, options)
+    } finally {
+      outgoing = kept.outgoing
+      turnLog = kept.turnLog
     }
-    if (rewritten) return deliver($, e, rewritten, how, next, log)
-    await updateLog($, log, { delivered: 'typed' })
-    turnLog = log
-    if (typedByUser) outgoing = 'typed'
-    return next(d.text !== e.text ? { ...e, text: d.text } : e)
   }).catch(($, e, next) => next(e))
 
   on('tool.call', ($, e, next) => {

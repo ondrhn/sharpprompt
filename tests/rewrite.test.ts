@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 import { RULES, SHAPES } from '../hooks/bank'
+import { overlap } from '../hooks/flow'
 import { addedLine, anchors, clean, completePrompt, familyOf, forkPrompt, hasToken, KEEP, lost, wordLimit } from '../hooks/rewrite'
 
 const DRAFT = 'login broken again after your change, fix'
@@ -171,5 +172,37 @@ describe('anchors match whole tokens', () => {
     expect(hasToken('out/31.mp4', '31')).toBe(true)
     expect(hasToken('tests/auth.test.ts', 'test.ts')).toBe(true)
     expect(hasToken('tests', 'test')).toBe(false)
+  })
+})
+
+describe('anchors from review', () => {
+  test('numbers with several groups, non-ASCII file names, paths and words with a slash', () => {
+    expect(lost('bump claude code to 2.1.296 and retest', 'Bump Claude Code to 2.1.296 and retest.')).toEqual([])
+    expect(lost('use 1,000,000 rows', 'Use 1,000,000 rows.')).toEqual([])
+    expect(lost('çalışma.py patlıyor, düzelt', 'çalışma.py hata veriyor; düzelt.')).toEqual([])
+    expect(lost('/home/önder/x.py fails', 'x')).toEqual(['/home/önder/x.py'])
+    expect(lost('wait 500 ms', 'Wait 500ms.')).toEqual([])
+    expect(anchors('make the sync work w/o the cache and/or the login/logout path')).toEqual([])
+    expect(anchors('see hooks/ and src/app.ts')).toEqual(['hooks/', 'src/app.ts'])
+  })
+  test('one-character quotes and URLs in backticks', () => {
+    expect(anchors('make the csv export use ";" not "," because excel breaks')).toEqual([';', ','])
+    expect(anchors('fetch `https://x.dev/api/v1` and print the status')).toEqual(['https://x.dev/api/v1'])
+  })
+  test('inline list markers are not numbers to keep', () => {
+    expect(anchors('two fixes pls: 1) the save button does nothing 2) the toggle resets')).toEqual([])
+  })
+  test('KEEP dressed up is still KEEP', () => {
+    expect(clean('**KEEP**', 'make it better')).toEqual({ rejected: 'keep' })
+    expect(clean('KEEP\n\nThe draft is already clear.', 'make it better')).toEqual({ rejected: 'keep' })
+    expect(clean('Keep the comma.', 'make it better pls')).toEqual({ rewritten: 'Keep the comma.' })
+  })
+})
+
+describe('overlap', () => {
+  test('words of any script count, and two texts with none are not an edit', () => {
+    expect(overlap('Почини вход в систему', 'Добавь экспорт отчета')).toBe(0)
+    expect(overlap('Почини вход в систему', 'Почини вход в систему сегодня')).toBeGreaterThan(0.4)
+    expect(overlap('🙂', '👍')).toBe(0)
   })
 })

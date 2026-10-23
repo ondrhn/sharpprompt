@@ -52,7 +52,7 @@ export function report(lines) {
   out.push(`| no rewrite (${[...new Set(log.filter(r => r.outcome !== 'rewritten').map(r => r.outcome))].join(', ') || '-'}) | ${log.filter(r => r.outcome !== 'rewritten').length} |`)
   out.push(`| question dialog closed | ${log.filter(r => r.answers === 'dismissed').length} |`, '')
   out.push(`## Rough and clear`, '')
-  out.push(`Classified rough ${c('verdict:rough')}, clear ${c('verdict:clear')}, timeout ${c('verdict:timeout')}, error ${c('verdict:error')}; passed by the gate ${Object.entries(counts).filter(([k]) => k.startsWith('skip:')).reduce((a, [, v]) => a + v, 0)}.`, '')
+  out.push(`Classified rough ${c('verdict:rough')}, clear ${c('verdict:clear')}, long ${c('verdict:long')}, timeout ${c('verdict:timeout')}, error ${c('verdict:error')}; passed by the gate ${Object.entries(counts).filter(([k]) => k.startsWith('skip:')).reduce((a, [, v]) => a + v, 0)}.`, '')
   out.push(`## Wait`, '')
   out.push(`Classify plus rewrite, p50 ${pct(waits, 50) ?? '-'} ms, p95 ${pct(waits, 95) ?? '-'} ms (n=${waits.length}).`, '')
   out.push(`## Edits`, '')

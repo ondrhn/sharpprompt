@@ -57,7 +57,7 @@
     "askBeforeSend": {
       "type": "boolean",
       "title": "Ask before sending",
-      "description": "When a rough prompt leaves out something the conversation does not answer, ask up to three questions in one dialog before the rewrite goes in the box",
+      "description": "When a rough prompt leaves out something the conversation does not answer, ask up to two questions, one dialog each, before the rewrite goes in the box",
       "default": true
     },
     "sessionFacts": {

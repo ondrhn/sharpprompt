@@ -4,14 +4,17 @@ import type { SharppromptDecision, SharppromptMode } from '../types'
 
 export const MODES: readonly SharppromptMode[] = ['fill', 'replace', 'context', 'off']
 
-const bag = (s: string) => new Set(s.toLowerCase().split(/\W+/).filter(Boolean))
+// Letters of any script, not just ASCII: split on \W, two Russian texts
+// had no words at all and counted as the same.
+const bag = (s: string) => new Set(s.toLowerCase().split(/[^\p{L}\p{N}_]+/u).filter(Boolean))
 
 // Word overlap of two texts, 0 to 1. Above EDIT_OVERLAP a prompt sent while
 // our suggestion sits in the box counts as the suggestion, edited.
 export function overlap(a: string, b: string): number {
   const x = bag(a)
   const y = bag(b)
-  if (x.size === 0 && y.size === 0) return 1
+  // Nothing to compare (emoji only, say) is no evidence of an edit.
+  if (x.size === 0 && y.size === 0) return 0
   let both = 0
   for (const w of x) if (y.has(w)) both++
   return both / (x.size + y.size - both)
@@ -72,5 +75,5 @@ export function describe(d: SharppromptDecision | null): string {
   if (!('rewrite' in d) || !d.rewrite) return `classified ${d.verdict}${classify}, sent as typed`
   const r = d.rewrite
   const size = r.text ? `, ${words(d.text)} -> ${words(r.text)} words` : `, ${words(d.text)} words`
-  return `classified rough${classify}, rewrite ${r.outcome} via ${r.via} in ${r.ms} ms${size}`
+  return `${d.verdict === 'long' ? 'long, tidied' : `classified ${d.verdict}`}${classify}, rewrite ${r.outcome} via ${r.via} in ${r.ms} ms${size}`
 }

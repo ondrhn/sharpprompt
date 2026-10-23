@@ -24,7 +24,7 @@ export type SharppromptVerdict = 'clear' | 'rough' | 'long' | 'timeout' | 'error
 export type SharppromptQuestion = { question: string; header: string; options: { label: string; adds: string }[] }
 
 export type SharppromptRewrite = {
-  outcome: 'rewritten' | 'keep' | 'same' | 'empty' | 'too-long' | 'lost' | 'timeout' | 'error'
+  outcome: 'rewritten' | 'keep' | 'same' | 'empty' | 'too-long' | 'lost' | 'timeout' | 'aborted' | 'error'
   via: 'fork' | 'complete'
   ms: number
   text?: string

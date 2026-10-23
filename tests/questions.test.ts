@@ -14,7 +14,7 @@ const Q = [
 
 describe('splitReply', () => {
   test('a reply without QUESTIONS is all rewrite', () => {
-    expect(splitReply('Fix the export.')).toEqual({ body: 'Fix the export.', questions: [] })
+    expect(splitReply('Fix the export.')).toEqual({ body: 'Fix the export.', questions: [], dropped: false })
   })
   test('reads the questions after the rewrite', () => {
     const r = splitReply(`Add a CSV export for reports.\nQUESTIONS: ${JSON.stringify(Q)}`)
@@ -22,13 +22,18 @@ describe('splitReply', () => {
     expect(r.questions).toEqual(Q)
   })
   test('malformed JSON keeps the rewrite and drops the questions', () => {
-    expect(splitReply('Add it.\nQUESTIONS: [{"question": "x?"')).toEqual({ body: 'Add it.', questions: [] })
+    expect(splitReply('Add it.\nQUESTIONS: [{"question": "x?"')).toEqual({ body: 'Add it.', questions: [], dropped: true })
   })
   test('at most two questions, each with two to four options', () => {
     const one = { question: 'q?', header: 'H', options: [{ label: 'a', adds: 'A.' }, { label: 'b', adds: 'B.' }] }
     const bad = { question: 'only one option?', header: 'H', options: [{ label: 'a', adds: 'A.' }] }
     const r = splitReply(`Do it.\nQUESTIONS: ${JSON.stringify([bad, one, one, one, one])}`)
     expect(r.questions).toHaveLength(2)
+    expect(r.dropped).toBe(true)
+  })
+  test('an option whose sentence runs long drops its question, and says so', () => {
+    const long = { question: 'q?', header: 'H', options: [{ label: 'a', adds: 'A'.repeat(201) }, { label: 'b', adds: 'B.' }] }
+    expect(splitReply(`Do it.\nQUESTIONS: ${JSON.stringify([long])}`)).toEqual({ body: 'Do it.', questions: [], dropped: true })
   })
 })
 

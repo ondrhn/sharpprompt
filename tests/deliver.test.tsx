@@ -26,7 +26,7 @@ const BAND = {
 // and the bottom of prompt.submit.
 function world(
   on: On,
-  opts: { surface?: RenderSurface | null; fillOk?: boolean; label?: string; forkMs?: number; box?: (fills: string[]) => string; fork?: string; ask?: Record<string, string> | 'dismiss'; storeFull?: boolean } = {},
+  opts: { surface?: RenderSurface | null; fillOk?: boolean; label?: string; forkMs?: number; box?: (fills: string[]) => string; fork?: string; ask?: Record<string, string> | 'dismiss'; storeFull?: boolean; forkAborted?: boolean } = {},
 ) {
   const w = {
     sent: [] as { text: string; context?: readonly string[]; origin: unknown }[],
@@ -59,6 +59,7 @@ function world(
   on('model.fork', async (_$, e) => {
     w.forkPrompts.push(e.prompt)
     if (opts.forkMs) await w.clock.sleep(opts.forkMs)
+    if (opts.forkAborted) return { value: { isAnswered: false, reason: 'aborted', usage } }
     return { value: answer(opts.fork ?? REWRITTEN) }
   })
   // $.ui.ask is a tool.call of AskUserQuestion beneath the plugin.
@@ -431,4 +432,63 @@ test('on after mode off turns rewriting back on', async ($, on) => {
   await $.command.run(cmd('sharp', 'on'))
   await $.prompt.submit({ text: ROUGH, ...typed })
   expect(w.classify).toBe(1)
+})
+
+test('Esc during the wait: the draft put back goes out untouched, with no second rewrite', async ($, on) => {
+  const w = world(on, { forkAborted: true })
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(w.store.rewrites).toEqual([expect.objectContaining({ outcome: 'aborted' })])
+  const r = await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(r.text).toBe(ROUGH)
+  expect(w.classify).toBe(1)
+  expect(w.forkPrompts).toHaveLength(1)
+})
+
+test('text typed in the box during the wait is not wiped: the prompt goes as typed', async ($, on) => {
+  const w = world(on, { box: () => 'also check the logout path' })
+  const r = await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(r.text).toBe(ROUGH)
+  expect(w.fills).toHaveLength(0)
+})
+
+test('a prompt typed over a running turn leaves that turn its record', async ($, on) => {
+  const w = world(on, { label: 'clear' })
+  on('turn.complete', (_$, e) => ({ text: e.answer, reason: 'answer' as const }))
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  await $.prompt.submit({ text: 'and the logout path too', ...typed, turnId: 't1' })
+  await $.turn.complete({ turnId: 't1', durationMs: 1000, isAborted: false, reason: 'answer', answer: 'ok.' })
+  expect(w.store.turns).toEqual([expect.objectContaining({ prompt: 'typed', durationMs: 1000 })])
+})
+
+test('a question the dialog cannot show turns the rewrite down: its point is not in the body', async ($, on) => {
+  const long = [{ question: 'Which separator?', header: 'Separator', options: [{ label: 'Semicolon', adds: 'x'.repeat(201) }, { label: 'Comma', adds: 'Keep the comma.' }] }]
+  const w = world(on, { fork: `${REWRITTEN}\nQUESTIONS: ${JSON.stringify(long)}` })
+  const r = await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(r.text).toBe(ROUGH)
+  expect(w.fills).toHaveLength(0)
+  expect(w.store.rewrites).toEqual([expect.objectContaining({ outcome: 'error' })])
+})
+
+test('a value from the draft that the rewrite asks about is not lost', async ($, on) => {
+  const draft = 'the fetch in api.ts keeps failing on flaky wifi, make it retry 3 or 5 times before it gives up'
+  const q = [{ question: 'How many retries?', header: 'Retries', options: [{ label: '3', adds: 'Retry 3 times.' }, { label: '5', adds: 'Retry 5 times.' }] }]
+  const w = world(on, { fork: `Make the fetch in api.ts retry before giving up, so it survives flaky wifi.\nQUESTIONS: ${JSON.stringify(q)}`, ask: { 'How many retries?': '5' } })
+  await $.prompt.submit({ text: draft, ...typed })
+  expect(w.asked).toHaveLength(1)
+  expect(w.fills[0]).toBe('Make the fetch in api.ts retry before giving up, so it survives flaky wifi. Retry 5 times.')
+})
+
+test('KEEP in bold is no rewrite', async ($, on) => {
+  const w = world(on, { fork: '**KEEP**' })
+  const r = await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(r.text).toBe(ROUGH)
+  expect(w.fills).toHaveLength(0)
+})
+
+test('on after mode off brings back the configured mode', { options: { mode: 'replace' } }, async ($, on) => {
+  const w = world(on)
+  await $.command.run(cmd('sharp', 'mode off'))
+  await $.command.run(cmd('sharp', 'on'))
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(w.sent[0]?.text).toBe(REWRITTEN)
 })

@@ -107,26 +107,38 @@ export function anchors(draft: string, kind: 'all' | 'facts' = 'all'): string[] 
   }
   if (kind === 'all') {
     take(/`([^`\n]+)`/g, draft, 1)
-    take(/"([^"\n]{2,80})"/g, draft, 1)
+    // One character is enough: ";" not "," gives ; and , (at two or more,
+    // the words between them were taken instead).
+    take(/"([^"\n]{1,80})"/g, draft, 1)
   }
-  take(/https?:\/\/\S+[^\s.,;:!?)'"]/g)
-  take(/\/?(?:[\w.~-]+\/)+[\w.-]*[\w-]/g)
-  take(/\b[\w-]+\.(?:py|ts|tsx|js|mjs|json|md|png|jpg|jpeg|txt|sh|yml|yaml|toml|csv|xlsx|html|css|mp4|srt|log)\b/gi)
+  take(/https?:\/\/\S+[^\s.,;:!?)'"`>\]*]/g)
+  // and/or, w/o, I/O, login/logout are words, not paths: a path starts at
+  // the root, home or here, ends in a slash or a file name, or has two slashes.
+  for (const m of draft.matchAll(/(?<![\p{L}\p{N}_./~-])[./~]*\/?(?:[\p{L}\p{N}_.~-]+\/)+(?:[\p{L}\p{N}_.-]*[\p{L}\p{N}_-])?/gu)) {
+    const p = m[0].replace(/^\.(?=[^./])/, '')
+    if (/^[./~]/.test(p) || /\/$/.test(p) || (p.match(/\//g) ?? []).length >= 2 || /\.[\p{L}\p{N}]+$/u.test(p)) out.add(p)
+  }
+  take(/(?<![\p{L}\p{N}_-])[\p{L}\p{N}_-]+\.(?:py|ts|tsx|js|mjs|json|md|png|jpg|jpeg|txt|sh|yml|yaml|toml|csv|xlsx|html|css|mp4|srt|log)(?![\p{L}\p{N}_])/giu)
   take(/\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b/g)
-  take(kind === 'all' ? /(?<![\w.])\d+(?:[.,]\d+)?(?!\w)/g : /(?<![\w.])\d{2,}(?:[.,]\d+)?(?!\w)/g, draft.replace(/(^|\n)\s*\d+[-.)]\s/g, '$1'))
+  // List markers, at a line start or inline (1) ... 2) ...), are not numbers to keep.
+  const unlisted = draft.replace(/(^|\n)\s*\d+[-.)]\s/g, '$1').replace(/(^|[\s:;,])\(?\d{1,2}\)\s/g, '$1')
+  take(kind === 'all' ? /(?<![\w.])\d+(?:[.,]\d+)*(?![\d.,]*\d)/g : /(?<![\w.])\d{2,}(?:[.,]\d+)*(?![\d.,]*\d)/g, unlisted)
   // A piece of a longer one (test.ts in tests/auth.test.ts) adds nothing.
-  return [...out].filter(a => ![...out].some(b => b !== a && hasToken(b, a)))
+  return [...out].filter(a => ![...out].some(b => b !== a && b.includes(a) && hasToken(b, a)))
 }
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-const WORD = /^[\p{L}\p{N}_]|[\p{L}\p{N}_]$/u
 
 // a stands on its own in text: "31" is in "out/31.mp4", but "2" is not in
-// "120" or "2.5", and "test" is not in "tests".
+// "120" or "2.5", and "test" is not in "tests". A number only needs other
+// digits kept off it, so "500ms" keeps 500 and "v2" keeps 2.
 export function hasToken(text: string, a: string): boolean {
-  const before = WORD.test(a[0] ?? '') ? '(?<![\\p{L}\\p{N}_]|\\p{N}[.,])' : ''
-  const after = WORD.test(a.at(-1) ?? '') ? '(?![\\p{L}\\p{N}_]|[.,]\\p{N})' : ''
-  return new RegExp(before + esc(a) + after, 'u').test(text)
+  if (!text.includes(a)) return false
+  const edge = (c: string | undefined) => (c === undefined ? '' : /\p{N}/u.test(c) ? 'num' : /[\p{L}_]/u.test(c) ? 'word' : '')
+  const guard = { num: ['(?<!\\p{N}|\\p{N}[.,])', '(?!\\p{N}|[.,]\\p{N})'], word: ['(?<![\\p{L}\\p{N}_])', '(?![\\p{L}\\p{N}_])'], '': ['', ''] }
+  const first = edge(a[0])
+  const last = edge(a.at(-1))
+  return new RegExp(guard[first][0] + esc(a) + guard[last][1], 'u').test(text)
 }
 
 export const lost = (draft: string, text: string) => anchors(draft).filter(a => !hasToken(text, a))
@@ -193,17 +205,21 @@ export type Cleaned = { rewritten: string } | { rejected: 'keep' | 'empty' | 'to
 
 // What the model sent back, made safe to put in the prompt box: fences and
 // wrapping quotes off, and turned down when it is no rewrite at all.
-export function clean(reply: string, draft: string): Cleaned {
+// also: text that goes out with the rewrite, such as the sentences the
+// answers to its questions add; an anchor found there is not lost.
+export function clean(reply: string, draft: string, also = ''): Cleaned {
   let t = reply.trim()
   t = t.replace(/^```[a-z]*\n([\s\S]*?)\n```$/i, '$1').trim()
   t = t.replace(/^<draft>\s*([\s\S]*?)\s*<\/draft>$/i, '$1').trim()
   if (/^["“].*["”]$/s.test(t)) t = t.slice(1, -1).trim()
   if (t === '') return { rejected: 'empty' }
-  if (t === KEEP || t.replace(/[.!]$/, '') === KEEP) return { rejected: 'keep' }
+  // KEEP in bold or backticks, or with a reason after it, is still KEEP.
+  const head = (t.split('\n')[0] ?? '').replace(/[*_`"'\s]/g, '').replace(/[.!:]$/, '')
+  if (head.toUpperCase() === KEEP) return { rejected: 'keep' }
   // A little slack so a near miss still reaches the user.
   if (words(t) > wordLimit(draft) + 15) return { rejected: 'too-long' }
   if (t === draft.trim()) return { rejected: 'same' }
-  const gone = lost(draft, t)
+  const gone = lost(draft, also ? `${t}\n${also}` : t)
   if (gone.length) return { rejected: 'lost', lost: gone }
   return { rewritten: t }
 }

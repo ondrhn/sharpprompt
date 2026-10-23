@@ -28,7 +28,7 @@ export function sessionFacts(rows: readonly SessionMessage[]): string {
       if (use.tool === 'Bash' && typeof use.input?.command === 'string') {
         const out = use.text ?? ''
         // "0 failed" is a pass; "2 failed", FAIL, a traceback or an error line is not.
-        const bad = use.isError === true || /\b(FAIL|FAILED|Traceback)\b|\w*Error\b|\b[1-9]\d* failed\b/.test(out)
+        const bad = use.isError === true || /\b(FAIL|FAILED|Traceback)\b|Error\b|\b[1-9]\d* failed\b/.test(out)
         failed = bad ? { command: use.input.command, output: out } : null
       }
     }
