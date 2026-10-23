@@ -15,6 +15,12 @@ describe('sessionFacts', () => {
     expect(f).toContain('Files changed this session: calc.py')
     expect(f).toContain('Files read this session: export.py')
   })
+  test('a file touched again counts as recent: the last eight are the most recent', () => {
+    const files = Array.from({ length: 9 }, (_, i) => tool('Read', { file_path: `f${i}.py` }))
+    const f = sessionFacts([said('', [...files, tool('Read', { file_path: 'f0.py' })])])
+    expect(f).toContain('f0.py')
+    expect(f).not.toContain('f1.py')
+  })
   test('keeps the last failed command and the end of its output', () => {
     const f = sessionFacts([said('', [tool('Bash', { command: 'python3 run_tests.py' }, 'ok a\nFAIL test_days_in_month\nAssertionError', true)])])
     expect(f).toContain('Last command failed: python3 run_tests.py')

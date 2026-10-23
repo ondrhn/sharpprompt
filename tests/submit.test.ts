@@ -94,13 +94,22 @@ test('a long draft gets more time: 100 ms a word over 20, at most 25 s', async (
   expect(calls.decisions.at(-1)?.rewrite).toMatchObject({ outcome: 'timeout', via: 'fork' })
 })
 
-test('a completion cut off by its own time limit counts as a timeout', async ($, on) => {
+test('a completion past the time limit counts as a timeout', async ($, on) => {
+  const calls = world(on, { fork: { isAnswered: false, reason: 'nothing-to-fork' }, complete: 'hang' })
+  const pending = $.prompt.submit({ text: ROUGH, ...typed })
+  await calls.clock.settle()
+  await calls.clock.advance(10_000)
+  expect((await pending).text).toBe(ROUGH)
+  expect(calls.decisions.at(-1)?.rewrite).toMatchObject({ outcome: 'timeout', via: 'complete' })
+})
+
+test('a completion cut by Esc counts as aborted', async ($, on) => {
   const calls = world(on, {
     fork: { isAnswered: false, reason: 'nothing-to-fork' },
     complete: { isAnswered: false, reason: 'aborted', usage },
   })
   await $.prompt.submit({ text: ROUGH, ...typed })
-  expect(calls.decisions.at(-1)?.rewrite).toMatchObject({ outcome: 'timeout', via: 'complete' })
+  expect(calls.decisions.at(-1)?.rewrite).toMatchObject({ outcome: 'aborted', via: 'complete' })
 })
 
 test('a long draft skips the classifier and goes to tidying', async ($, on) => {

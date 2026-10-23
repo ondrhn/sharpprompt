@@ -1,4 +1,4 @@
-import type { SharppromptDecision } from '../types'
+import type { SharppromptDecision, SharppromptRewrite } from '../types'
 
 // What we keep per turn and how /sharp stats sums it up. Everything stays in
 // $.store on the user's machine.
@@ -53,6 +53,10 @@ export const MAX_RECORDS = 500
 
 export const wordCount = (t: string) => t.split(/\s+/).filter(Boolean).length
 
+// Every outcome but rewritten, in the order /sharp stats lists them; a new
+// outcome in the type fails to compile until it is here.
+const NOT_REWRITTEN: Record<Exclude<SharppromptRewrite['outcome'], 'rewritten'>, true> = { keep: true, same: true, 'too-long': true, lost: true, empty: true, timeout: true, aborted: true, error: true }
+
 export function lastRewriteLine(r: RewriteRecord | undefined): string {
   if (!r) return 'Last rewrite: none yet'
   const w = r.words ? `, ${r.words[0]}${r.words[1] === undefined ? '' : ` -> ${r.words[1]}`} words` : ''
@@ -102,7 +106,7 @@ export function summary(counts: Counts, rewrites: readonly RewriteRecord[], turn
   return [
     `Prompts seen: ${seen}. Passed by the gate: ${skips.join(', ') || 'none'}.`,
     `Classified: clear ${c('verdict:clear')}, rough ${rough}, long ${c('verdict:long')}, timeout ${c('verdict:timeout')}, error ${c('verdict:error')}.`,
-    `Rewrites: ${ok.length} made, ${rewrites.length - ok.length} not (${['keep', 'same', 'too-long', 'lost', 'empty', 'timeout', 'aborted', 'error'].map(o => `${o} ${rewrites.filter(r => r.outcome === o).length}`).join(', ')}).`,
+    `Rewrites: ${ok.length} made, ${rewrites.length - ok.length} not (${Object.keys(NOT_REWRITTEN).map(o => `${o} ${rewrites.filter(r => r.outcome === o).length}`).join(', ')}).`,
     `What you did with them: sent as is ${c('answer:as-is')}, edited ${c('answer:edited')}, took yours back ${c('answer:original')}.`,
     `Wait (p50 / p95): classify ${spread(classified.map(x => x.ms))}, fork ${spread(forks.map(r => r.ms))}, fallback completion ${spread(rewrites.filter(r => r.via === 'complete').map(r => r.ms))}.`,
     `Cost per rough prompt: ${fmt(avg(spent.map(u => u.input)))} in, ${fmt(avg(spent.map(u => u.cacheRead)))} from cache, ${fmt(avg(spent.map(u => u.output)))} out. Forks that lost the race and finished anyway: ${c('late:forks')}, ${c('late:output')} output tokens, ${c('late:input')} input.`,

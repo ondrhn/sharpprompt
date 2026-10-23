@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Your own text put back with `back to mine` goes out untouched when you edit it too, not only as it stands; before, an edit started a new rewrite. The band now says when your own text is back in the box.
+- Esc during the fallback completion is recorded as `aborted`, and a completion that loses the race is cut instead of running on.
+- Inline `1. ... 2. ...` lists are not taken for numbers to keep, and a number may change its decimal mark (2,5 to 2.5).
+- Edits of a suggestion in Chinese, Japanese or Korean are recognised (pairs of characters stand in for words).
+- The band no longer names a value you picked in the question dialog as new, and `/sharp undo` keeps its usage-log record.
+- Tool counts leave out sharpprompt's own question dialogs; forks that finish late are no longer lost when two land at once; the files a rewrite hears about are the most recently touched ones.
+- Nothing lands in the box when another plugin settled the prompt first.
+- README: which languages it works in.
 - A number inside a longer one no longer hides it: with "2 failing tests, line 120" a rewrite that drops the 2 is turned down. Anchors match whole tokens; numbers keep all their groups (2.1.296, 1,000,000), file names and paths take any script's letters (çalışma.py), "500 ms" may become "500ms".
 - Anchors no longer take and/or, w/o or login/logout for paths, inline list markers like 1) and 2) for numbers, the words between two one-character quotes, or the backtick after a URL.
 - A rewrite that asks about a value from the draft (retry 3 or 5 times) is no longer turned down for leaving the value to the question. A question that cannot be shown (malformed, a third one, an option over 200 characters) turns the rewrite down, since its point is missing from the body.

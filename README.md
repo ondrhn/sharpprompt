@@ -46,6 +46,8 @@ Enter sends it, or edit it in the box. [ back to mine ]
 
 "u mentioned" became the function and file the conversation was about.
 
+`r` (after ctrl+x tab) or a click on `[ back to mine ]` puts your own text back; the band then says so, and that text goes out as you send it, edited or not, with no second rewrite.
+
 ![Recording: a rough prompt is typed, the rewrite appears in the prompt box with a note above it, Enter sends it and Claude starts on the fix](https://raw.githubusercontent.com/ondrhn/sharpprompt/master/docs/demo.gif)
 
 Recorded with [vhs](docs/demo.tape) on Claude Code 2.1.295.
@@ -177,6 +179,9 @@ One classifier call on the helper model for each prompt that passes the gate, an
 
 ### Can I turn it off for one prompt?
 Start the prompt with `raw:`. The prefix is removed and the rest goes out as typed. `/sharp off` turns it off for the session.
+
+### Which languages does it work in?
+Any language your session's model reads. The classifier and the rewriter are models, so there is no word list to match, and by default the rewrite comes back in the language you typed. Set `Rewrite language` to `en` to get an English prompt from a draft in another language. Numbers, paths and file names are checked in any script (`çalışma.py`, `2,5`), and an edit of a suggestion is recognised in Cyrillic, Chinese or Japanese as well as in Latin letters. The rules the rewriter follows are written in English. What has been measured: the benchmarks are in English plus one Turkish set, and 232 of the author's 238 logged prompts were Turkish. Other languages are untested.
 
 ### Does it work in VS Code?
 The hooks run, but VS Code has no box for the mod to fill and no band, so the rewrite goes to Claude as a note beside your prompt (`context` mode) and your prompt goes out as typed.

@@ -206,3 +206,15 @@ describe('overlap', () => {
     expect(overlap('🙂', '👍')).toBe(0)
   })
 })
+
+describe('anchors, second round', () => {
+  test('a decimal mark may change, an inline 1. 2. list is not numbers', () => {
+    expect(lost('set the ratio to 2,5', 'Set the ratio to 2.5.')).toEqual([])
+    expect(anchors('two things: 1. fix the save button 2. fix the toggle')).toEqual([])
+    expect(anchors('bump to version 1. then test')).toEqual(['1'])
+  })
+  test('Chinese and Japanese edits still overlap', () => {
+    expect(overlap('修复登录页面的错误', '修复登录页面的错误并添加测试')).toBeGreaterThan(0.4)
+    expect(overlap('修复登录页面的错误', '导出报表为表格文件')).toBeLessThan(0.4)
+  })
+})

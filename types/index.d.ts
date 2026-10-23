@@ -49,6 +49,9 @@ export type SharppromptPending = {
   rewritten: string
   // The usage-log record of this rewrite, when the log is on.
   log?: string
+  // The sentences the person's answers added, so the band does not name
+  // their own picks as new.
+  asked?: string
 }
 
 declare module 'claude-code' {

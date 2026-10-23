@@ -1,4 +1,5 @@
 import type { SharppromptDecision, SharppromptMode } from '../types'
+import { wordCount as words } from './stats'
 
 // Pure helpers for delivery and the slash command.
 
@@ -6,7 +7,22 @@ export const MODES: readonly SharppromptMode[] = ['fill', 'replace', 'context', 
 
 // Letters of any script, not just ASCII: split on \W, two Russian texts
 // had no words at all and counted as the same.
-const bag = (s: string) => new Set(s.toLowerCase().split(/[^\p{L}\p{N}_]+/u).filter(Boolean))
+// Chinese, Japanese and Korean put no spaces between words: there pairs of
+// characters stand in for words.
+const CJK = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u
+function bag(s: string): Set<string> {
+  const out = new Set<string>()
+  for (const w of s.toLowerCase().split(/[^\p{L}\p{N}_]+/u)) {
+    if (!w) continue
+    if (!CJK.test(w) || w.length < 3) {
+      out.add(w)
+      continue
+    }
+    const chars = [...w]
+    for (let i = 0; i < chars.length - 1; i++) out.add(chars[i]! + chars[i + 1]!)
+  }
+  return out
+}
 
 // Word overlap of two texts, 0 to 1. Above EDIT_OVERLAP a prompt sent while
 // our suggestion sits in the box counts as the suggestion, edited.
@@ -70,7 +86,6 @@ Start a prompt with raw: to send it untouched.`
 export function describe(d: SharppromptDecision | null): string {
   if (!d) return 'no prompt seen yet'
   if (d.verdict === 'skip') return `passed untouched (${d.reason})`
-  const words = (t: string) => t.split(/\s+/).filter(Boolean).length
   const classify = d.classifyMs === undefined ? '' : ` in ${d.classifyMs} ms`
   if (!('rewrite' in d) || !d.rewrite) return `classified ${d.verdict}${classify}, sent as typed`
   const r = d.rewrite

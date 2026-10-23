@@ -23,6 +23,8 @@ const HARNESS_TAG = /<(task-notification|system-reminder|command-[a-z-]+|local-c
 // Only what a person typed (or sent from their phone) is ours to look at.
 const TYPED: ReadonlySet<PromptOrigin['kind']> = new Set(['composer', 'bridge'])
 
+export const isTyped = (origin: PromptOrigin) => TYPED.has(origin.kind)
+
 export function gate(input: GateInput): GateDecision {
   const { text, origin, minChars, isOff } = input
   const pass = (reason: SharppromptSkip, out = text): GateDecision => ({ pass: true, reason, text: out })

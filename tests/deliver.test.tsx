@@ -179,12 +179,27 @@ test('band: r puts the original back as typed, and sent unchanged it goes out un
   expect(w.store.counts).toMatchObject({ 'answer:original': 1, 'skip:back-to-mine': 1 })
 })
 
-test('band: the original put back and then edited is a new prompt', async ($, on) => {
+test('band: the original put back and then edited is still the user own, sent untouched', async ($, on) => {
+  const w = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  let ui = await $.ui.mount({ plugin: 'sharpprompt', surface: 'terminal', ...BAND })
+  await ui.press({ key: 'raw' })
+  await ui.unmount()
+  ui = await $.ui.mount({ plugin: 'sharpprompt', surface: 'terminal', ...BAND })
+  expect(await ui.find({ type: 'Text', text: /your own prompt is back in the box/ })).toBeDefined()
+  await ui.unmount()
+  const edited = ROUGH + ' and also check the logout path please'
+  const r = await $.prompt.submit({ text: edited, ...typed })
+  expect(r.text).toBe(edited)
+  expect(w.classify).toBe(1)
+})
+
+test('band: a different prompt after the original was put back is a new prompt', async ($, on) => {
   const w = world(on)
   await $.prompt.submit({ text: ROUGH, ...typed })
   const ui = await $.ui.mount({ plugin: 'sharpprompt', surface: 'terminal', ...BAND })
   await ui.press({ key: 'raw' })
-  await $.prompt.submit({ text: ROUGH + ' and also check the logout path please', ...typed })
+  await $.prompt.submit({ text: 'completely unrelated question about the deploy pipeline and its caching', ...typed })
   expect(w.classify).toBe(2)
 })
 
@@ -491,4 +506,22 @@ test('on after mode off brings back the configured mode', { options: { mode: 're
   await $.command.run(cmd('sharp', 'on'))
   await $.prompt.submit({ text: ROUGH, ...typed })
   expect(w.sent[0]?.text).toBe(REWRITTEN)
+})
+
+test('band: a value picked in the dialog is not named as new', async ($, on) => {
+  const q = [{ question: 'How many retries?', header: 'Retries', options: [{ label: '30', adds: 'Retry 30 times.' }, { label: '50', adds: 'Retry 50 times.' }] }]
+  world(on, { fork: `${REWRITTEN}\nQUESTIONS: ${JSON.stringify(q)}`, ask: { 'How many retries?': '50' } })
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  const ui = await $.ui.mount({ plugin: 'sharpprompt', surface: 'terminal', ...BAND })
+  expect(await ui.find({ type: 'Text', text: /not in your draft/ })).toBeUndefined()
+  await ui.unmount()
+})
+
+test('our own question dialog is not counted as a tool call of the turn', async ($, on) => {
+  const w = world(on, { fork: WITH_QUESTION, ask: { [SEP]: 'Comma' } })
+  on('turn.complete', (_$, e) => ({ text: e.answer, reason: 'answer' as const }))
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  await $.prompt.submit({ text: w.fills[0]!, ...typed })
+  await $.turn.complete({ turnId: 't1', durationMs: 1000, isAborted: false, reason: 'answer', answer: 'ok.' })
+  expect(w.store.turns).toEqual([expect.objectContaining({ tools: 0 })])
 })

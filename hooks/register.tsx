@@ -1,8 +1,8 @@
-import type { EngineInterface, ModelUsage, PromptSubmitInput, PromptSubmitResult, Register } from 'claude-code'
+import type { EngineInterface, ModelUsage, Next, PromptSubmitInput, PromptSubmitResult, Register } from 'claude-code'
 import type { SharppromptDecision, SharppromptMode, SharppromptPending, SharppromptRewrite, SharppromptVerdict } from '../types'
 import { contextNote, describe, DROP_NOTE, EDIT_OVERLAP, HELP, overlap, parseCommand } from './flow'
 import { sessionFacts } from './facts'
-import { endsWithQuestion, gate, RAW_PREFIX } from './gate'
+import { endsWithQuestion, gate, isTyped, RAW_PREFIX } from './gate'
 import { clip, logLine, MAX_LOG, newRecord, patchLog, type LogRecord } from './log'
 import { applyAnswers, askInput, recommended, splitReply, type Question } from './questions'
 import { countKey, lastRewriteLine, MAX_RECORDS, summary, tokens, wordCount, type ClassifyRecord, type Counts, type DecisionRecord, type LateRecord, type RewriteRecord, type TurnRecord } from './stats'
@@ -22,6 +22,9 @@ let outgoing: TurnRecord['prompt'] | null = null
 let toolCalls = 0
 // The usage-log record of the prompt that started the running turn.
 let turnLog: string | null = null
+// Our own question dialogs: $.ui.ask runs as an AskUserQuestion tool call,
+// which is no tool call of the turn.
+let asking = 0
 
 type Options = Readonly<Record<string, unknown>>
 
@@ -132,7 +135,10 @@ async function rewrite($: EngineInterface, draft: string, helper: string, opts: 
   if (!reply.isAnswered && reply.reason === 'aborted') return { outcome: 'aborted', via, ms: await took(), usage: reply.usage }
   if (!reply.isAnswered && reply.reason === 'nothing-to-fork') {
     via = 'complete'
-    reply = await $.model.complete({
+    // Raced like the fork and cut by our own signal when it loses, so an
+    // 'aborted' reply means Esc, and a lost completion stops being billed.
+    const stop = new AbortController()
+    const completing = $.model.complete({
       model: helper,
       prompt: completePrompt(draft, family, await recent($), examples, opts),
       // A cut reply comes back answered, with no sign it was cut, so the cap
@@ -140,9 +146,14 @@ async function rewrite($: EngineInterface, draft: string, helper: string, opts: 
       // draft) plus questions: about 2 tokens a word, 600 at least.
       maxTokens: Math.max(600, 2 * wordLimit(draft) + 400),
       effort: 'low',
-      timeoutMs: limit,
-    })
-    if (!reply.isAnswered && reply.reason === 'aborted') return { outcome: 'timeout', via, ms: await took() }
+    }, { signal: stop.signal })
+    const completed = await race($, completing, limit)
+    if (completed === TIMEOUT) {
+      stop.abort()
+      return { outcome: 'timeout', via, ms: await took() }
+    }
+    reply = completed
+    if (!reply.isAnswered && reply.reason === 'aborted') return { outcome: 'aborted', via, ms: await took() }
   }
   if (!reply.isAnswered) return { outcome: 'error', via, ms: await took(), detail: reply.reason, usage: reply.usage }
 
@@ -183,6 +194,7 @@ async function rewriteOptions($: EngineInterface, options: Options): Promise<Rew
 // or it cannot be shown: the prompt then goes out as typed.
 async function askUser($: EngineInterface, questions: readonly Question[]): Promise<Record<string, string> | null> {
   const answers: Record<string, string> = {}
+  asking++
   try {
     for (const [i, q] of askInput(questions).questions.entries()) {
       const header = questions.length > 1 ? `${q.header.slice(0, 8)} ${i + 1}/${questions.length}` : q.header
@@ -191,6 +203,8 @@ async function askUser($: EngineInterface, questions: readonly Question[]): Prom
     return answers
   } catch {
     return null
+  } finally {
+    asking--
   }
 }
 
@@ -351,12 +365,25 @@ async function record($: EngineInterface, d: SharppromptDecision, helper: string
   await push($, 'rewrites', item)
 }
 
-async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: string, mode: SharppromptMode, next: (e: PromptSubmitInput) => Promise<PromptSubmitResult>, log: string | null = null): Promise<PromptSubmitResult> {
+// What /sharp undo puts back, with its usage-log record.
+async function keepForUndo($: EngineInterface, original: string, log: string | null) {
+  await $.store.set('lastOriginal', original).catch(() => {})
+  await $.store.set('lastLog', log).catch(() => {})
+}
+
+// VS Code and headless sessions draw no box, no band and no dialog.
+async function isDrawn($: EngineInterface): Promise<boolean> {
+  const surface = await $.session.surface()
+  return surface === 'terminal' || surface === 'desktop'
+}
+
+async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: string, mode: SharppromptMode, next: Next<'prompt.submit'>, log: string | null = null, asked = ''): Promise<PromptSubmitResult> {
   // VS Code and headless sessions draw no box and no band: there the rewrite
   // can only ride along as context.
-  const surface = await $.session.surface()
-  const drawn = surface === 'terminal' || surface === 'desktop'
-  const how = mode === 'fill' && !drawn ? 'context' : mode
+  // The dispatch went on without us (Esc, or a plugin above settled the
+  // prompt first): nothing of ours may land in the box or the state now.
+  if (next.signal.aborted) return next(e)
+  const how = mode === 'fill' && !(await isDrawn($)) ? 'context' : mode
 
   if (how === 'context') {
     await updateLog($, log, { delivered: 'context', boxed: clip(rewritten) })
@@ -366,8 +393,8 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
   }
 
   if (how === 'replace') {
-    await $.store.set('lastOriginal', e.text).catch(() => {})
-    await $.state.set(pending, { kind: 'replaced', original: e.text, rewritten, ...(log ? { log } : {}) })
+    await keepForUndo($, e.text, log)
+    await $.state.set(pending, { kind: 'replaced', original: e.text, rewritten, ...(log ? { log } : {}), ...(asked ? { asked } : {}) })
     await updateLog($, log, { delivered: 'replace', boxed: clip(rewritten) })
     turnLog = log
     outgoing = 'rewritten'
@@ -393,8 +420,8 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
     outgoing = 'typed'
     return next(e)
   }
-  await $.store.set('lastOriginal', e.text).catch(() => {})
-  await $.state.set(pending, { kind: 'filled', original: e.text, rewritten, ...(log ? { log } : {}) })
+  await keepForUndo($, e.text, log)
+  await $.state.set(pending, { kind: 'filled', original: e.text, rewritten, ...(log ? { log } : {}), ...(asked ? { asked } : {}) })
   await updateLog($, log, { delivered: 'fill', boxed: clip(rewritten), fillMs })
   // Since Claude Code 2.1.295 a dropped prompt is put back in the box after
   // our fill, so the box reads rewrite + original. The engine does that before
@@ -411,9 +438,9 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
   return { drop: DROP_NOTE }
 }
 
-// Puts the user's own text back in the box. Sent as it stands, it goes out
-// untouched (prompt.submit checks it against pending); edited, it is a new
-// prompt. We never send it for them: a prompt a plugin submits shows in the
+// Puts the user's own text back in the box. Sent as it stands or edited, it
+// goes out untouched (prompt.submit checks it against pending); a different
+// prompt is a new one. We never send it for them: a prompt a plugin submits shows in the
 // transcript under the plugin's name and skips @file expansion. pending is
 // written before the fill so an Enter right after it already sees it.
 async function restoreOriginal($: EngineInterface, p: SharppromptPending): Promise<boolean> {
@@ -425,12 +452,15 @@ async function restoreOriginal($: EngineInterface, p: SharppromptPending): Promi
   return r.isFilled
 }
 
-// True when this is the user's own text we put back, sent unchanged.
+// True when this is the user's own text we put back, sent unchanged or
+// edited. They asked for theirs back: on 23 Oct 2026 an original put back
+// with back to mine was added to and sent, and got rewritten all over
+// again. A different prompt is new.
 async function isRestored($: EngineInterface, text: string): Promise<boolean> {
   const p = (await $.state.get(pending)).value
   if (!p || p.kind !== 'restored') return false
   await $.state.set(pending, null)
-  if (text !== p.original) return false
+  if (text !== p.original && overlap(text, p.original) < EDIT_OVERLAP) return false
   turnLog = p.log ?? null
   return true
 }
@@ -446,7 +476,6 @@ async function runCommand($: EngineInterface, args: string, options: Options): P
     }
     case 'on':
       await $.state.set(isOff, false)
-      // Mode off (from /sharp mode off or the settings) would keep it off.
       // Mode off from the settings needs an override; one from /sharp mode off
       // is lifted, so a configured replace or context mode comes back.
       if ((await modeOf($, options)) === 'off') await $.state.set(modeOverride, options.mode === 'off' ? 'fill' : null)
@@ -460,7 +489,8 @@ async function runCommand($: EngineInterface, args: string, options: Options): P
     case 'undo': {
       const original = await $.store.get('lastOriginal')
       if (typeof original !== 'string') return 'Nothing to undo.'
-      const ok = await restoreOriginal($, { kind: 'restored', original, rewritten: '' })
+      const log = await $.store.get('lastLog')
+      const ok = await restoreOriginal($, { kind: 'restored', original, rewritten: '', ...(typeof log === 'string' ? { log } : {}) })
       return ok ? 'Your original is back in the prompt box; sent as it stands, it goes out untouched.' : `Could not reach the prompt box. Your original was:\n${original}`
     }
     case 'stats': {
@@ -479,8 +509,8 @@ async function runCommand($: EngineInterface, args: string, options: Options): P
   }
 }
 
-async function submit($: EngineInterface, e: PromptSubmitInput, next: (e: PromptSubmitInput) => Promise<PromptSubmitResult>, options: Options): Promise<PromptSubmitResult> {
-  const typedByUser = e.origin.kind === 'composer' || e.origin.kind === 'bridge'
+async function submit($: EngineInterface, e: PromptSubmitInput, next: Next<'prompt.submit'>, options: Options): Promise<PromptSubmitResult> {
+  const typedByUser = isTyped(e.origin)
   if (typedByUser) {
     if (await isRestored($, e.text)) {
       const d: SharppromptDecision = { verdict: 'skip', reason: 'back-to-mine', text: e.text }
@@ -513,10 +543,11 @@ async function submit($: EngineInterface, e: PromptSubmitInput, next: (e: Prompt
   }
   let rewritten = 'rewrite' in d ? d.rewrite?.text : undefined
   let how = mode
+  let asked = ''
   const questions = ('rewrite' in d ? d.rewrite?.questions : undefined) ?? []
   if (rewritten && questions.length) {
-    const surface = await $.session.surface()
-    if (surface === 'terminal' || surface === 'desktop') {
+    if (next.signal.aborted) return next(e)
+    if (await isDrawn($)) {
       const answers = await askUser($, questions)
       if (!answers) {
         await bump($, { 'ask:dismissed': 1 })
@@ -528,6 +559,7 @@ async function submit($: EngineInterface, e: PromptSubmitInput, next: (e: Prompt
       await bump($, { 'ask:answered': 1 })
       await updateLog($, log, { answers })
       rewritten = applyAnswers(rewritten, questions, answers)
+      asked = applyAnswers('', questions, answers)
     } else {
       // Nobody to ask: the recommended answers are guesses, so they ride
       // along as context and never replace what the user typed.
@@ -535,7 +567,7 @@ async function submit($: EngineInterface, e: PromptSubmitInput, next: (e: Prompt
       how = 'context'
     }
   }
-  if (rewritten) return deliver($, e, rewritten, how, next, log)
+  if (rewritten) return deliver($, e, rewritten, how, next, log, asked)
   await updateLog($, log, { delivered: 'typed' })
   turnLog = log
   if (typedByUser) outgoing = 'typed'
@@ -574,7 +606,7 @@ export const register: Register = (on, options) => {
   }).catch(($, e, next) => next(e))
 
   on('tool.call', ($, e, next) => {
-    if (!e.agentId) toolCalls++
+    if (!e.agentId && asking === 0) toolCalls++
     return next(e)
   }).catch(($, e, next) => next(e))
 
@@ -596,11 +628,14 @@ export const register: Register = (on, options) => {
       turnLog = null
     }
     if (late.forks > 0) {
-      const add = { 'late:forks': late.forks, 'late:input': late.usage.input_tokens + late.usage.cache_read_input_tokens + late.usage.cache_creation_input_tokens, 'late:output': late.usage.output_tokens }
-      const item: LateRecord = { at: await $.clock.now(), forks: late.forks, ms: late.ms, model: await $.session.model(), usage: tokens(late.usage) }
+      // Taken and reset before any await: a fork that lands meanwhile goes to
+      // the next flush instead of being wiped by this one.
+      const { forks, ms, usage } = late
       late.forks = 0
       late.ms = []
       late.usage = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 }
+      const add = { 'late:forks': forks, 'late:input': usage.input_tokens + usage.cache_read_input_tokens + usage.cache_creation_input_tokens, 'late:output': usage.output_tokens }
+      const item: LateRecord = { at: await $.clock.now(), forks, ms, model: await $.session.model(), usage: tokens(usage) }
       await bump($, add)
       await push($, 'late', item)
     }
@@ -609,10 +644,13 @@ export const register: Register = (on, options) => {
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const p = (await $.state.get(pending)).value
-    if (!p || p.kind === 'restored' || e.props.hasSurvey) return next(e)
+    if (!p || e.props.hasSurvey) return next(e)
     const { Box, Button, Text } = $.ui.resolve(e)
+    // Says what is in the box now, so no one takes it for the suggestion.
+    if (p.kind === 'restored') return <Text dimColor>sharpprompt: your own prompt is back in the box; edited or not, it goes out as you send it.</Text>
     const was = p.original.length > 70 ? `${p.original.slice(0, 70)}...` : p.original
-    const extra = addedLine(p.original, p.rewritten)
+    // What the person picked in the dialog is theirs, not news.
+    const extra = addedLine(`${p.original} ${p.asked ?? ''}`, p.rewritten)
     const note = extra ? <Text color="warning">{extra}</Text> : null
     if (p.kind === 'replaced') {
       return (

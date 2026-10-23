@@ -1,4 +1,5 @@
 import { RULES, SHAPES, type Family } from './bank'
+import { wordCount as words } from './stats'
 
 // Everything about the rewrite that needs no $: which rules apply, the text
 // we send the model, and what we accept back.
@@ -36,8 +37,6 @@ export function familyOf(model: string): Family {
   }
   return 'common'
 }
-
-const words = (s: string) => s.split(/\s+/).filter(Boolean).length
 
 export const isLong = (draft: string) => words(draft) >= LONG_WORDS
 
@@ -120,8 +119,10 @@ export function anchors(draft: string, kind: 'all' | 'facts' = 'all'): string[] 
   }
   take(/(?<![\p{L}\p{N}_-])[\p{L}\p{N}_-]+\.(?:py|ts|tsx|js|mjs|json|md|png|jpg|jpeg|txt|sh|yml|yaml|toml|csv|xlsx|html|css|mp4|srt|log)(?![\p{L}\p{N}_])/giu)
   take(/\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b/g)
-  // List markers, at a line start or inline (1) ... 2) ...), are not numbers to keep.
-  const unlisted = draft.replace(/(^|\n)\s*\d+[-.)]\s/g, '$1').replace(/(^|[\s:;,])\(?\d{1,2}\)\s/g, '$1')
+  // List markers, at a line start or inline (1) ... 2) ..., or 1. ... 2. ...
+  // when both are there), are not numbers to keep.
+  let unlisted = draft.replace(/(^|\n)\s*\d+[-.)]\s/g, '$1').replace(/(^|[\s:;,])\(?\d{1,2}\)\s/g, '$1')
+  if (/(^|[\s:;,])1\.\s[\s\S]*[\s:;,]2\.\s/.test(unlisted)) unlisted = unlisted.replace(/(^|[\s:;,])\d{1,2}\.\s/g, '$1')
   take(kind === 'all' ? /(?<![\w.])\d+(?:[.,]\d+)*(?![\d.,]*\d)/g : /(?<![\w.])\d{2,}(?:[.,]\d+)*(?![\d.,]*\d)/g, unlisted)
   // A piece of a longer one (test.ts in tests/auth.test.ts) adds nothing.
   return [...out].filter(a => ![...out].some(b => b !== a && b.includes(a) && hasToken(b, a)))
@@ -141,7 +142,15 @@ export function hasToken(text: string, a: string): boolean {
   return new RegExp(guard[first][0] + esc(a) + guard[last][1], 'u').test(text)
 }
 
-export const lost = (draft: string, text: string) => anchors(draft).filter(a => !hasToken(text, a))
+// A number may change its decimal mark (2,5 to 2.5) when the rewrite is in
+// another language.
+const otherMark = (a: string) => (/^\d+[.,]\d+$/.test(a) ? a.replace(/[.,]/, m => (m === '.' ? ',' : '.')) : null)
+
+export const lost = (draft: string, text: string) =>
+  anchors(draft).filter(a => {
+    const alt = otherMark(a)
+    return !hasToken(text, a) && !(alt && hasToken(text, alt))
+  })
 
 // The same kinds of thing the rewrite brought in from elsewhere: a path, a
 // hash or a number the user did not type, shown on the band so a stale one

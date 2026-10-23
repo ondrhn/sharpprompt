@@ -21,9 +21,12 @@ export function sessionFacts(rows: readonly SessionMessage[]): string {
     for (const use of row.toolUses ?? []) {
       const kind = FILE_TOOLS[use.tool]
       const path = typeof use.input?.file_path === 'string' ? use.input.file_path : typeof use.input?.notebook_path === 'string' ? use.input.notebook_path : null
+      // Deleted first so a file touched again moves to the end, and the
+      // last eight kept are the most recent.
       if (kind && path) {
-        if (kind === 'changed') changed.add(path)
-        else read.add(path)
+        const set = kind === 'changed' ? changed : read
+        set.delete(path)
+        set.add(path)
       }
       if (use.tool === 'Bash' && typeof use.input?.command === 'string') {
         const out = use.text ?? ''
