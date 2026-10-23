@@ -46,7 +46,7 @@ Enter sends it, or edit it in the box. [ back to mine ]
 
 "u mentioned" became the function and file the conversation was about.
 
-`r` (after ctrl+x tab) or a click on `[ back to mine ]` puts your own text back; the band then says so, and that text goes out as you send it, edited or not, with no second rewrite.
+`ctrl+x r` (once bound, see [Install](#install)), `r` after ctrl+x tab, or a click on `[ back to mine ]` puts your own text back; the band then says so, and that text goes out as you send it, edited or not, with no second rewrite.
 
 ![Recording: a rough prompt is typed, the rewrite appears in the prompt box with a note above it, Enter sends it and Claude starts on the fix](https://raw.githubusercontent.com/ondrhn/sharpprompt/master/docs/demo.gif)
 
@@ -82,6 +82,19 @@ claude --plugin-dir ~/sharpprompt
 ```
 
 To load the clone in every session, add the folder to `CLAUDE_CODE_PLUGIN_DIRS` in the `env` block of `~/.claude/settings.json`.
+
+To take your own text back with `ctrl+x r` straight from the prompt box, with no ctrl+x tab first, add this to `~/.claude/keybindings.json` (merge it into the file if you have one):
+
+```json
+{
+  "$schema": "https://www.schemastore.org/claude-code-keybindings.json",
+  "bindings": [
+    { "context": "Chat", "bindings": { "ctrl+x r": "app:cycleDiffBase" } }
+  ]
+}
+```
+
+A plugin cannot bind keys of its own: its buttons answer the chord of one of Claude Code's actions. `app:cycleDiffBase` only does anything in the diff sidebar, so from the prompt box its chord reaches the band. While the diff sidebar is open, ctrl+x r cycles the diff base there instead. ctrl+r is not used because it is Claude Code's history search.
 
 ## Commands
 
@@ -149,7 +162,7 @@ Each rule is in [docs/rules](docs/rules) with a link to the Anthropic page it co
 - The rewrite runs on your session's model, so it costs what a short question to that model costs; the conversation part comes from the prompt cache while it is warm. `/sharp stats` shows the tokens per rough prompt. The `Helper model` setting picks only the classifier and the fallback used before the conversation has a first reply.
 - Claude Code's fork has no time limit, so sharpprompt stops waiting after 10 seconds, plus 100 ms for each word past 20 (at most 25 seconds), and sends your prompt as typed. The fork still finishes in the background and is billed, with no cap on its output. `/sharp stats` counts these.
 - VS Code and headless runs (`claude -p`, the SDK) have no box to fill, so `fill` acts as `context` there. Mods do not run in a Desktop session that uses WSL.
-- Taking your own text back is two keys: `r` puts it in the box, Enter sends it. sharpprompt does not send it for you because a prompt a plugin sends shows under the plugin's name in the transcript and skips `@file` expansion. The band's buttons answer to their keys once the band has focus: ctrl+x tab, or a click.
+- Taking your own text back is a chord and Enter: `ctrl+x r` (with the binding above) or ctrl+x tab then `r` puts it in the box, Enter sends it. sharpprompt does not send it for you because a prompt a plugin sends shows under the plugin's name in the transcript and skips `@file` expansion. The band's buttons answer to their keys once the band has focus: ctrl+x tab, or a click.
 - A rough prompt waits for the classifier and the rewrite before anything happens. In the sessions measured so far the box filled 3.6 to 6.2 seconds after Enter.
 
 ## Measurements

@@ -153,6 +153,7 @@ test('band: Enter, edit in the box, or r for the original', async ($, on) => {
     const ui = await $.ui.mount({ plugin: 'sharpprompt', surface, ...BAND })
     expect(await ui.find({ type: 'Text', text: /Enter sends it, or edit it in the box/ })).toBeDefined()
     expect((await ui.find({ key: 'raw' }))?.props.hotkey).toBe('r')
+    expect((await ui.find({ key: 'raw' }))?.props.action).toBe('app:cycleDiffBase')
     await ui.unmount()
   }
 })

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `back to mine` answers `ctrl+x r` from the prompt box, with no ctrl+x tab first, once the binding in the README's Install section is in `~/.claude/keybindings.json`.
 - Your own text put back with `back to mine` goes out untouched when you edit it too, not only as it stands; before, an edit started a new rewrite. The band now says when your own text is back in the box.
 - Esc during the fallback completion is recorded as `aborted`, and a completion that loses the race is cut instead of running on.
 - Inline `1. ... 2. ...` lists are not taken for numbers to keep, and a number may change its decimal mark (2,5 to 2.5).

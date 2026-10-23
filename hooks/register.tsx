@@ -67,6 +67,12 @@ function addLate(u: ModelUsage, ms: number) {
   late.usage.cache_creation_input_tokens += u.cache_creation_input_tokens
 }
 
+// A plugin binds no chords of its own: a Button answers the chord of an
+// engine action. This one's handler lives only in the diff sidebar, so from
+// the prompt the chord reaches the band. Bound in ~/.claude/keybindings.json,
+// context Chat, "ctrl+x r" (README, Install); ctrl+r is history search.
+export const BACK_TO_MINE = 'app:cycleDiffBase'
+
 const TIMEOUT: unique symbol = Symbol('timeout')
 
 // fork and classify take no time limit, so we race them against the clock.
@@ -670,7 +676,7 @@ export const register: Register = (on, options) => {
         {note}
         <Box>
           <Text dimColor>Enter sends it, or edit it in the box. </Text>
-          <Button key="raw" hotkey="r" label="back to mine" onPress={() => restoreOriginal($, p)} />
+          <Button key="raw" hotkey="r" action={BACK_TO_MINE} label="back to mine" onPress={() => restoreOriginal($, p)} />
         </Box>
       </Box>
     )
