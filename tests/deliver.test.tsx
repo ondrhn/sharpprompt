@@ -229,17 +229,17 @@ test('stats prints a summary and says when n is too small', async ($, on) => {
 })
 
 test('a fork that loses the race is still counted once it finishes', async ($, on) => {
-  const w = world(on, { forkMs: 6_000 })
+  const w = world(on, { forkMs: 11_000 })
   on('turn.complete', (_$, e) => ({ text: e.answer, reason: 'answer' as const }))
   const pending = $.prompt.submit({ text: ROUGH, ...typed })
   await w.clock.settle()
-  await w.clock.advance(5_000)
+  await w.clock.advance(10_000)
   expect((await pending).text).toBe(ROUGH)
   await w.clock.advance(1_000)
   await $.turn.complete({ turnId: 't1', durationMs: 1000, isAborted: false, reason: 'answer', answer: 'ok.' })
   expect(w.store.counts).toMatchObject({ 'late:forks': 1, 'late:output': 20, 'late:input': 10 })
   expect(w.store.rewrites).toEqual([expect.objectContaining({ outcome: 'timeout', via: 'fork' })])
-  expect(w.store.late).toEqual([{ at: w.clock.now(), forks: 1, ms: [6_000], model: 'claude-opus-5-5', usage: { input: 10, output: 20, cacheRead: 0, cacheWrite: 0 } }])
+  expect(w.store.late).toEqual([{ at: w.clock.now(), forks: 1, ms: [11_000], model: 'claude-opus-5-5', usage: { input: 10, output: 20, cacheRead: 0, cacheWrite: 0 } }])
 })
 
 test('classify time is kept for clear prompts too', async ($, on) => {

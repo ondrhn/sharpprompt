@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A rewrite gets 10 seconds, not 5, before the prompt goes out as typed (still plus 100 ms a word past 20, at most 25). From 12 to 23 October 32 of 79 rewrites of short drafts timed out at 5 seconds; the forks that lost took 7.5 seconds at the median.
 - The band names what the rewrite brought in that the draft did not have: paths, file names, URLs, commit hashes and numbers of two digits or more. On the 29 rewrites in the author's usage log it would have shown on 10, one of them a stale commit hash.
 - Long prompts (60 words or more) skip the classifier and are tidied instead of rewritten: repeats merged, requests in order, nothing added, no longer than the draft ([report](docs/measurements/tidy-2026-10-11.md)).
 - A rewrite that drops a number, file name, path, URL, or quoted or code text from the draft is thrown away (outcome `lost`).

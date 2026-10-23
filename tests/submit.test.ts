@@ -70,11 +70,11 @@ test('with nothing to fork, the rewrite falls back to a completion', async ($, o
   expect(calls.decisions.at(-1)?.rewrite).toMatchObject({ outcome: 'rewritten', via: 'complete' })
 })
 
-test('a fork that hangs past 5 s gives up and the prompt goes out as typed', async ($, on) => {
+test('a fork that hangs past 10 s gives up and the prompt goes out as typed', async ($, on) => {
   const calls = world(on, { fork: 'hang' })
   const pending = $.prompt.submit({ text: ROUGH, ...typed })
   await calls.clock.settle()
-  await calls.clock.advance(4_999)
+  await calls.clock.advance(9_999)
   expect(calls.decisions).toHaveLength(0)
   await calls.clock.advance(1)
   const r = await pending
@@ -83,11 +83,11 @@ test('a fork that hangs past 5 s gives up and the prompt goes out as typed', asy
 })
 
 test('a long draft gets more time: 100 ms a word over 20, at most 25 s', async ($, on) => {
-  const long = (ROUGH + ' ').repeat(10).trim() // 140 words: 5 s + 120 * 100 ms
+  const long = (ROUGH + ' ').repeat(10).trim() // 140 words: 10 s + 120 * 100 ms
   const calls = world(on, { fork: 'hang' })
   const pending = $.prompt.submit({ text: long, ...typed })
   await calls.clock.settle()
-  await calls.clock.advance(16_999)
+  await calls.clock.advance(21_999)
   expect(calls.decisions).toHaveLength(0)
   await calls.clock.advance(1)
   await pending
@@ -226,7 +226,7 @@ test('status: shown while the fork runs and cleared when it times out', async ($
   const pending = $.prompt.submit({ text: ROUGH, ...typed })
   await calls.clock.settle()
   expect(calls.statuses).toEqual([CHECKING, REWRITING])
-  await calls.clock.advance(5_000)
+  await calls.clock.advance(10_000)
   await pending
   expect(calls.statuses).toEqual([CHECKING, REWRITING, undefined])
 })

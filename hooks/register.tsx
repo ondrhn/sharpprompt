@@ -30,7 +30,10 @@ export const CLASSIFY_MS = 2_500
 // The labels the classifier picks from; the wording is what it judges by.
 const CLEAR = 'clear and specific'
 const ROUGH = 'rough: vague or missing what to deliver'
-export const REWRITE_MS = 5_000
+// 10 s, not 5: from 12 to 23 Oct 2026, 32 of 79 rewrites of drafts of 20
+// words or less timed out at 5 s. The forks that lost finished in 7.5 s
+// (median), 9.9 s at p90; the time follows the conversation, not the draft.
+export const REWRITE_MS = 10_000
 
 // Long drafts get longer: over 20 words, 100 ms more per word, up to 25 s.
 // 15 of 40 rough prompts timed out in two days of use (9 to 11 Oct 2026),
