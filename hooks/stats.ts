@@ -51,7 +51,13 @@ export type Counts = Record<string, number>
 
 export const MAX_RECORDS = 500
 
-export const wordCount = (t: string) => t.split(/\s+/).filter(Boolean).length
+// Chinese and Japanese write no spaces: a run of their characters counts
+// as one word per two characters, so a long draft there is still long.
+export const wordCount = (t: string) =>
+  t
+    .split(/\s+/)
+    .filter(Boolean)
+    .reduce((n, w) => n + Math.max(1, Math.ceil((w.match(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/gu)?.length ?? 0) / 2)), 0)
 
 // Every outcome but rewritten, in the order /sharp stats lists them; a new
 // outcome in the type fails to compile until it is here.

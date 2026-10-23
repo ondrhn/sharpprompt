@@ -42,7 +42,7 @@ export type SharppromptDecision =
 
 // A rewrite the user has not acted on yet: in the box (filled) or already
 // sent (replaced), shown in the band; or the user's own text put back in the
-// box (restored), which goes out untouched if sent as it stands.
+// box (restored), which goes out as the person sends it, edited or not.
 export type SharppromptPending = {
   kind: 'filled' | 'replaced' | 'restored'
   original: string

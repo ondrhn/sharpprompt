@@ -526,3 +526,41 @@ test('our own question dialog is not counted as a tool call of the turn', async 
   await $.turn.complete({ turnId: 't1', durationMs: 1000, isAborted: false, reason: 'answer', answer: 'ok.' })
   expect(w.store.turns).toEqual([expect.objectContaining({ tools: 0 })])
 })
+
+test('back to mine, then a sentence added: still the user own text, and raw: is taken off', async ($, on) => {
+  const w = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  const ui = await $.ui.mount({ plugin: 'sharpprompt', surface: 'terminal', ...BAND })
+  await ui.press({ key: 'raw' })
+  await ui.unmount()
+  const more = `${ROUGH}. after the token refresh users get kicked out to the start page and lose their unsaved form data, see auth.ts`
+  expect((await $.prompt.submit({ text: more, ...typed })).text).toBe(more)
+  expect(w.classify).toBe(1)
+})
+
+test('raw: in front of the user own text put back is taken off', async ($, on) => {
+  const w = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  const ui = await $.ui.mount({ plugin: 'sharpprompt', surface: 'terminal', ...BAND })
+  await ui.press({ key: 'raw' })
+  await ui.unmount()
+  expect((await $.prompt.submit({ text: `raw: ${ROUGH}`, ...typed })).text).toBe(ROUGH)
+  expect(w.store.counts).toMatchObject({ 'skip:back-to-mine': 1 })
+})
+
+test('replace mode: our dialog is not a tool call of the turn', { options: { mode: 'replace' } }, async ($, on) => {
+  const w = world(on, { fork: WITH_QUESTION, ask: { [SEP]: 'Comma' } })
+  on('turn.complete', (_$, e) => ({ text: e.answer, reason: 'answer' as const }))
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  await $.turn.complete({ turnId: 't1', durationMs: 1000, isAborted: false, reason: 'answer', answer: 'ok.' })
+  expect(w.asked).toHaveLength(1)
+  expect(w.store.turns).toEqual([expect.objectContaining({ tools: 0 })])
+})
+
+test('undo after the rewrite was sent leaves its record alone', async ($, on) => {
+  const w = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  await $.prompt.submit({ text: REWRITTEN, ...typed })
+  await $.command.run(cmd('sharp', 'undo'))
+  expect((w.store.log as { action?: string }[]).at(-1)?.action).toBe('as-is')
+})

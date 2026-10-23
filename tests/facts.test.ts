@@ -21,6 +21,12 @@ describe('sessionFacts', () => {
     expect(f).toContain('f0.py')
     expect(f).not.toContain('f1.py')
   })
+  test('long paths: the newest files survive the cut, and a changed file read again is recent', () => {
+    const long = (i: number) => `src/a/very/long/directory/name/that/keeps/going/and/going/file${i}.ts`
+    const f = sessionFacts([said('', [...Array.from({ length: 9 }, (_, i) => tool('Edit', { file_path: long(i) })), tool('Read', { file_path: long(0) })])])
+    expect(f).toContain(long(0))
+    expect(f).toContain(long(8))
+  })
   test('keeps the last failed command and the end of its output', () => {
     const f = sessionFacts([said('', [tool('Bash', { command: 'python3 run_tests.py' }, 'ok a\nFAIL test_days_in_month\nAssertionError', true)])])
     expect(f).toContain('Last command failed: python3 run_tests.py')

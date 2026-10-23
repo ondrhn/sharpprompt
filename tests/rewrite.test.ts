@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 import { RULES, SHAPES } from '../hooks/bank'
-import { overlap } from '../hooks/flow'
+import { kept, overlap } from '../hooks/flow'
 import { addedLine, anchors, clean, completePrompt, familyOf, forkPrompt, hasToken, KEEP, lost, wordLimit } from '../hooks/rewrite'
 
 const DRAFT = 'login broken again after your change, fix'
@@ -216,5 +216,26 @@ describe('anchors, second round', () => {
   test('Chinese and Japanese edits still overlap', () => {
     expect(overlap('修复登录页面的错误', '修复登录页面的错误并添加测试')).toBeGreaterThan(0.4)
     expect(overlap('修复登录页面的错误', '导出报表为表格文件')).toBeLessThan(0.4)
+  })
+})
+
+describe('third review', () => {
+  test('only list markers counting up from 1 are dropped', () => {
+    expect(anchors('two fixes: 1. set the timeout to 30. 2. make retries 5')).toEqual(['30', '5'])
+    expect(anchors('1. fix the save button 2. fix the toggle')).toEqual([])
+    expect(anchors('需要两个修改：1. 修复登录 2. 添加测试')).toEqual([])
+    expect(anchors('两个问题：1、登录失败 2、导出报错')).toEqual([])
+    expect(lost('two things pls: 1. set the request timeout to 30. 2. fix the toggle', 'Two fixes: 1. set the request timeout to 60. 2. fix the toggle.')).toEqual(['30'])
+  })
+  test('a decimal comma may become a point, but not in code, and the band knows it', () => {
+    expect(lost('set `retry_delay` to `2.5` in config.yaml', 'config.yaml içinde retry_delay değerini 2,5 yap')).toEqual(['2.5'])
+    expect(lost('python 3.12 olsun', 'Use Python 3,12.')).toEqual(['3.12'])
+    expect(addedLine('eşiği 12,5 yap', 'Set the threshold to 12.5.')).toBeNull()
+  })
+  test('Latin names glued to CJK, Hindi, and the one-sided share', () => {
+    expect(overlap('修复getUserProfile函数', '删除getUserProfile测试')).toBeLessThan(0.4)
+    expect(overlap('सेटिंग्स पेज में डार्क मोड का विकल्प जोड़ो', 'डिप्लॉय स्क्रिप्ट में स्टेजिंग सर्वर का पता बदलो')).toBeLessThan(0.4)
+    expect(kept('make the login thing work better', 'make the login thing work better. after the token refresh users get kicked out and lose their unsaved form data, see auth.ts')).toBe(1)
+    expect(kept('make the login thing work better', 'deploy the staging server')).toBeLessThan(0.6)
   })
 })

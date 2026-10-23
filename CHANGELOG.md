@@ -2,8 +2,12 @@
 
 ## Unreleased
 
+- Inline list markers are dropped only when they count up from 1, so "timeout to 30. 2. ..." keeps its 30, and lists that start a line or use 、 are covered. A decimal comma may become a point (2,5 to 2.5) only outside code and quotes, and the band no longer names 12.5 when you wrote 12,5.
+- The band checks the sentence behind an answer you picked: only the label you saw, or what you typed, counts as yours.
+- `raw:` in front of your own text put back is taken off; a slash command typed meanwhile leaves that text as it was; `/sharp undo` no longer changes the record of a rewrite you already sent.
+- Edits are told apart in Hindi (vowel signs stay in the word) and when a Latin name is glued to Chinese or Japanese; Chinese and Japanese drafts are counted by characters, so a long one is tidied.
 - `back to mine` answers `ctrl+x r` from the prompt box, with no ctrl+x tab first, once the binding in the README's Install section is in `~/.claude/keybindings.json`.
-- Your own text put back with `back to mine` goes out untouched when you edit it too, not only as it stands; before, an edit started a new rewrite. The band now says when your own text is back in the box.
+- Your own text put back with `back to mine` goes out untouched when you edit it or add to it; before, an edit started a new rewrite. The band now says when your own text is back in the box.
 - Esc during the fallback completion is recorded as `aborted`, and a completion that loses the race is cut instead of running on.
 - Inline `1. ... 2. ...` lists are not taken for numbers to keep, and a number may change its decimal mark (2,5 to 2.5).
 - Edits of a suggestion in Chinese, Japanese or Korean are recognised (pairs of characters stand in for words).

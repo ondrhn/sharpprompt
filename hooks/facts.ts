@@ -10,6 +10,15 @@ const MAX_CHARS = 1200
 const tail = (s: string, n: number) => (s.length > n ? `...${s.slice(-n)}` : s)
 const head = (s: string, n: number) => (s.length > n ? `${s.slice(0, n)}...` : s)
 
+// The last eight, cut from the front to fit their share of MAX_CHARS, so a
+// long list loses its oldest files, not its newest.
+const LIST_CHARS = 400
+function recent(paths: readonly string[]): string {
+  const list = paths.slice(-8)
+  while (list.length > 1 && list.join(', ').length > LIST_CHARS) list.shift()
+  return list.join(', ')
+}
+
 export function sessionFacts(rows: readonly SessionMessage[]): string {
   const read = new Set<string>()
   const changed = new Set<string>()
@@ -22,9 +31,10 @@ export function sessionFacts(rows: readonly SessionMessage[]): string {
       const kind = FILE_TOOLS[use.tool]
       const path = typeof use.input?.file_path === 'string' ? use.input.file_path : typeof use.input?.notebook_path === 'string' ? use.input.notebook_path : null
       // Deleted first so a file touched again moves to the end, and the
-      // last eight kept are the most recent.
+      // last eight kept are the most recent. A changed file read again is
+      // still a changed file, now a recent one.
       if (kind && path) {
-        const set = kind === 'changed' ? changed : read
+        const set = kind === 'changed' || changed.has(path) ? changed : read
         set.delete(path)
         set.add(path)
       }
@@ -39,8 +49,8 @@ export function sessionFacts(rows: readonly SessionMessage[]): string {
   for (const p of changed) read.delete(p)
 
   const lines: string[] = []
-  if (changed.size) lines.push(`Files changed this session: ${[...changed].slice(-8).join(', ')}`)
-  if (read.size) lines.push(`Files read this session: ${[...read].slice(-8).join(', ')}`)
+  if (changed.size) lines.push(`Files changed this session: ${recent([...changed])}`)
+  if (read.size) lines.push(`Files read this session: ${recent([...read])}`)
   if (failed) lines.push(`Last command failed: ${head(failed.command, 120)}\nIts output ended with:\n${tail(failed.output.trim(), 400)}`)
   if (lastReply) lines.push(`Claude's last reply began: ${head(lastReply.replace(/\s+/g, ' '), 240)}`)
   const text = lines.join('\n')

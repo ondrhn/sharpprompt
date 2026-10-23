@@ -1,6 +1,6 @@
 import type { EngineInterface, ModelUsage, Next, PromptSubmitInput, PromptSubmitResult, Register } from 'claude-code'
 import type { SharppromptDecision, SharppromptMode, SharppromptPending, SharppromptRewrite, SharppromptVerdict } from '../types'
-import { contextNote, describe, DROP_NOTE, EDIT_OVERLAP, HELP, overlap, parseCommand } from './flow'
+import { contextNote, describe, DROP_NOTE, EDIT_OVERLAP, HELP, kept, KEPT_OWN, overlap, parseCommand } from './flow'
 import { sessionFacts } from './facts'
 import { endsWithQuestion, gate, isTyped, RAW_PREFIX } from './gate'
 import { clip, logLine, MAX_LOG, newRecord, patchLog, type LogRecord } from './log'
@@ -22,9 +22,6 @@ let outgoing: TurnRecord['prompt'] | null = null
 let toolCalls = 0
 // The usage-log record of the prompt that started the running turn.
 let turnLog: string | null = null
-// Our own question dialogs: $.ui.ask runs as an AskUserQuestion tool call,
-// which is no tool call of the turn.
-let asking = 0
 
 type Options = Readonly<Record<string, unknown>>
 
@@ -81,7 +78,8 @@ const TIMEOUT: unique symbol = Symbol('timeout')
 async function race<T>($: EngineInterface, work: Promise<T>, ms: number): Promise<T | typeof TIMEOUT> {
   const stop = new AbortController()
   // A sleep that fails for its own reasons must not read as a timeout: the
-  // work then runs unraced, and the engine's hook budget is the backstop.
+  // work then runs unraced. The hook budget is no backstop (it stops while a
+  // $ call is in flight), so the completion also carries its own timeoutMs.
   const timer: Promise<typeof TIMEOUT> = $.clock.sleep(ms, { signal: stop.signal }).then(
     () => TIMEOUT,
     () => new Promise<never>(() => {}),
@@ -152,6 +150,8 @@ async function rewrite($: EngineInterface, draft: string, helper: string, opts: 
       // draft) plus questions: about 2 tokens a word, 600 at least.
       maxTokens: Math.max(600, 2 * wordLimit(draft) + 400),
       effort: 'low',
+      // Only a backstop for a refused sleep; the race below ends it first.
+      timeoutMs: limit + 1_000,
     }, { signal: stop.signal })
     const completed = await race($, completing, limit)
     if (completed === TIMEOUT) {
@@ -159,7 +159,7 @@ async function rewrite($: EngineInterface, draft: string, helper: string, opts: 
       return { outcome: 'timeout', via, ms: await took() }
     }
     reply = completed
-    if (!reply.isAnswered && reply.reason === 'aborted') return { outcome: 'aborted', via, ms: await took() }
+    if (!reply.isAnswered && reply.reason === 'aborted') return { outcome: (await took()) >= limit ? 'timeout' : 'aborted', via, ms: await took() }
   }
   if (!reply.isAnswered) return { outcome: 'error', via, ms: await took(), detail: reply.reason, usage: reply.usage }
 
@@ -200,7 +200,6 @@ async function rewriteOptions($: EngineInterface, options: Options): Promise<Rew
 // or it cannot be shown: the prompt then goes out as typed.
 async function askUser($: EngineInterface, questions: readonly Question[]): Promise<Record<string, string> | null> {
   const answers: Record<string, string> = {}
-  asking++
   try {
     for (const [i, q] of askInput(questions).questions.entries()) {
       const header = questions.length > 1 ? `${q.header.slice(0, 8)} ${i + 1}/${questions.length}` : q.header
@@ -209,8 +208,6 @@ async function askUser($: EngineInterface, questions: readonly Question[]): Prom
     return answers
   } catch {
     return null
-  } finally {
-    asking--
   }
 }
 
@@ -371,10 +368,11 @@ async function record($: EngineInterface, d: SharppromptDecision, helper: string
   await push($, 'rewrites', item)
 }
 
-// What /sharp undo puts back, with its usage-log record.
+// What /sharp undo puts back, with its usage-log record, as one key so the
+// two cannot fall out of step. Written after pending, so an Enter on the
+// box right after the fill already finds the suggestion.
 async function keepForUndo($: EngineInterface, original: string, log: string | null) {
-  await $.store.set('lastOriginal', original).catch(() => {})
-  await $.store.set('lastLog', log).catch(() => {})
+  await $.store.set('undo', { original, log }).catch(() => {})
 }
 
 // VS Code and headless sessions draw no box, no band and no dialog.
@@ -387,8 +385,9 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
   // VS Code and headless sessions draw no box and no band: there the rewrite
   // can only ride along as context.
   // The dispatch went on without us (Esc, or a plugin above settled the
-  // prompt first): nothing of ours may land in the box or the state now.
-  if (next.signal.aborted) return next(e)
+  // prompt first): nothing of ours may land in the box or the state now,
+  // and next(e) would send the prompt down the chain a second time.
+  if (next.signal.aborted) return { text: e.text }
   const how = mode === 'fill' && !(await isDrawn($)) ? 'context' : mode
 
   if (how === 'context') {
@@ -399,8 +398,8 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
   }
 
   if (how === 'replace') {
-    await keepForUndo($, e.text, log)
     await $.state.set(pending, { kind: 'replaced', original: e.text, rewritten, ...(log ? { log } : {}), ...(asked ? { asked } : {}) })
+    await keepForUndo($, e.text, log)
     await updateLog($, log, { delivered: 'replace', boxed: clip(rewritten) })
     turnLog = log
     outgoing = 'rewritten'
@@ -426,8 +425,8 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
     outgoing = 'typed'
     return next(e)
   }
-  await keepForUndo($, e.text, log)
   await $.state.set(pending, { kind: 'filled', original: e.text, rewritten, ...(log ? { log } : {}), ...(asked ? { asked } : {}) })
+  await keepForUndo($, e.text, log)
   await updateLog($, log, { delivered: 'fill', boxed: clip(rewritten), fillMs })
   // Since Claude Code 2.1.295 a dropped prompt is put back in the box after
   // our fill, so the box reads rewrite + original. The engine does that before
@@ -461,12 +460,13 @@ async function restoreOriginal($: EngineInterface, p: SharppromptPending): Promi
 // True when this is the user's own text we put back, sent unchanged or
 // edited. They asked for theirs back: on 23 Oct 2026 an original put back
 // with back to mine was added to and sent, and got rewritten all over
-// again. A different prompt is new.
+// again. A prompt that keeps less than KEPT_OWN of it is new.
 async function isRestored($: EngineInterface, text: string): Promise<boolean> {
   const p = (await $.state.get(pending)).value
   if (!p || p.kind !== 'restored') return false
   await $.state.set(pending, null)
-  if (text !== p.original && overlap(text, p.original) < EDIT_OVERLAP) return false
+  // One-sided: whatever is added, the person's text is still there.
+  if (text !== p.original && kept(p.original, text) < KEPT_OWN) return false
   turnLog = p.log ?? null
   return true
 }
@@ -493,11 +493,17 @@ async function runCommand($: EngineInterface, args: string, options: Options): P
       await $.state.set(modeOverride, c.mode)
       return `Mode is ${c.mode} for this session.`
     case 'undo': {
-      const original = await $.store.get('lastOriginal')
+      const u = await $.store.get('undo')
+      const saved = u && typeof u === 'object' ? (u as { original?: unknown; log?: unknown }) : {}
+      const old = await $.store.get('lastOriginal')
+      const original = typeof saved.original === 'string' ? saved.original : old
       if (typeof original !== 'string') return 'Nothing to undo.'
-      const log = await $.store.get('lastLog')
-      const ok = await restoreOriginal($, { kind: 'restored', original, rewritten: '', ...(typeof log === 'string' ? { log } : {}) })
-      return ok ? 'Your original is back in the prompt box; sent as it stands, it goes out untouched.' : `Could not reach the prompt box. Your original was:\n${original}`
+      // The record is only taken over while nothing was done with that
+      // rewrite yet: an undo after it was sent must not rewrite its history.
+      const id = typeof saved.log === 'string' ? saved.log : null
+      const open = id && (await readLog($)).some(r => r.id === id && !r.action)
+      const ok = await restoreOriginal($, { kind: 'restored', original, rewritten: '', ...(open ? { log: id } : {}) })
+      return ok ? 'Your original is back in the prompt box; edited or not, it goes out as you send it.' : `Could not reach the prompt box. Your original was:\n${original}`
     }
     case 'stats': {
       const v = await $.store.get('counts')
@@ -517,17 +523,18 @@ async function runCommand($: EngineInterface, args: string, options: Options): P
 
 async function submit($: EngineInterface, e: PromptSubmitInput, next: Next<'prompt.submit'>, options: Options): Promise<PromptSubmitResult> {
   const typedByUser = isTyped(e.origin)
-  if (typedByUser) {
-    if (await isRestored($, e.text)) {
-      const d: SharppromptDecision = { verdict: 'skip', reason: 'back-to-mine', text: e.text }
+  // A slash command typed meanwhile leaves the text in the box as it was.
+  if (typedByUser && !e.text.trim().startsWith('/')) {
+    // raw: in front of our suggestion or of the person's own text changes
+    // nothing; it is taken off before the comparison and before it goes out.
+    const sent = e.text.replace(RAW_PREFIX, '')
+    if (await isRestored($, sent)) {
+      const d: SharppromptDecision = { verdict: 'skip', reason: 'back-to-mine', text: sent }
       await $.state.set(lastDecision, d)
       await record($, d, helperModel(options))
       outgoing = 'typed'
-      return next(e)
+      return next(sent === e.text ? e : { ...e, text: sent })
     }
-    // raw: in front of our suggestion changes nothing about it; it is
-    // taken off before the comparison and before the prompt goes out.
-    const sent = e.text.replace(RAW_PREFIX, '')
     const answered = await settlePending($, sent)
     if (answered) {
       await $.state.set(lastDecision, { verdict: 'skip', reason: 'suggested', text: sent })
@@ -542,7 +549,7 @@ async function submit($: EngineInterface, e: PromptSubmitInput, next: Next<'prom
   if (typedByUser) await record($, d, helperModel(options))
   const log = typedByUser ? await startLog($, options, d) : null
   // Esc put the draft back in the box: sent as it stands, it is the
-  // person's own and goes out untouched, with no second wait.
+  // person's own and goes out as they send it, with no second wait.
   if ('rewrite' in d && d.rewrite?.outcome === 'aborted') {
     if (typedByUser) await $.state.set(pending, { kind: 'restored', original: e.text, rewritten: '', ...(log ? { log } : {}) })
     return next(e)
@@ -552,7 +559,7 @@ async function submit($: EngineInterface, e: PromptSubmitInput, next: Next<'prom
   let asked = ''
   const questions = ('rewrite' in d ? d.rewrite?.questions : undefined) ?? []
   if (rewritten && questions.length) {
-    if (next.signal.aborted) return next(e)
+    if (next.signal.aborted) return { text: e.text }
     if (await isDrawn($)) {
       const answers = await askUser($, questions)
       if (!answers) {
@@ -565,7 +572,9 @@ async function submit($: EngineInterface, e: PromptSubmitInput, next: Next<'prom
       await bump($, { 'ask:answered': 1 })
       await updateLog($, log, { answers })
       rewritten = applyAnswers(rewritten, questions, answers)
-      asked = applyAnswers('', questions, answers)
+      // What the person saw and chose: the labels or their own words. The
+      // option sentences behind them were the model's, and stay checked.
+      asked = Object.values(answers).join(' ')
     } else {
       // Nobody to ask: the recommended answers are guesses, so they ride
       // along as context and never replace what the user typed.
@@ -612,7 +621,8 @@ export const register: Register = (on, options) => {
   }).catch(($, e, next) => next(e))
 
   on('tool.call', ($, e, next) => {
-    if (!e.agentId && asking === 0) toolCalls++
+    // $.ui.ask runs as an AskUserQuestion call made by us: no tool call of the turn.
+    if (!e.agentId && next.origin.plugin !== 'sharpprompt') toolCalls++
     return next(e)
   }).catch(($, e, next) => next(e))
 
@@ -641,7 +651,9 @@ export const register: Register = (on, options) => {
       late.ms = []
       late.usage = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 }
       const add = { 'late:forks': forks, 'late:input': usage.input_tokens + usage.cache_read_input_tokens + usage.cache_creation_input_tokens, 'late:output': usage.output_tokens }
-      const item: LateRecord = { at: await $.clock.now(), forks, ms, model: await $.session.model(), usage: tokens(usage) }
+      const at = await $.clock.now().catch(() => Date.now())
+      const model = await $.session.model().catch(() => 'unknown')
+      const item: LateRecord = { at, forks, ms, model, usage: tokens(usage) }
       await bump($, add)
       await push($, 'late', item)
     }

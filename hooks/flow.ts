@@ -5,21 +5,24 @@ import { wordCount as words } from './stats'
 
 export const MODES: readonly SharppromptMode[] = ['fill', 'replace', 'context', 'off']
 
-// Letters of any script, not just ASCII: split on \W, two Russian texts
-// had no words at all and counted as the same.
-// Chinese, Japanese and Korean put no spaces between words: there pairs of
-// characters stand in for words.
-const CJK = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u
+// Words of any script, not just ASCII: split on \W, two Russian texts had
+// no words at all and counted as the same. Marks (\p{M}) stay in the word,
+// or Hindi falls apart into single consonants. Chinese and Japanese put no
+// spaces between words: there pairs of characters stand in for words, and a
+// Latin name glued to them (修复getUserProfile函数) stays one word.
+const CJK_RUN = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]+|[^\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]+/gu
+const IS_CJK = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
 function bag(s: string): Set<string> {
   const out = new Set<string>()
-  for (const w of s.toLowerCase().split(/[^\p{L}\p{N}_]+/u)) {
-    if (!w) continue
-    if (!CJK.test(w) || w.length < 3) {
-      out.add(w)
-      continue
+  for (const w of s.toLowerCase().split(/[^\p{L}\p{M}\p{N}_]+/u)) {
+    for (const run of w.match(CJK_RUN) ?? []) {
+      const chars = [...run]
+      if (!IS_CJK.test(run) || chars.length < 2) {
+        out.add(run)
+        continue
+      }
+      for (let i = 0; i < chars.length - 1; i++) out.add(chars[i]! + chars[i + 1]!)
     }
-    const chars = [...w]
-    for (let i = 0; i < chars.length - 1; i++) out.add(chars[i]! + chars[i + 1]!)
   }
   return out
 }
@@ -37,6 +40,20 @@ export function overlap(a: string, b: string): number {
 }
 
 export const EDIT_OVERLAP = 0.4
+
+// Share of a's words still in b, 0 to 1: one-sided, so adding to a text
+// keeps it at 1 however much is added.
+export function kept(a: string, b: string): number {
+  const x = bag(a)
+  if (x.size === 0) return 0
+  const y = bag(b)
+  let both = 0
+  for (const w of x) if (y.has(w)) both++
+  return both / x.size
+}
+
+// The person's own text put back stays theirs while this much of it is left.
+export const KEPT_OWN = 0.6
 
 export function contextNote(rewritten: string): string {
   return `The sharpprompt plugin read the user's request above as the following. Use it only where it matches what the user wrote:\n${rewritten}`

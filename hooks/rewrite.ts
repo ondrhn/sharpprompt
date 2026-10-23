@@ -113,19 +113,38 @@ export function anchors(draft: string, kind: 'all' | 'facts' = 'all'): string[] 
   take(/https?:\/\/\S+[^\s.,;:!?)'"`>\]*]/g)
   // and/or, w/o, I/O, login/logout are words, not paths: a path starts at
   // the root, home or here, ends in a slash or a file name, or has two slashes.
-  for (const m of draft.matchAll(/(?<![\p{L}\p{N}_./~-])[./~]*\/?(?:[\p{L}\p{N}_.~-]+\/)+(?:[\p{L}\p{N}_.-]*[\p{L}\p{N}_-])?/gu)) {
+  for (const m of draft.matchAll(/(?<![\p{L}\p{M}\p{N}_./~-])[./~]*\/?(?:[\p{L}\p{M}\p{N}_.~-]+\/)+(?:[\p{L}\p{M}\p{N}_.-]*[\p{L}\p{M}\p{N}_-])?/gu)) {
     const p = m[0].replace(/^\.(?=[^./])/, '')
     if (/^[./~]/.test(p) || /\/$/.test(p) || (p.match(/\//g) ?? []).length >= 2 || /\.[\p{L}\p{N}]+$/u.test(p)) out.add(p)
   }
-  take(/(?<![\p{L}\p{N}_-])[\p{L}\p{N}_-]+\.(?:py|ts|tsx|js|mjs|json|md|png|jpg|jpeg|txt|sh|yml|yaml|toml|csv|xlsx|html|css|mp4|srt|log)(?![\p{L}\p{N}_])/giu)
+  take(/(?<![\p{L}\p{M}\p{N}_-])[\p{L}\p{M}\p{N}_-]+\.(?:py|ts|tsx|js|mjs|json|md|png|jpg|jpeg|txt|sh|yml|yaml|toml|csv|xlsx|html|css|mp4|srt|log)(?![\p{L}\p{M}\p{N}_])/giu)
   take(/\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b/g)
-  // List markers, at a line start or inline (1) ... 2) ..., or 1. ... 2. ...
-  // when both are there), are not numbers to keep.
-  let unlisted = draft.replace(/(^|\n)\s*\d+[-.)]\s/g, '$1').replace(/(^|[\s:;,])\(?\d{1,2}\)\s/g, '$1')
-  if (/(^|[\s:;,])1\.\s[\s\S]*[\s:;,]2\.\s/.test(unlisted)) unlisted = unlisted.replace(/(^|[\s:;,])\d{1,2}\.\s/g, '$1')
+  const unlisted = dropListMarkers(draft).replace(/(^|\n)\s*\d+[-.)]\s/g, '$1')
   take(kind === 'all' ? /(?<![\w.])\d+(?:[.,]\d+)*(?![\d.,]*\d)/g : /(?<![\w.])\d{2,}(?:[.,]\d+)*(?![\d.,]*\d)/g, unlisted)
   // A piece of a longer one (test.ts in tests/auth.test.ts) adds nothing.
   return [...out].filter(a => ![...out].some(b => b !== a && b.includes(a) && hasToken(b, a)))
+}
+
+// List markers are not numbers to keep: 1. 2. (or 1) 2), (1) (2), 1、2、)
+// at a line start or inline. Only markers counting up from 1 are taken, and
+// only when there are two or more, so the 30 in "timeout to 30. 2. ..." and
+// the 12 in "12. satır" stay numbers.
+function dropListMarkers(s: string): string {
+  let want = 1
+  const picked: { at: number; len: number }[] = []
+  for (const m of s.matchAll(/(?<=^|[\s:;,：；，、(（])\(?(\d{1,2})[.)、]\)?(?=\s|\p{L})/gu)) {
+    if (Number(m[1]) !== want) continue
+    picked.push({ at: m.index ?? 0, len: m[0].length })
+    want++
+  }
+  if (want <= 2) return s
+  let out = ''
+  let from = 0
+  for (const p of picked) {
+    out += s.slice(from, p.at)
+    from = p.at + p.len
+  }
+  return out + s.slice(from)
 }
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -135,27 +154,30 @@ const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 // digits kept off it, so "500ms" keeps 500 and "v2" keeps 2.
 export function hasToken(text: string, a: string): boolean {
   if (!text.includes(a)) return false
-  const edge = (c: string | undefined) => (c === undefined ? '' : /\p{N}/u.test(c) ? 'num' : /[\p{L}_]/u.test(c) ? 'word' : '')
-  const guard = { num: ['(?<!\\p{N}|\\p{N}[.,])', '(?!\\p{N}|[.,]\\p{N})'], word: ['(?<![\\p{L}\\p{N}_])', '(?![\\p{L}\\p{N}_])'], '': ['', ''] }
+  const edge = (c: string | undefined) => (c === undefined ? '' : /\p{N}/u.test(c) ? 'num' : /[\p{L}\p{M}_]/u.test(c) ? 'word' : '')
+  const guard = { num: ['(?<!\\p{N}|\\p{N}[.,])', '(?!\\p{N}|[.,]\\p{N})'], word: ['(?<![\\p{L}\\p{M}\\p{N}_])', '(?![\\p{L}\\p{M}\\p{N}_])'], '': ['', ''] }
   const first = edge(a[0])
   const last = edge(a.at(-1))
   return new RegExp(guard[first][0] + esc(a) + guard[last][1], 'u').test(text)
 }
 
-// A number may change its decimal mark (2,5 to 2.5) when the rewrite is in
-// another language.
-const otherMark = (a: string) => (/^\d+[.,]\d+$/.test(a) ? a.replace(/[.,]/, m => (m === '.' ? ',' : '.')) : null)
+// A bare number may change its decimal comma to a point (2,5 to 2.5) when
+// the rewrite is in English. Not inside code or quotes, which are kept as
+// written, and never a point to a comma (3.12 is likely a version).
+const inSpan = (draft: string, a: string) => [...draft.matchAll(/`[^`\n]+`|"[^"\n]{1,80}"/g)].some(m => m[0].includes(a))
+const toPoint = (a: string) => (/^\d+,\d+$/.test(a) ? a.replace(',', '.') : null)
 
 export const lost = (draft: string, text: string) =>
   anchors(draft).filter(a => {
-    const alt = otherMark(a)
+    const alt = inSpan(draft, a) ? null : toPoint(a)
     return !hasToken(text, a) && !(alt && hasToken(text, alt))
   })
 
 // The same kinds of thing the rewrite brought in from elsewhere: a path, a
 // hash or a number the user did not type, shown on the band so a stale one
 // is caught before it goes out under their name.
-export const added = (draft: string, text: string) => anchors(text, 'facts').filter(a => !hasToken(draft, a))
+export const added = (draft: string, text: string) =>
+  anchors(text, 'facts').filter(a => !hasToken(draft, a) && !(/^\d+\.\d+$/.test(a) && hasToken(draft, a.replace('.', ','))))
 
 export function addedLine(draft: string, text: string): string | null {
   const list = added(draft, text)
