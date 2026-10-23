@@ -17,7 +17,7 @@ export type GateDecision =
 
 export const MAX_CHARS = 20_000
 
-const RAW_PREFIX = /^raw:\s?/i
+export const RAW_PREFIX = /^raw:\s?/i
 const HARNESS_TAG = /<(task-notification|system-reminder|command-[a-z-]+|local-command-[a-z-]+)[\s>]/
 
 // Only what a person typed (or sent from their phone) is ours to look at.

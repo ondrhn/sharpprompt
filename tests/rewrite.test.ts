@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 import { RULES, SHAPES } from '../hooks/bank'
-import { addedLine, anchors, clean, completePrompt, familyOf, forkPrompt, KEEP, lost, wordLimit } from '../hooks/rewrite'
+import { addedLine, anchors, clean, completePrompt, familyOf, forkPrompt, hasToken, KEEP, lost, wordLimit } from '../hooks/rewrite'
 
 const DRAFT = 'login broken again after your change, fix'
 
@@ -159,5 +159,17 @@ describe('added', () => {
   })
   test('nothing new, no line', () => {
     expect(addedLine('fix auth.ts line 12', 'Fix line 12 of auth.ts.')).toBeNull()
+  })
+})
+
+describe('anchors match whole tokens', () => {
+  test('a number inside a longer one is still its own anchor', () => {
+    expect(lost('2 failing tests, see line 120', 'Fix the failing tests; see line 120.')).toEqual(['2'])
+    expect(lost('ratio 2 not 2.5', 'Use a ratio of 2.5.')).toEqual(['2'])
+  })
+  test('a piece of a path or file name is not', () => {
+    expect(hasToken('out/31.mp4', '31')).toBe(true)
+    expect(hasToken('tests/auth.test.ts', 'test.ts')).toBe(true)
+    expect(hasToken('tests', 'test')).toBe(false)
   })
 })

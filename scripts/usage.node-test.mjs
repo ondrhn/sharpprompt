@@ -6,6 +6,7 @@ import { spawnSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import test from 'node:test'
 import { exportLines, storeFiles } from './export_log.mjs'
 import { report, sentenceDiff } from './usage_report.mjs'
@@ -42,7 +43,7 @@ test('export finds the store and writes one line per item; the report reads it b
     assert.equal(lines.find(l => l.type === 'log').draft, RECORD.draft)
 
     const out = join(config, 'export.jsonl')
-    const r = spawnSync('node', [new URL('./export_log.mjs', import.meta.url).pathname, '--out', out], { env: { ...process.env, CLAUDE_CONFIG_DIR: config }, encoding: 'utf8' })
+    const r = spawnSync('node', [fileURLToPath(new URL('./export_log.mjs', import.meta.url)), '--out', out], { env: { ...process.env, CLAUDE_CONFIG_DIR: config }, encoding: 'utf8' })
     assert.equal(r.status, 0, r.stderr)
     const back = readFileSync(out, 'utf8').trim().split('\n').map(l => JSON.parse(l))
     assert.equal(back.length, 3)

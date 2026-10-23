@@ -115,15 +115,26 @@ export function anchors(draft: string, kind: 'all' | 'facts' = 'all'): string[] 
   take(/\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b/g)
   take(kind === 'all' ? /(?<![\w.])\d+(?:[.,]\d+)?(?!\w)/g : /(?<![\w.])\d{2,}(?:[.,]\d+)?(?!\w)/g, draft.replace(/(^|\n)\s*\d+[-.)]\s/g, '$1'))
   // A piece of a longer one (test.ts in tests/auth.test.ts) adds nothing.
-  return [...out].filter(a => ![...out].some(b => b !== a && b.includes(a)))
+  return [...out].filter(a => ![...out].some(b => b !== a && hasToken(b, a)))
 }
 
-export const lost = (draft: string, text: string) => anchors(draft).filter(a => !text.includes(a))
+const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const WORD = /^[\p{L}\p{N}_]|[\p{L}\p{N}_]$/u
+
+// a stands on its own in text: "31" is in "out/31.mp4", but "2" is not in
+// "120" or "2.5", and "test" is not in "tests".
+export function hasToken(text: string, a: string): boolean {
+  const before = WORD.test(a[0] ?? '') ? '(?<![\\p{L}\\p{N}_]|\\p{N}[.,])' : ''
+  const after = WORD.test(a.at(-1) ?? '') ? '(?![\\p{L}\\p{N}_]|[.,]\\p{N})' : ''
+  return new RegExp(before + esc(a) + after, 'u').test(text)
+}
+
+export const lost = (draft: string, text: string) => anchors(draft).filter(a => !hasToken(text, a))
 
 // The same kinds of thing the rewrite brought in from elsewhere: a path, a
 // hash or a number the user did not type, shown on the band so a stale one
 // is caught before it goes out under their name.
-export const added = (draft: string, text: string) => anchors(text, 'facts').filter(a => !draft.includes(a))
+export const added = (draft: string, text: string) => anchors(text, 'facts').filter(a => !hasToken(draft, a))
 
 export function addedLine(draft: string, text: string): string | null {
   const list = added(draft, text)

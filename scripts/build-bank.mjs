@@ -4,8 +4,9 @@
 // node scripts/build-bank.mjs --check  exit 1 if hooks/bank.ts is stale
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const root = new URL('..', import.meta.url).pathname
+const root = fileURLToPath(new URL('..', import.meta.url))
 const FAMILIES = ['common', 'fable', 'opus', 'sonnet', 'haiku']
 const SHAPES = ['fix', 'investigate', 'build', 'refactor', 'research', 'review', 'write', 'ask']
 

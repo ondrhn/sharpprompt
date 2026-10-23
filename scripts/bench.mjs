@@ -46,8 +46,9 @@ import { randomUUID } from 'node:crypto'
 import { appendFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const root = new URL('..', import.meta.url).pathname
+const root = fileURLToPath(new URL('..', import.meta.url))
 const bench = join(root, 'docs/bench')
 const { completePrompt, clean, familyOf } = await import(join(root, 'hooks/rewrite.ts'))
 const { endsWithQuestion } = await import(join(root, 'hooks/gate.ts'))

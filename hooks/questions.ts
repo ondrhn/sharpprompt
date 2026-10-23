@@ -6,6 +6,7 @@ export type Question = { question: string; header: string; options: QuestionOpti
 
 // Each question is its own dialog, so two at most.
 export const MAX_QUESTIONS = 2
+export const MAX_ADDS = 200
 
 // The rewriter writes its rewrite, then optionally a QUESTIONS: line with a
 // JSON array. Anything malformed means no questions, never a broken rewrite.
@@ -27,6 +28,9 @@ export function splitReply(reply: string): { body: string; questions: Question[]
     if (!q || typeof q.question !== 'string' || !Array.isArray(q.options)) continue
     const options = q.options
       .filter((o: unknown): o is QuestionOption => !!o && typeof (o as QuestionOption).label === 'string' && typeof (o as QuestionOption).adds === 'string')
+      // An answer adds one sentence; a longer one would blow past the
+      // rewrite's word limit after the length check has run.
+      .filter((o: QuestionOption) => o.adds.trim().length <= MAX_ADDS)
       .slice(0, 4)
       .map((o: QuestionOption) => ({ label: o.label.trim().slice(0, 60), adds: o.adds.trim() }))
     if (options.length < 2) continue

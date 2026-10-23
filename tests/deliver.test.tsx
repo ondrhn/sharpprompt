@@ -26,7 +26,7 @@ const BAND = {
 // and the bottom of prompt.submit.
 function world(
   on: On,
-  opts: { surface?: RenderSurface | null; fillOk?: boolean; label?: string; forkMs?: number; box?: (fills: string[]) => string; fork?: string; ask?: Record<string, string> | 'dismiss' } = {},
+  opts: { surface?: RenderSurface | null; fillOk?: boolean; label?: string; forkMs?: number; box?: (fills: string[]) => string; fork?: string; ask?: Record<string, string> | 'dismiss'; storeFull?: boolean } = {},
 ) {
   const w = {
     sent: [] as { text: string; context?: readonly string[]; origin: unknown }[],
@@ -40,6 +40,7 @@ function world(
   // A store in memory that the test can read back.
   on('store.get', (_$, e) => ({ value: w.store[e.key] }))
   on('store.set', (_$, e) => {
+    if (opts.storeFull) throw new Error('store is full')
     w.store[e.key] = JSON.parse(JSON.stringify(e.value))
     return { value: undefined }
   })
@@ -382,4 +383,52 @@ test('log off: nothing is kept and stats says so', { options: { log: false } }, 
   await $.prompt.submit({ text: REWRITTEN, ...typed })
   expect(w.store.log).toBeUndefined()
   expect((await $.command.run(cmd('sharp', 'stats'))).text).toContain('Log: off.')
+})
+
+test('a full store costs no rewrite: the stats are lost, the suggestion is not', async ($, on) => {
+  const w = world(on, { storeFull: true })
+  on('turn.complete', (_$, e) => ({ text: e.answer, reason: 'answer' as const }))
+  const r = await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(r).toEqual({ drop: DROP_NOTE })
+  expect(w.fills).toEqual([REWRITTEN])
+  await $.turn.complete({ turnId: 't1', durationMs: 1000, isAborted: false, reason: 'answer', answer: 'ok.' })
+})
+
+test('raw: in front of the suggestion sends the suggestion without the prefix', async ($, on) => {
+  const w = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  const r = await $.prompt.submit({ text: `raw: ${REWRITTEN}`, ...typed })
+  expect(r.text).toBe(REWRITTEN)
+  expect(w.classify).toBe(1)
+  expect(w.store.exemplars).toBeUndefined()
+  expect(w.store.counts).toMatchObject({ 'answer:as-is': 1 })
+})
+
+test('replace mode: the band of a sent rewrite goes with the next prompt', { options: { mode: 'replace' } }, async ($, on) => {
+  world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  let ui = await $.ui.mount({ plugin: 'sharpprompt', surface: 'terminal', ...BAND })
+  expect(await ui.find({ key: 'undo' })).toBeDefined()
+  await ui.unmount()
+  await $.prompt.submit({ text: 'thanks', ...typed })
+  ui = await $.ui.mount({ plugin: 'sharpprompt', surface: 'terminal', ...BAND })
+  expect(await ui.find({ key: 'undo' })).toBeUndefined()
+  await ui.unmount()
+})
+
+test('replace mode with nobody to ask: the guessed answers go as context, the prompt as typed', { options: { mode: 'replace' } }, async ($, on) => {
+  const w = world(on, { fork: WITH_QUESTION, surface: 'vscode' })
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(w.sent[0]?.text).toBe(ROUGH)
+  expect(w.sent[0]?.context?.[0]).toContain(`${REWRITTEN} Use a semicolon as the separator.`)
+})
+
+test('on after mode off turns rewriting back on', async ($, on) => {
+  const w = world(on)
+  await $.command.run(cmd('sharp', 'mode off'))
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(w.classify).toBe(0)
+  await $.command.run(cmd('sharp', 'on'))
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  expect(w.classify).toBe(1)
 })

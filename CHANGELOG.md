@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- A number inside a longer one no longer hides it: with "2 failing tests, line 120" a rewrite that drops the 2 is turned down. Anchors match whole tokens.
+- A full or failing plugin store no longer costs a rewrite: the stats are best effort, the suggestion still reaches the box.
+- With nobody to ask (VS Code, headless), a rewrite that came with questions goes as context even in replace mode, so guessed answers never replace what was typed.
+- In replace mode the band of a sent rewrite goes away with the next prompt.
+- `/sharp on` after `/sharp mode off` (or mode off in the settings) turns rewriting back on.
+- `raw:` typed in front of a suggestion is taken off; the suggestion goes out as is and is not kept as an edit.
+- An answer option whose sentence runs past 200 characters is dropped.
+- Scripts find the project folder with `fileURLToPath`, so paths with spaces or non-ASCII letters work.
 - A rewrite gets 10 seconds, not 5, before the prompt goes out as typed (still plus 100 ms a word past 20, at most 25). From 12 to 23 October 32 of 79 rewrites of short drafts timed out at 5 seconds; the forks that lost took 7.5 seconds at the median.
 - The band names what the rewrite brought in that the draft did not have: paths, file names, URLs, commit hashes and numbers of two digits or more. On the 29 rewrites in the author's usage log it would have shown on 10, one of them a stale commit hash.
 - Long prompts (60 words or more) skip the classifier and are tidied instead of rewritten: repeats merged, requests in order, nothing added, no longer than the draft ([report](docs/measurements/tidy-2026-10-11.md)).

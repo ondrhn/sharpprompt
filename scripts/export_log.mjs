@@ -15,6 +15,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 export function storeFiles(configDir = process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude')) {
   const dir = join(configDir, 'plugins', 'store')
@@ -47,7 +48,7 @@ function main(args) {
     console.error('no sharpprompt store found; pass --store <file>')
     process.exit(1)
   }
-  const root = new URL('..', import.meta.url).pathname
+  const root = fileURLToPath(new URL('..', import.meta.url))
   const out = opt('out') ?? join(root, 'docs/measurements/usage', `${new Date().toISOString().slice(0, 10)}.jsonl`)
   const lines = exportLines(files)
   mkdirSync(dirname(out), { recursive: true })
