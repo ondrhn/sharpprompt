@@ -57,7 +57,7 @@ export const wordCount = (t: string) =>
   t
     .split(/\s+/)
     .filter(Boolean)
-    .reduce((n, w) => n + Math.max(1, Math.ceil((w.match(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/gu)?.length ?? 0) / 2)), 0)
+    .reduce((n, w) => n + Math.max(1, Math.ceil((w.match(/[\p{scx=Han}\p{scx=Hiragana}\p{scx=Katakana}]/gu)?.length ?? 0) / 2)), 0)
 
 // Every outcome but rewritten, in the order /sharp stats lists them; a new
 // outcome in the type fails to compile until it is here.

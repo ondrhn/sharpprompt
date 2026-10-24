@@ -2,12 +2,12 @@
 
 ## Unreleased
 
-- Inline list markers are dropped only when they count up from 1, so "timeout to 30. 2. ..." keeps its 30, and lists that start a line or use 、 are covered. A decimal comma may become a point (2,5 to 2.5) only outside code and quotes, and the band no longer names 12.5 when you wrote 12,5.
+- A list is markers of one style counting up from 1, each item two words or more, and a new 1 starts another list, so two lists or one inside another are dropped, Chinese ones too (1、 after 。, （1）). The 30 in "timeout to 30. 2. ...", sleep(1), log4j 1.x, 1.sütun and "1. ve 2." stay numbers to keep; markers that start lines count from two lines on. A decimal comma may become a point (2,5 to 2.5) and a thousands point a comma (10.000 to 10,000), only outside code and quotes, and the band no longer names 12.5 when you wrote 12,5.
 - The band checks the sentence behind an answer you picked: only the label you saw, or what you typed, counts as yours.
-- `raw:` in front of your own text put back is taken off; a slash command typed meanwhile leaves that text as it was; `/sharp undo` no longer changes the record of a rewrite you already sent.
-- Edits are told apart in Hindi (vowel signs stay in the word) and when a Latin name is glued to Chinese or Japanese; Chinese and Japanese drafts are counted by characters, so a long one is tidied.
+- `raw:` in front of your own text put back is taken off; a slash command typed meanwhile leaves that text as it was (a prompt that starts with a path such as /etc/hosts is no command). `/sharp undo` after a rewrite was answered no longer changes its record or counts it twice, and an original sent after a replaced rewrite no longer takes that rewrite's turn.
+- Edits are told apart in Hindi (vowel signs stay in the word), in Thai, Lao, Khmer and Myanmar (pairs of characters, like Chinese, Japanese and Korean), in katakana words with ー, and when a Latin name is glued to Chinese or Japanese; Chinese and Japanese drafts are counted by characters, so a long one is tidied.
 - `back to mine` answers `ctrl+x r` from the prompt box, with no ctrl+x tab first, once the binding in the README's Install section is in `~/.claude/keybindings.json`.
-- Your own text put back with `back to mine` goes out untouched when you edit it or add to it; before, an edit started a new rewrite. The band now says when your own text is back in the box.
+- Your own text put back with `back to mine` goes out untouched when you edit it or add to it, and a suggestion added to counts as edited; before, both started a new rewrite. The band now says when your own text is back in the box. Esc while the classifier runs puts your text back the same way.
 - Esc during the fallback completion is recorded as `aborted`, and a completion that loses the race is cut instead of running on.
 - Inline `1. ... 2. ...` lists are not taken for numbers to keep, and a number may change its decimal mark (2,5 to 2.5).
 - Edits of a suggestion in Chinese, Japanese or Korean are recognised (pairs of characters stand in for words).

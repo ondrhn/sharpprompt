@@ -26,6 +26,7 @@ describe('sessionFacts', () => {
     const f = sessionFacts([said('', [...Array.from({ length: 9 }, (_, i) => tool('Edit', { file_path: long(i) })), tool('Read', { file_path: long(0) })])])
     expect(f).toContain(long(0))
     expect(f).toContain(long(8))
+    expect(f).not.toContain(long(4))
   })
   test('keeps the last failed command and the end of its output', () => {
     const f = sessionFacts([said('', [tool('Bash', { command: 'python3 run_tests.py' }, 'ok a\nFAIL test_days_in_month\nAssertionError', true)])])

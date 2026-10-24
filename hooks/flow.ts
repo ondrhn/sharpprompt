@@ -7,11 +7,14 @@ export const MODES: readonly SharppromptMode[] = ['fill', 'replace', 'context', 
 
 // Words of any script, not just ASCII: split on \W, two Russian texts had
 // no words at all and counted as the same. Marks (\p{M}) stay in the word,
-// or Hindi falls apart into single consonants. Chinese and Japanese put no
-// spaces between words: there pairs of characters stand in for words, and a
+// or Hindi falls apart into single consonants. Chinese, Japanese, Korean,
+// Thai, Lao, Khmer and Myanmar put no spaces between words, or (Korean)
+// glue endings to them: there pairs of characters stand in for words, and a
 // Latin name glued to them (修复getUserProfile函数) stays one word.
-const CJK_RUN = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]+|[^\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]+/gu
-const IS_CJK = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
+// Script_Extensions, so the long-vowel mark ー stays in its katakana word.
+const PAIRED = String.raw`\p{scx=Han}\p{scx=Hiragana}\p{scx=Katakana}\p{scx=Hangul}\p{scx=Thai}\p{scx=Lao}\p{scx=Khmer}\p{scx=Myanmar}`
+const CJK_RUN = new RegExp(`[${PAIRED}]+|[^${PAIRED}]+`, 'gu')
+const IS_CJK = new RegExp(`^[${PAIRED}]`, 'u')
 function bag(s: string): Set<string> {
   const out = new Set<string>()
   for (const w of s.toLowerCase().split(/[^\p{L}\p{M}\p{N}_]+/u)) {
@@ -52,8 +55,16 @@ export function kept(a: string, b: string): number {
   return both / x.size
 }
 
-// The person's own text put back stays theirs while this much of it is left.
-export const KEPT_OWN = 0.6
+// Nearly all of a text still there: it was added to, not replaced. Kept
+// alone is not enough below this, as small words count too and a new
+// prompt on the same subject keeps most of them.
+export const KEPT_ADDED = 0.9
+
+// b is a, edited or added to: word overlap for an edit, or nearly all of a
+// kept for an addition, which overlap alone took for a new prompt (23 Oct
+// 2026: the person's own text put back with back to mine, added to and sent,
+// got rewritten all over again).
+export const isEditOf = (a: string, b: string) => overlap(a, b) >= EDIT_OVERLAP || kept(a, b) >= KEPT_ADDED
 
 export function contextNote(rewritten: string): string {
   return `The sharpprompt plugin read the user's request above as the following. Use it only where it matches what the user wrote:\n${rewritten}`

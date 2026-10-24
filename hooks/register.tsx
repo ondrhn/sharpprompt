@@ -1,6 +1,6 @@
 import type { EngineInterface, ModelUsage, Next, PromptSubmitInput, PromptSubmitResult, Register } from 'claude-code'
 import type { SharppromptDecision, SharppromptMode, SharppromptPending, SharppromptRewrite, SharppromptVerdict } from '../types'
-import { contextNote, describe, DROP_NOTE, EDIT_OVERLAP, HELP, kept, KEPT_OWN, overlap, parseCommand } from './flow'
+import { contextNote, describe, DROP_NOTE, HELP, isEditOf, parseCommand } from './flow'
 import { sessionFacts } from './facts'
 import { endsWithQuestion, gate, isTyped, RAW_PREFIX } from './gate'
 import { clip, logLine, MAX_LOG, newRecord, patchLog, type LogRecord } from './log'
@@ -306,7 +306,7 @@ async function settlePending($: EngineInterface, text: string): Promise<'as-is' 
     turnLog = p.log ?? null
     return 'as-is'
   }
-  if (overlap(text, p.rewritten) < EDIT_OVERLAP) {
+  if (!isEditOf(p.rewritten, text)) {
     await updateLog($, p.log, { action: 'abandoned' })
     return null
   }
@@ -368,11 +368,11 @@ async function record($: EngineInterface, d: SharppromptDecision, helper: string
   await push($, 'rewrites', item)
 }
 
-// What /sharp undo puts back, with its usage-log record, as one key so the
-// two cannot fall out of step. Written after pending, so an Enter on the
-// box right after the fill already finds the suggestion.
-async function keepForUndo($: EngineInterface, original: string, log: string | null) {
-  await $.store.set('undo', { original, log }).catch(() => {})
+// What /sharp undo puts back. Written after pending, so an Enter on the
+// box right after the fill already finds the suggestion. The usage-log
+// record goes with the suggestion's pending, not here.
+async function keepForUndo($: EngineInterface, original: string) {
+  await $.store.set('undo', { original }).catch(() => {})
 }
 
 // VS Code and headless sessions draw no box, no band and no dialog.
@@ -399,7 +399,7 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
 
   if (how === 'replace') {
     await $.state.set(pending, { kind: 'replaced', original: e.text, rewritten, ...(log ? { log } : {}), ...(asked ? { asked } : {}) })
-    await keepForUndo($, e.text, log)
+    await keepForUndo($, e.text)
     await updateLog($, log, { delivered: 'replace', boxed: clip(rewritten) })
     turnLog = log
     outgoing = 'rewritten'
@@ -426,7 +426,7 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
     return next(e)
   }
   await $.state.set(pending, { kind: 'filled', original: e.text, rewritten, ...(log ? { log } : {}), ...(asked ? { asked } : {}) })
-  await keepForUndo($, e.text, log)
+  await keepForUndo($, e.text)
   await updateLog($, log, { delivered: 'fill', boxed: clip(rewritten), fillMs })
   // Since Claude Code 2.1.295 a dropped prompt is put back in the box after
   // our fill, so the box reads rewrite + original. The engine does that before
@@ -448,10 +448,15 @@ async function deliver($: EngineInterface, e: PromptSubmitInput, rewritten: stri
 // prompt is a new one. We never send it for them: a prompt a plugin submits shows in the
 // transcript under the plugin's name and skips @file expansion. pending is
 // written before the fill so an Enter right after it already sees it.
+// A rewrite already sent (replaced) keeps its turn on its record: the
+// original sent after it is a turn of its own.
 async function restoreOriginal($: EngineInterface, p: SharppromptPending): Promise<boolean> {
-  await $.state.set(pending, { ...p, kind: 'restored' })
-  await bump($, { 'answer:original': 1 })
-  await updateLog($, p.log, { action: 'original' })
+  const { log, ...rest } = p
+  await $.state.set(pending, { ...rest, kind: 'restored', ...(log && p.kind !== 'replaced' ? { log } : {}) })
+  if (p.kind !== 'restored') {
+    await bump($, { 'answer:original': 1 })
+    await updateLog($, log, { action: 'original' })
+  }
   const r = await $.prompt.fill({ text: p.original, mode: 'replace' })
   if (!r.isFilled) await $.state.set(pending, null)
   return r.isFilled
@@ -460,13 +465,12 @@ async function restoreOriginal($: EngineInterface, p: SharppromptPending): Promi
 // True when this is the user's own text we put back, sent unchanged or
 // edited. They asked for theirs back: on 23 Oct 2026 an original put back
 // with back to mine was added to and sent, and got rewritten all over
-// again. A prompt that keeps less than KEPT_OWN of it is new.
+// again. A prompt that is neither an edit of it nor an addition is new.
 async function isRestored($: EngineInterface, text: string): Promise<boolean> {
   const p = (await $.state.get(pending)).value
   if (!p || p.kind !== 'restored') return false
   await $.state.set(pending, null)
-  // One-sided: whatever is added, the person's text is still there.
-  if (text !== p.original && kept(p.original, text) < KEPT_OWN) return false
+  if (text !== p.original && !isEditOf(p.original, text)) return false
   turnLog = p.log ?? null
   return true
 }
@@ -494,15 +498,16 @@ async function runCommand($: EngineInterface, args: string, options: Options): P
       return `Mode is ${c.mode} for this session.`
     case 'undo': {
       const u = await $.store.get('undo')
-      const saved = u && typeof u === 'object' ? (u as { original?: unknown; log?: unknown }) : {}
+      const saved = u && typeof u === 'object' ? (u as { original?: unknown }) : {}
       const old = await $.store.get('lastOriginal')
       const original = typeof saved.original === 'string' ? saved.original : old
       if (typeof original !== 'string') return 'Nothing to undo.'
-      // The record is only taken over while nothing was done with that
-      // rewrite yet: an undo after it was sent must not rewrite its history.
-      const id = typeof saved.log === 'string' ? saved.log : null
-      const open = id && (await readLog($)).some(r => r.id === id && !r.action)
-      const ok = await restoreOriginal($, { kind: 'restored', original, rewritten: '', ...(open ? { log: id } : {}) })
+      // While its band is up this is the band's own button. After that the
+      // rewrite was answered: the original comes back, but its record and
+      // counts are not touched again.
+      const w = (await $.state.get(pending)).value
+      const p: SharppromptPending = w && w.original === original ? w : { kind: 'restored', original, rewritten: '' }
+      const ok = await restoreOriginal($, p)
       return ok ? 'Your original is back in the prompt box; edited or not, it goes out as you send it.' : `Could not reach the prompt box. Your original was:\n${original}`
     }
     case 'stats': {
@@ -524,7 +529,8 @@ async function runCommand($: EngineInterface, args: string, options: Options): P
 async function submit($: EngineInterface, e: PromptSubmitInput, next: Next<'prompt.submit'>, options: Options): Promise<PromptSubmitResult> {
   const typedByUser = isTyped(e.origin)
   // A slash command typed meanwhile leaves the text in the box as it was.
-  if (typedByUser && !e.text.trim().startsWith('/')) {
+  // The engine says which prompt runs one: a path such as /etc/hosts is text.
+  if (typedByUser && !e.command) {
     // raw: in front of our suggestion or of the person's own text changes
     // nothing; it is taken off before the comparison and before it goes out.
     const sent = e.text.replace(RAW_PREFIX, '')
@@ -550,18 +556,23 @@ async function submit($: EngineInterface, e: PromptSubmitInput, next: Next<'prom
   const log = typedByUser ? await startLog($, options, d) : null
   // Esc put the draft back in the box: sent as it stands, it is the
   // person's own and goes out as they send it, with no second wait.
-  if ('rewrite' in d && d.rewrite?.outcome === 'aborted') {
+  // Esc while the classifier runs rejects it, and it reads as an error.
+  const escaped = ('rewrite' in d && d.rewrite?.outcome === 'aborted') || (d.verdict === 'error' && next.signal.aborted)
+  if (escaped) {
     if (typedByUser) await $.state.set(pending, { kind: 'restored', original: e.text, rewritten: '', ...(log ? { log } : {}) })
     return next(e)
   }
+  // The dispatch went on without us while we waited: next(e) would send the
+  // prompt down the chain a second time.
+  if (next.signal.aborted) return { text: e.text }
   let rewritten = 'rewrite' in d ? d.rewrite?.text : undefined
   let how = mode
   let asked = ''
   const questions = ('rewrite' in d ? d.rewrite?.questions : undefined) ?? []
   if (rewritten && questions.length) {
-    if (next.signal.aborted) return { text: e.text }
     if (await isDrawn($)) {
       const answers = await askUser($, questions)
+      if (next.signal.aborted) return { text: e.text }
       if (!answers) {
         await bump($, { 'ask:dismissed': 1 })
         await updateLog($, log, { answers: 'dismissed', delivered: 'typed' })

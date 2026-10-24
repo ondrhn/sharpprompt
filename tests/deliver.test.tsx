@@ -527,7 +527,7 @@ test('our own question dialog is not counted as a tool call of the turn', async 
   expect(w.store.turns).toEqual([expect.objectContaining({ tools: 0 })])
 })
 
-test('back to mine, then a sentence added: still the user own text, and raw: is taken off', async ($, on) => {
+test('back to mine, then a sentence added: still the user own text', async ($, on) => {
   const w = world(on)
   await $.prompt.submit({ text: ROUGH, ...typed })
   const ui = await $.ui.mount({ plugin: 'sharpprompt', surface: 'terminal', ...BAND })
@@ -564,3 +564,55 @@ test('undo after the rewrite was sent leaves its record alone', async ($, on) =>
   await $.command.run(cmd('sharp', 'undo'))
   expect((w.store.log as { action?: string }[]).at(-1)?.action).toBe('as-is')
 })
+
+test('replace mode: /sharp undo after the turn leaves that turn on its record', { options: { mode: 'replace' } }, async ($, on) => {
+  const w = world(on)
+  on('turn.complete', (_$, e) => ({ text: e.answer, reason: 'answer' as const }))
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  await $.turn.complete({ turnId: 't1', durationMs: 4200, isAborted: false, reason: 'answer', answer: 'ok.' })
+  await $.command.run(cmd('sharp', 'undo'))
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  await $.turn.complete({ turnId: 't2', durationMs: 999, isAborted: false, reason: 'answer', answer: 'ok.' })
+  expect((w.store.log as { turn?: { durationMs: number } }[])[0]?.turn?.durationMs).toBe(4200)
+})
+
+test('undo after the suggestion was answered counts nothing twice', async ($, on) => {
+  const w = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  await $.prompt.submit({ text: REWRITTEN, ...typed })
+  await $.command.run(cmd('sharp', 'undo'))
+  expect(w.store.counts).toMatchObject({ 'answer:as-is': 1 })
+  expect(w.store.counts).not.toHaveProperty('answer:original')
+})
+
+test('a prompt starting with a path is text, not a command: the waiting suggestion is settled', async ($, on) => {
+  const w = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  await $.prompt.submit({ text: '/etc/nginx/nginx.conf has a typo on line 12 that breaks the reload, fix it please', ...typed })
+  expect((w.store.log as { action?: string }[])[0]?.action).toBe('abandoned')
+  const ui = await $.ui.mount({ plugin: 'sharpprompt', surface: 'terminal', ...BAND })
+  expect(await ui.find({ key: 'raw' })).toBeUndefined()
+  await ui.unmount()
+})
+
+test('back to mine, then trimmed: still the user own text', async ($, on) => {
+  const w = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  const ui = await $.ui.mount({ plugin: 'sharpprompt', surface: 'terminal', ...BAND })
+  await ui.press({ key: 'raw' })
+  await ui.unmount()
+  await $.prompt.submit({ text: 'make the login work, its broken when i log out', ...typed })
+  expect(w.classify).toBe(1)
+})
+
+test('back to mine, then a different prompt: it is new', async ($, on) => {
+  const w = world(on)
+  await $.prompt.submit({ text: ROUGH, ...typed })
+  const ui = await $.ui.mount({ plugin: 'sharpprompt', surface: 'terminal', ...BAND })
+  await ui.press({ key: 'raw' })
+  await ui.unmount()
+  await $.prompt.submit({ text: 'when you do a release, the thing that builds the docs is broken: make it work with the new sidebar and do not touch the login page', ...typed })
+  expect(w.classify).toBe(2)
+})
+
+

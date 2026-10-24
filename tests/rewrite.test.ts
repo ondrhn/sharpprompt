@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'claude-code/testing'
 import { RULES, SHAPES } from '../hooks/bank'
-import { kept, overlap } from '../hooks/flow'
+import { wordCount } from '../hooks/stats'
+import { isEditOf, kept, overlap } from '../hooks/flow'
 import { addedLine, anchors, clean, completePrompt, familyOf, forkPrompt, hasToken, KEEP, lost, wordLimit } from '../hooks/rewrite'
 
 const DRAFT = 'login broken again after your change, fix'
@@ -237,5 +238,39 @@ describe('third review', () => {
     expect(overlap('सेटिंग्स पेज में डार्क मोड का विकल्प जोड़ो', 'डिप्लॉय स्क्रिप्ट में स्टेजिंग सर्वर का पता बदलो')).toBeLessThan(0.4)
     expect(kept('make the login thing work better', 'make the login thing work better. after the token refresh users get kicked out and lose their unsaved form data, see auth.ts')).toBe(1)
     expect(kept('make the login thing work better', 'deploy the staging server')).toBeLessThan(0.6)
+  })
+})
+
+describe('fourth review', () => {
+  test('call arguments, versions and ordinals are numbers to keep, not list markers', () => {
+    expect(lost('change sleep(1) to sleep(2) in worker.py its broken', 'In worker.py, change sleep(3) to sleep(5) and make sure the worker restarts cleanly.')).toEqual(['1', '2'])
+    expect(anchors('migrate our logging from log4j 1.x to 2.x')).toEqual(['1', '2'])
+    expect(anchors('tablodaki 1.sütunu ve 2.sütunu sil')).toEqual(['1', '2'])
+    expect(anchors('1. ve 2. satırları sil')).toEqual(['1', '2'])
+  })
+  test('two lists, a list inside a list, and Chinese markers are dropped', () => {
+    expect(lost('bugs: 1. login fails on mobile 2. export breaks; features: 1. dark mode 2. csv export', 'Fix two bugs (login fails on mobile, export breaks) and add two features (dark mode, CSV export).')).toEqual([])
+    expect(anchors('two areas: 1. backend: 1) fix auth 2) add rate limit 2. frontend: 1) dark mode 2) csv export')).toEqual([])
+    expect(anchors('两个问题：1、登录失败。2、导出报错。')).toEqual([])
+    expect(anchors('两个问题：（1）登录失败 （2）导出报错')).toEqual([])
+  })
+  test('a thousands point may become a comma; code and quotes are matched by token', () => {
+    expect(lost('10.000 satırdan sonra sayfa donuyor, düzelt', 'The page freezes after 10,000 rows; fix it.')).toEqual([])
+    expect(addedLine('10.000 satırdan sonra donuyor', 'It freezes after 10,000 rows.')).toBeNull()
+    expect(lost('fiyatı "12,50 TL" göster, indirim oranı 2,5 olsun', 'Show the price as "12,50 TL" and set the discount rate to 2.5.')).toEqual([])
+    expect(lost('eşiği `2,5` yap', 'Set the threshold to 2.5.')).toEqual(['2,5'])
+  })
+  test('Korean, Thai and katakana edits are pairs of characters', () => {
+    expect(overlap('로그인 페이지에서 비밀번호 재설정 버튼이 작동하지 않습니다. 원인을 찾아 수정해 주세요.', '로그인 페이지의 비밀번호 재설정 버튼이 안 눌려요. 원인을 찾아서 수정하고 테스트를 추가해 주세요.')).toBeGreaterThan(0.4)
+    expect(overlap('แก้ไขปุ่มบันทึกในหน้าตั้งค่าให้ทำงานได้', 'แก้ไขปุ่มบันทึกในหน้าตั้งค่าให้ทำงานได้ด้วย')).toBeGreaterThan(0.4)
+    expect(overlap('サーバーのエラーログをチェックしてレポートを作って', 'サーバーのエラーログを見てレポートにまとめて')).toBeGreaterThan(0.4)
+    expect(overlap('サーバーのエラーログを確認してください。', 'ユーザーのデータを確認してください。')).toBeLessThan(0.4)
+    expect(wordCount('サーバー')).toBe(2)
+  })
+  test('an edit is overlap, an addition keeps nearly all', () => {
+    const own = 'make the login thing work better its kinda broken when you do the thing'
+    expect(isEditOf(own, 'make the login work, its broken when i log out')).toBe(true)
+    expect(isEditOf(own, 'when you do a release, the thing that builds the docs is broken: make it work with the new sidebar and do not touch the login page')).toBe(false)
+    expect(isEditOf(own, `${own}. after the token refresh users get kicked out to the start page and lose their unsaved form data, see auth.ts and session.ts and api/client.ts`)).toBe(true)
   })
 })

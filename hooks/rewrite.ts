@@ -119,30 +119,48 @@ export function anchors(draft: string, kind: 'all' | 'facts' = 'all'): string[] 
   }
   take(/(?<![\p{L}\p{M}\p{N}_-])[\p{L}\p{M}\p{N}_-]+\.(?:py|ts|tsx|js|mjs|json|md|png|jpg|jpeg|txt|sh|yml|yaml|toml|csv|xlsx|html|css|mp4|srt|log)(?![\p{L}\p{M}\p{N}_])/giu)
   take(/\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b/g)
-  const unlisted = dropListMarkers(draft).replace(/(^|\n)\s*\d+[-.)]\s/g, '$1')
+  // Markers that start lines count as a list from two lines on, whatever
+  // their numbers: "1. ve 2. satırları sil" on one line keeps its 1.
+  const atLineStart = /(^|\n)\s*\d+[-.)]\s/g
+  const lined = dropListMarkers(draft)
+  const unlisted = (draft.match(atLineStart) ?? []).length >= 2 ? lined.replace(atLineStart, '$1') : lined
   take(kind === 'all' ? /(?<![\w.])\d+(?:[.,]\d+)*(?![\d.,]*\d)/g : /(?<![\w.])\d{2,}(?:[.,]\d+)*(?![\d.,]*\d)/g, unlisted)
   // A piece of a longer one (test.ts in tests/auth.test.ts) adds nothing.
   return [...out].filter(a => ![...out].some(b => b !== a && b.includes(a) && hasToken(b, a)))
 }
 
 // List markers are not numbers to keep: 1. 2. (or 1) 2), (1) (2), 1、2、)
-// at a line start or inline. Only markers counting up from 1 are taken, and
-// only when there are two or more, so the 30 in "timeout to 30. 2. ..." and
-// the 12 in "12. satır" stay numbers.
+// at a line start or inline. A list is markers of one style counting up
+// from 1, two or more, each item two words or more, and a new 1 starts
+// another list (two lists, or one inside another). So the 30 in "timeout
+// to 30. 2. ...", the 12 in "12. satır", sleep(1), 1.x and "1. ve 2." stay
+// numbers: dropping a real one would let a rewrite change it unseen.
+const MARKER = /(?<=^|[\s:;,!?：；，、。！？])(?:([(（])(\d{1,2})([)）])|(\d{1,2})(?:[.)）](?=\s)|、))/gu
 function dropListMarkers(s: string): string {
-  let want = 1
-  const picked: { at: number; len: number }[] = []
-  for (const m of s.matchAll(/(?<=^|[\s:;,：；，、(（])\(?(\d{1,2})[.)、]\)?(?=\s|\p{L})/gu)) {
-    if (Number(m[1]) !== want) continue
-    picked.push({ at: m.index ?? 0, len: m[0].length })
-    want++
+  type Mark = { at: number; end: number; n: number }
+  const open = new Map<string, Mark[]>()
+  const lists: Mark[][] = []
+  for (const m of s.matchAll(MARKER)) {
+    // The style is the marker less its number: "1." and "2." are one list.
+    const style = m[0].replace(/\d+/, '')
+    const mark = { at: m.index ?? 0, end: (m.index ?? 0) + m[0].length, n: Number(m[2] ?? m[4]) }
+    const run = open.get(style)
+    if (run && mark.n === run.length + 1) run.push(mark)
+    else if (mark.n === 1) {
+      const fresh = [mark]
+      open.set(style, fresh)
+      lists.push(fresh)
+    }
   }
-  if (want <= 2) return s
+  const picked = lists
+    .filter(l => l.length >= 2 && l.slice(0, -1).every((m, i) => words(s.slice(m.end, l[i + 1]!.at)) >= 2))
+    .flat()
+    .sort((x, y) => x.at - y.at)
   let out = ''
   let from = 0
   for (const p of picked) {
     out += s.slice(from, p.at)
-    from = p.at + p.len
+    from = p.end
   }
   return out + s.slice(from)
 }
@@ -161,15 +179,16 @@ export function hasToken(text: string, a: string): boolean {
   return new RegExp(guard[first][0] + esc(a) + guard[last][1], 'u').test(text)
 }
 
-// A bare number may change its decimal comma to a point (2,5 to 2.5) when
-// the rewrite is in English. Not inside code or quotes, which are kept as
-// written, and never a point to a comma (3.12 is likely a version).
-const inSpan = (draft: string, a: string) => [...draft.matchAll(/`[^`\n]+`|"[^"\n]{1,80}"/g)].some(m => m[0].includes(a))
-const toPoint = (a: string) => (/^\d+,\d+$/.test(a) ? a.replace(',', '.') : null)
+// A bare number may change its decimal mark when the rewrite is in
+// English: a decimal comma to a point (2,5 to 2.5), and a thousands point to
+// a comma (10.000 to 10,000; three digits after it, so 3.12 stays a
+// version). Not inside code or quotes, which are kept as written.
+const inSpan = (draft: string, a: string) => [...draft.matchAll(/`[^`\n]+`|"[^"\n]{1,80}"/g)].some(m => hasToken(m[0], a))
+const otherMark = (a: string) => (/^\d+,\d+$/.test(a) ? a.replace(',', '.') : /^\d{1,3}(?:\.\d{3})+$/.test(a) ? a.replaceAll('.', ',') : null)
 
 export const lost = (draft: string, text: string) =>
   anchors(draft).filter(a => {
-    const alt = inSpan(draft, a) ? null : toPoint(a)
+    const alt = inSpan(draft, a) ? null : otherMark(a)
     return !hasToken(text, a) && !(alt && hasToken(text, alt))
   })
 
@@ -177,7 +196,11 @@ export const lost = (draft: string, text: string) =>
 // hash or a number the user did not type, shown on the band so a stale one
 // is caught before it goes out under their name.
 export const added = (draft: string, text: string) =>
-  anchors(text, 'facts').filter(a => !hasToken(draft, a) && !(/^\d+\.\d+$/.test(a) && hasToken(draft, a.replace('.', ','))))
+  anchors(text, 'facts').filter(a => {
+    // The draft's own number with its mark changed (12,5 as 12.5, 10.000 as 10,000).
+    const was = /^\d+\.\d+$/.test(a) ? a.replace('.', ',') : /^\d{1,3}(?:,\d{3})+$/.test(a) ? a.replaceAll(',', '.') : null
+    return !hasToken(draft, a) && !(was && hasToken(draft, was))
+  })
 
 export function addedLine(draft: string, text: string): string | null {
   const list = added(draft, text)
